@@ -1,143 +1,118 @@
-/* Configurações Globais */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Montserrat', sans-serif;
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Caixa PDV</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-body {
-  background-color: #f4f7f6;
-  color: #333;
-  line-height: 1.6;
-}
+  <!-- Navegação superior -->
+  <header class="navbar">
+    <div class="container navbar-content">
+      <div class="logo">Caixa<span>PDV</span></div>
+      <nav>
+        <button id="btnAbaCaixa" class="nav-btn active">🛒 Caixa / Vendas</button>
+        <button id="btnAbaCadastro" class="nav-btn">📦 Cadastrar Produtos</button>
+      </nav>
+    </div>
+  </header>
 
-.container {
-  width: 90%;
-  max-width: 1100px;
-  margin: 0 auto;
-}
+  <main class="container main-content">
 
-/* Navbar */
-.navbar {
-  background: #1e293b;
-  color: #fff;
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
+    <!-- SEÇÃO 1: TELA DE CAIXA / VENDAS -->
+    <section id="secaoCaixa" class="aba-conteudo active">
+      <div class="pdv-grid">
+        
+        <!-- Esquerda: Entrada de Código e Destaque do Produto -->
+        <div class="painel-leitura">
+          <div class="card-leitura">
+            <h2>Passar Produto</h2>
+            <div class="input-barcode-group">
+              <input type="text" id="codigoBarrasInput" placeholder="Bipe ou digite o Código de Barras..." autofocus>
+              <button id="btnAdicionarManual">Adicionar</button>
+            </div>
+          </div>
 
-.navbar-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+          <!-- Destaque do produto lido atualmente -->
+          <div class="card-produto-destaque" id="produtoDestaque">
+            <div class="img-container">
+              <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto do Produto">
+            </div>
+            <div class="info-container">
+              <span class="tag-status">Último Item Lido</span>
+              <h3 id="destaqueNome">Aguardando produto...</h3>
+              <div class="preco-destaque">R$ <span id="destaquePreco">0,00</span></div>
+            </div>
+          </div>
+        </div>
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
+        <!-- Direita: Lista da Compra e Total -->
+        <div class="painel-carrinho">
+          <h2>Itens da Venda</h2>
+          <div class="tabela-container">
+            <table id="tabelaCarrinho">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qtd</th>
+                  <th>Unit.</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="listaCarrinho">
+                <!-- Itens serão inseridos via JavaScript -->
+              </tbody>
+            </table>
+          </div>
 
-.logo span {
-  color: #3b82f6;
-}
+          <div class="painel-total">
+            <div class="total-label">TOTAL A PAGAR:</div>
+            <div class="total-valor">R$ <span id="valorTotal">0,00</span></div>
+            <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar Venda</button>
+          </div>
+        </div>
 
-.navbar nav ul {
-  display: flex;
-  list-style: none;
-  gap: 1.5rem;
-}
+      </div>
+    </section>
 
-.navbar nav a {
-  color: #cbd5e1;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s;
-}
+    <!-- SEÇÃO 2: CADASTRO DE PRODUTOS -->
+    <section id="secaoCadastro" class="aba-conteudo">
+      <div class="card-form">
+        <h2>Cadastrar Novo Produto</h2>
+        <form id="formCadastro">
+          <div class="form-group">
+            <label>Código de Barras:</label>
+            <input type="text" id="cadCodigo" placeholder="Ex: 7891234567890" required>
+          </div>
+          <div class="form-group">
+            <label>Descrição / Nome do Produto:</label>
+            <input type="text" id="cadNome" placeholder="Ex: Refrigerante Coca-Cola 2L" required>
+          </div>
+          <div class="form-group">
+            <label>Preço de Venda (R$):</label>
+            <input type="number" step="0.01" id="cadPreco" placeholder="Ex: 8.50" required>
+          </div>
+          <div class="form-group">
+            <label>URL da Foto do Produto (Opcional):</label>
+            <input type="url" id="cadFoto" placeholder="https://link-da-imagem.com/foto.jpg">
+          </div>
+          <button type="submit" class="btn-salvar">Salvar Produto</button>
+        </form>
+      </div>
 
-.navbar nav a:hover, .navbar nav a.active {
-  color: #3b82f6;
-}
+      <div class="card-lista-produtos">
+        <h3>Produtos Cadastrados (<span id="totalCadastrados">0</span>)</h3>
+        <ul id="listaProdutosCadastrados" class="lista-cadastrados">
+          <!-- Produtos cadastrados aparecerão aqui -->
+        </ul>
+      </div>
+    </section>
 
-/* Hero Section */
-.hero {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  color: #fff;
-  padding: 5rem 0;
-  text-align: center;
-}
+  </main>
 
-.hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.1rem;
-  color: #94a3b8;
-  max-width: 600px;
-  margin: 0 auto 2rem auto;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: #fff;
-  border: none;
-  padding: 0.8rem 1.8rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-  transform: translateY(-2px);
-}
-
-/* Cards Section */
-.features {
-  padding: 4rem 0;
-}
-
-.grid-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.card {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.card h3 {
-  margin-bottom: 0.8rem;
-  color: #0f172a;
-}
-
-.card p {
-  color: #64748b;
-  font-size: 0.95rem;
-}
-
-/* Rodapé */
-footer {
-  background: #0f172a;
-  color: #64748b;
-  text-align: center;
-  padding: 1.5rem 0;
-  margin-top: 2rem;
-  font-size: 0.9rem;
-}
+  <script src="script.js"></script>
+</body>
+</html>
