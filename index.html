@@ -3,24 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caixa PDV</title>
+  <title>Caixa PDV Agil</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <!-- Lib externa para leitura de código de barras via Câmera -->
   <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
 
-  <!-- Topo / Navbar com Menu Três Pontinhos -->
+  <!-- Topo / Navbar -->
   <header class="navbar">
     <div class="container navbar-content">
       <div class="logo">Caixa<span>PDV</span></div>
       
-      <!-- Menu Três Pontinhos -->
       <div class="menu-container">
         <button id="btnMenu" class="btn-menu" aria-label="Abrir menu">⋮</button>
         <div id="dropdownMenu" class="dropdown-menu">
-          <button class="menu-item" data-target="secaoCaixa">🛒 Caixa / Vendas</button>
+          <button class="menu-item" data-target="secaoInicio">🏠 Início</button>
           <button class="menu-item" data-target="secaoCadastro">📦 Cadastrar Produtos</button>
           <button class="menu-item" data-target="secaoClientes">👤 Clientes</button>
           <button class="menu-item" data-target="secaoHistorico">📜 Histórico</button>
@@ -32,70 +30,82 @@
 
   <main class="container main-content">
 
-    <!-- TELA INICIAL / OPERAÇÃO DE CAIXA -->
-    <section id="secaoCaixa" class="aba-conteudo active">
+    <!-- SEÇÃO 1: TELA INICIAL (Botão Iniciar Venda) -->
+    <section id="secaoInicio" class="aba-conteudo active">
+      <div class="card-boas-vindas">
+        <h2>Pronto para atender?</h2>
+        <p>Clique no botão abaixo para abrir a câmera e iniciar uma nova venda em tempo real.</p>
+        <button id="btnIniciarVenda" class="btn-iniciar-venda">🚀 Iniciar Venda</button>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 2: OPERAÇÃO DE VENDA (Câmera Ativa + Carrinho Rápido) -->
+    <section id="secaoCaixa" class="aba-conteudo">
       
-      <!-- Card Mensagem Principal e Ações de Leitura -->
-      <div class="card-instrucao">
-        <p class="mensagem-inicial">Passe um item pelo leitor ou digite o código de barras</p>
-        
-        <div class="input-barcode-group">
-          <input type="text" id="codigoBarrasInput" placeholder="Bipe ou digite o código..." autofocus>
-          <button id="btnAdicionarManual">Adicionar</button>
+      <!-- Visor de Leitura Contínua (Retangular Horizontal) -->
+      <div class="card-camera-box">
+        <div class="camera-header">
+          <span class="status-camera">🔴 Leitor Ativo</span>
+          <button id="btnCancelarVenda" class="btn-sair-venda">Sair da Venda</button>
         </div>
 
-        <button id="btnAbrirCamera" class="btn-camera">
-          📷 Abrir Câmera para Leitura
-        </button>
-
-        <!-- Área de pré-visualização da câmera (oculta inicialmente) -->
-        <div id="containerCamera" class="container-camera" style="display: none;">
+        <div class="visor-retangular">
           <video id="videoCamera" playsinline></video>
-          <button id="btnFecharCamera" class="btn-fechar-camera">Cancelar Câmera</button>
+          <div class="mira-scanner"></div>
+        </div>
+
+        <!-- Entrada Manual Secundária -->
+        <div class="input-barcode-group">
+          <input type="text" id="codigoBarrasInput" placeholder="Ou digite o código de barras...">
+          <button id="btnAdicionarManual">OK</button>
         </div>
       </div>
 
       <!-- Destaque do Último Item Lido -->
       <div class="card-produto-destaque" id="produtoDestaque">
         <div class="img-container">
-          <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto do Produto">
+          <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto">
         </div>
         <div class="info-container">
           <span class="tag-status">Último Item Lido</span>
-          <h3 id="destaqueNome">Aguardando produto...</h3>
+          <h3 id="destaqueNome">Aguardando leitura...</h3>
           <div class="preco-destaque">R$ <span id="destaquePreco">0,00</span></div>
         </div>
       </div>
 
-      <!-- Tabela da Compra Atual e Total -->
-      <div class="painel-carrinho">
-        <h2>Itens da Venda</h2>
+      <!-- Resumo do Total e Ações -->
+      <div class="bar-total-flutuante">
+        <div class="info-total">
+          <span>TOTAL:</span>
+          <strong>R$ <span id="valorTotal">0,00</span></strong>
+        </div>
+        <div class="acoes-venda">
+          <button id="btnVerItens" class="btn-secundario">📋 Lista (<span id="qtdItensTotal">0</span>)</button>
+          <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar</button>
+        </div>
+      </div>
+
+      <!-- Painel Tabela de Itens (Expansível / Escondível) -->
+      <div id="painelCarrinho" class="painel-carrinho" style="display: none;">
+        <h3>Itens Registrados</h3>
         <div class="tabela-container">
           <table>
             <thead>
               <tr>
                 <th>Item</th>
                 <th>Qtd</th>
-                <th>Unit.</th>
                 <th>Subtotal</th>
+                <th>Ações</th>
               </tr>
             </thead>
-            <tbody id="listaCarrinho">
-              <!-- Itens do carrinho aparecem aqui -->
-            </tbody>
+            <tbody id="listaCarrinho"></tbody>
           </table>
-        </div>
-
-        <div class="painel-total">
-          <div class="total-label">TOTAL A PAGAR:</div>
-          <div class="total-valor">R$ <span id="valorTotal">0,00</span></div>
-          <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar Venda</button>
         </div>
       </div>
 
     </section>
 
-    <!-- SEÇÃO: CADASTRO DE PRODUTOS -->
+    <!-- SEÇÃO 3: CADASTRO DE PRODUTOS (Upload de Foto da Galeria) -->
     <section id="secaoCadastro" class="aba-conteudo">
       <div class="card-form">
         <h2>Cadastrar Novo Produto</h2>
@@ -113,8 +123,11 @@
             <input type="number" step="0.01" id="cadPreco" placeholder="Ex: 8.50" required>
           </div>
           <div class="form-group">
-            <label>URL da Foto do Produto (Opcional):</label>
-            <input type="url" id="cadFoto" placeholder="https://link-da-imagem.com/foto.jpg">
+            <label>Foto do Produto (Carregar da Galeria):</label>
+            <input type="file" id="cadFotoArquivo" accept="image/*">
+            <div id="previewFotoContainer" style="margin-top: 10px; display: none;">
+              <img id="previewFoto" src="" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+            </div>
           </div>
           <button type="submit" class="btn-salvar">Salvar Produto</button>
         </form>
@@ -126,27 +139,27 @@
       </div>
     </section>
 
-    <!-- SEÇÃO: CLIENTES (Em breve) -->
+    <!-- SEÇÃO 4: CLIENTES -->
     <section id="secaoClientes" class="aba-conteudo">
       <div class="card-form">
-        <h2>Gestão de Clientes</h2>
-        <p style="color: #94a3b8;">Módulo de cadastro de clientes em desenvolvimento...</p>
+        <h2>Clientes</h2>
+        <p style="color: #94a3b8;">Módulo de gestão de clientes.</p>
       </div>
     </section>
 
-    <!-- SEÇÃO: HISTÓRICO (Em breve) -->
+    <!-- SEÇÃO 5: HISTÓRICO -->
     <section id="secaoHistorico" class="aba-conteudo">
       <div class="card-form">
         <h2>Histórico de Vendas</h2>
-        <p style="color: #94a3b8;">Módulo de relatórios e histórico em desenvolvimento...</p>
+        <p style="color: #94a3b8;">Registro detalhado de vendas finalizadas.</p>
       </div>
     </section>
 
-    <!-- SEÇÃO: CONFIGURAÇÕES (Em breve) -->
+    <!-- SEÇÃO 6: CONFIGURAÇÕES -->
     <section id="secaoConfig" class="aba-conteudo">
       <div class="card-form">
-        <h2>Configurações do Sistema</h2>
-        <p style="color: #94a3b8;">Módulo de configurações em desenvolvimento...</p>
+        <h2>Configurações</h2>
+        <p style="color: #94a3b8;">Ajustes e preferências do sistema.</p>
       </div>
     </section>
 
