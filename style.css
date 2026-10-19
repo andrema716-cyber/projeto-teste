@@ -97,7 +97,6 @@ body {
   display: block;
 }
 
-/* Card Iniciar Venda */
 .card-boas-vindas {
   background: #1e293b;
   padding: 3rem 1.5rem;
@@ -127,14 +126,8 @@ body {
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-  transition: transform 0.2s;
 }
 
-.btn-iniciar-venda:active {
-  transform: scale(0.98);
-}
-
-/* Visor de Câmera Retangular Horizontal */
 .card-camera-box {
   background: #1e293b;
   padding: 1rem;
@@ -171,7 +164,7 @@ body {
 .visor-retangular {
   position: relative;
   width: 100%;
-  height: 160px; /* Formato Retangular Horizontal */
+  height: 160px;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
@@ -220,7 +213,6 @@ body {
   cursor: pointer;
 }
 
-/* Destaque do Produto Lido */
 .card-produto-destaque {
   background: #1e293b;
   padding: 1rem;
@@ -259,7 +251,6 @@ body {
   color: #22c55e;
 }
 
-/* Barra de Total e Ações */
 .bar-total-flutuante {
   background: #1e293b;
   padding: 1rem;
@@ -307,7 +298,6 @@ body {
   cursor: pointer;
 }
 
-/* Tabela do Carrinho e Ações (+ e Lixeira) */
 .painel-carrinho {
   background: #1e293b;
   padding: 1rem;
@@ -338,15 +328,21 @@ th {
   color: #94a3b8;
 }
 
+/* Maior Espaçamento dos Botões no Carrinho */
+.acoes-item-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem; /* Espaço seguro para evitar cliques acidentais */
+}
+
 .btn-acao-tabela {
-  background: #334155;
   border: none;
-  color: #fff;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
   font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  margin-right: 0.3rem;
 }
 
 .btn-acao-tabela.btn-add {
@@ -359,7 +355,65 @@ th {
   color: #fff;
 }
 
-/* Formulário de Cadastro e Lista */
+/* Estilos do Modal de Pagamento */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid #334155;
+}
+
+.modal-subtotal {
+  font-size: 1.1rem;
+  margin-top: 0.4rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.opcoes-pagamento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.btn-pagamento {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #fff;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-pagamento.active {
+  background: #22c55e;
+  color: #0f172a;
+  border-color: #22c55e;
+}
+
+.input-select {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: #fff;
+}
+
 .card-form, .card-lista-produtos {
   background: #1e293b;
   padding: 1.5rem;
@@ -411,10 +465,19 @@ th {
   align-items: center;
 }
 
-.lista-cadastrados img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-right: 10px;
+.status-debito {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-debito.atrasado {
+  background: #ef4444;
+  color: #fff;
+}
+
+.status-debito.emdia {
+  background: #22c55e;
+  color: #0f172a;
 }
