@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caixa PDV Agil</title>
+  <title>Caixa PDV Ágil</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <!-- Gerador de QR Code para Pagamento Pix -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -20,8 +22,8 @@
         <div id="dropdownMenu" class="dropdown-menu">
           <button class="menu-item" data-target="secaoInicio">🏠 Início</button>
           <button class="menu-item" data-target="secaoCadastro">📦 Cadastrar Produtos</button>
-          <button class="menu-item" data-target="secaoClientes">👤 Clientes</button>
-          <button class="menu-item" data-target="secaoHistorico">📜 Histórico</button>
+          <button class="menu-item" data-target="secaoClientes">👤 Clientes & Fiado</button>
+          <button class="menu-item" data-target="secaoHistorico">📜 Histórico & Lucros</button>
           <button class="menu-item" data-target="secaoConfig">⚙️ Configurações</button>
         </div>
       </div>
@@ -30,7 +32,7 @@
 
   <main class="container main-content">
 
-    <!-- SEÇÃO 1: TELA INICIAL (Botão Iniciar Venda) -->
+    <!-- TELA INICIAL -->
     <section id="secaoInicio" class="aba-conteudo active">
       <div class="card-boas-vindas">
         <h2>Pronto para atender?</h2>
@@ -39,10 +41,9 @@
       </div>
     </section>
 
-    <!-- SEÇÃO 2: OPERAÇÃO DE VENDA (Câmera Ativa + Carrinho Rápido) -->
+    <!-- OPERAÇÃO DE VENDA -->
     <section id="secaoCaixa" class="aba-conteudo">
       
-      <!-- Visor de Leitura Contínua (Retangular Horizontal) -->
       <div class="card-camera-box">
         <div class="camera-header">
           <span class="status-camera">🔴 Leitor Ativo</span>
@@ -54,14 +55,12 @@
           <div class="mira-scanner"></div>
         </div>
 
-        <!-- Entrada Manual Secundária -->
         <div class="input-barcode-group">
           <input type="text" id="codigoBarrasInput" placeholder="Ou digite o código de barras...">
           <button id="btnAdicionarManual">OK</button>
         </div>
       </div>
 
-      <!-- Destaque do Último Item Lido -->
       <div class="card-produto-destaque" id="produtoDestaque">
         <div class="img-container">
           <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto">
@@ -73,7 +72,6 @@
         </div>
       </div>
 
-      <!-- Resumo do Total e Ações -->
       <div class="bar-total-flutuante">
         <div class="info-total">
           <span>TOTAL:</span>
@@ -81,11 +79,10 @@
         </div>
         <div class="acoes-venda">
           <button id="btnVerItens" class="btn-secundario">📋 Lista (<span id="qtdItensTotal">0</span>)</button>
-          <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar</button>
+          <button id="btnAbrirPagamento" class="btn-finalizar">Finalizar Venda</button>
         </div>
       </div>
 
-      <!-- Painel Tabela de Itens (Expansível / Escondível) -->
       <div id="painelCarrinho" class="painel-carrinho" style="display: none;">
         <h3>Itens Registrados</h3>
         <div class="tabela-container">
@@ -95,7 +92,7 @@
                 <th>Item</th>
                 <th>Qtd</th>
                 <th>Subtotal</th>
-                <th>Ações</th>
+                <th style="text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="listaCarrinho"></tbody>
@@ -105,7 +102,43 @@
 
     </section>
 
-    <!-- SEÇÃO 3: CADASTRO DE PRODUTOS (Upload de Foto da Galeria) -->
+    <!-- MODAL DE PAGAMENTO -->
+    <div id="modalPagamento" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <h3>Forma de Pagamento</h3>
+        <p class="modal-subtotal">Total: <strong>R$ <span id="modalValorTotal">0.00</span></strong></p>
+        
+        <div class="opcoes-pagamento">
+          <button class="btn-pagamento active" data-forma="dinheiro">💵 Dinheiro</button>
+          <button class="btn-pagamento" data-forma="pix">⚡ Pix</button>
+          <button class="btn-pagamento" data-forma="cartao">💳 Cartão</button>
+          <button class="btn-pagamento" data-forma="prazo">📅 No Prazo (Fiado)</button>
+        </div>
+
+        <!-- Área Dinâmica de Acordo com a Forma Escolhida -->
+        <div id="detalhesPagamento" class="detalhes-pagamento">
+          <!-- Pix Container -->
+          <div id="boxPix" style="display: none; text-align: center; margin-top: 1rem;">
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;">Apresente o QR Code ao cliente:</p>
+            <div id="qrcode" style="display: flex; justify-content: center; background: #fff; padding: 10px; border-radius: 8px; width: max-content; margin: 0 auto;"></div>
+          </div>
+
+          <!-- Prazo Container -->
+          <div id="boxPrazo" style="display: none; margin-top: 1rem;">
+            <label style="display:block; margin-bottom: 0.3rem; font-size: 0.9rem;">Selecione o Cliente:</label>
+            <select id="selectClientePrazo" class="input-select"></select>
+            <p id="infoVencimentoPrazo" style="font-size: 0.8rem; color: #38bdf8; margin-top: 0.5rem;"></p>
+          </div>
+        </div>
+
+        <div class="modal-acoes">
+          <button id="btnConfirmarPagamento" class="btn-finalizar" style="width: 100%; margin-top: 1rem;">Confirmar & Finalizar</button>
+          <button id="btnCancelarPagamento" class="btn-sair-venda" style="width: 100%; margin-top: 0.5rem; background: #475569;">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CADASTRO DE PRODUTOS -->
     <section id="secaoCadastro" class="aba-conteudo">
       <div class="card-form">
         <h2>Cadastrar Novo Produto</h2>
@@ -119,11 +152,15 @@
             <input type="text" id="cadNome" placeholder="Ex: Refrigerante 2L" required>
           </div>
           <div class="form-group">
+            <label>Custo do Produto (R$):</label>
+            <input type="number" step="0.01" id="cadCusto" placeholder="Ex: 5.00" required>
+          </div>
+          <div class="form-group">
             <label>Preço de Venda (R$):</label>
             <input type="number" step="0.01" id="cadPreco" placeholder="Ex: 8.50" required>
           </div>
           <div class="form-group">
-            <label>Foto do Produto (Carregar da Galeria):</label>
+            <label>Foto do Produto (Galeria):</label>
             <input type="file" id="cadFotoArquivo" accept="image/*">
             <div id="previewFotoContainer" style="margin-top: 10px; display: none;">
               <img id="previewFoto" src="" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
@@ -139,27 +176,64 @@
       </div>
     </section>
 
-    <!-- SEÇÃO 4: CLIENTES -->
+    <!-- CLIENTES & FIADO -->
     <section id="secaoClientes" class="aba-conteudo">
       <div class="card-form">
-        <h2>Clientes</h2>
-        <p style="color: #94a3b8;">Módulo de gestão de clientes.</p>
+        <h2>Cadastrar Cliente</h2>
+        <form id="formCliente">
+          <div class="form-group">
+            <label>Nome do Cliente:</label>
+            <input type="text" id="cliNome" placeholder="Ex: João da Silva" required>
+          </div>
+          <div class="form-group">
+            <label>Telefone (WhatsApp):</label>
+            <input type="text" id="cliTelefone" placeholder="Ex: 11999998888">
+          </div>
+          <div class="form-group">
+            <label>Melhor Dia de Vencimento (Dia do Mês):</label>
+            <input type="number" id="cliDiaVencimento" min="1" max="31" placeholder="Ex: 10" required>
+          </div>
+          <button type="submit" class="btn-salvar">Salvar Cliente</button>
+        </form>
+      </div>
+
+      <div class="card-lista-produtos">
+        <h3>Clientes Cadastrados</h3>
+        <ul id="listaClientesCadastrados" class="lista-cadastrados"></ul>
       </div>
     </section>
 
-    <!-- SEÇÃO 5: HISTÓRICO -->
+    <!-- HISTÓRICO & RELATÓRIOS -->
     <section id="secaoHistorico" class="aba-conteudo">
       <div class="card-form">
-        <h2>Histórico de Vendas</h2>
-        <p style="color: #94a3b8;">Registro detalhado de vendas finalizadas.</p>
+        <h2>Resumo Financeiro & Lucros</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+          <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #334155;">
+            <span style="font-size: 0.8rem; color: #94a3b8;">Faturamento Total</span>
+            <h3 style="color: #22c55e; font-size: 1.4rem;">R$ <span id="relFaturamento">0.00</span></h3>
+          </div>
+          <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #334155;">
+            <span style="font-size: 0.8rem; color: #94a3b8;">Lucro Total</span>
+            <h3 style="color: #38bdf8; font-size: 1.4rem;">R$ <span id="relLucro">0.00</span></h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-lista-produtos">
+        <h3>Histórico de Vendas</h3>
+        <ul id="listaHistoricoVendas" class="lista-cadastrados"></ul>
       </div>
     </section>
 
-    <!-- SEÇÃO 6: CONFIGURAÇÕES -->
+    <!-- CONFIGURAÇÕES -->
     <section id="secaoConfig" class="aba-conteudo">
       <div class="card-form">
-        <h2>Configurações</h2>
-        <p style="color: #94a3b8;">Ajustes e preferências do sistema.</p>
+        <h2>Configurações do Pix</h2>
+        <div class="form-group">
+          <label>Chave Pix para Recebimento:</label>
+          <input type="text" id="cfgChavePix" placeholder="CPF, Telefone, E-mail ou Chave Aleatória">
+        </div>
+        <button id="btnSalvarConfig" class="btn-salvar">Salvar Configurações</button>
       </div>
     </section>
 
