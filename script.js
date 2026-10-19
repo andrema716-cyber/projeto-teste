@@ -1,19 +1,25 @@
-// Base de dados de produtos salva no navegador
+// Base de dados salva no navegador
 let produtos = JSON.parse(localStorage.getItem('produtos_pdv')) || [
   { codigo: '123', nome: 'Produto Exemplo', preco: 10.50, foto: 'https://via.placeholder.com/150?text=Exemplo' }
 ];
 
 let carrinho = [];
+let codeReader = null;
 
-// Elementos das Abas
-const btnAbaCaixa = document.getElementById('btnAbaCaixa');
-const btnAbaCadastro = document.getElementById('btnAbaCadastro');
-const secaoCaixa = document.getElementById('secaoCaixa');
-const secaoCadastro = document.getElementById('secaoCadastro');
+// Elementos do Menu
+const btnMenu = document.getElementById('btnMenu');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const menuItems = document.querySelectorAll('.menu-item');
+const secoes = document.querySelectorAll('.aba-conteudo');
 
 // Elementos do Caixa
 const codigoInput = document.getElementById('codigoBarrasInput');
 const btnAdicionarManual = document.getElementById('btnAdicionarManual');
+const btnAbrirCamera = document.getElementById('btnAbrirCamera');
+const btnFecharCamera = document.getElementById('btnFecharCamera');
+const containerCamera = document.getElementById('containerCamera');
+const videoCamera = document.getElementById('videoCamera');
+
 const destaqueImg = document.getElementById('destaqueImg');
 const destaqueNome = document.getElementById('destaqueNome');
 const destaquePreco = document.getElementById('destaquePreco');
@@ -26,23 +32,69 @@ const formCadastro = document.getElementById('formCadastro');
 const listaProdutosCadastrados = document.getElementById('listaProdutosCadastrados');
 const totalCadastrados = document.getElementById('totalCadastrados');
 
-// Troca de Abas
-if (btnAbaCaixa && btnAbaCadastro) {
-  btnAbaCaixa.addEventListener('click', () => {
-    btnAbaCaixa.classList.add('active');
-    btnAbaCadastro.classList.remove('active');
-    secaoCaixa.classList.add('active');
-    secaoCadastro.classList.remove('active');
-    if (codigoInput) codigoInput.focus();
+// Controle do Menu Três Pontinhos
+if (btnMenu && dropdownMenu) {
+  btnMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('show');
   });
 
-  btnAbaCadastro.addEventListener('click', () => {
-    btnAbaCadastro.classList.add('active');
-    btnAbaCaixa.classList.remove('active');
-    secaoCadastro.classList.add('active');
-    secaoCaixa.classList.remove('active');
-    atualizarListaCadastrados();
+  document.addEventListener('click', () => {
+    dropdownMenu.classList.remove('show');
   });
+}
+
+// Navegação entre Seções
+menuItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const targetId = item.getAttribute('data-target');
+    
+    secoes.forEach(secao => secao.classList.remove('active'));
+    
+    const targetSecao = document.getElementById(targetId);
+    if (targetSecao) {
+      targetSecao.classList.add('active');
+    }
+
+    if (targetId === 'secaoCadastro') {
+      atualizarListaCadastrados();
+    } else if (targetId === 'secaoCaixa') {
+      if (codigoInput) codigoInput.focus();
+    }
+
+    dropdownMenu.classList.remove('show');
+  });
+});
+
+// Leitor de Câmera (ZXing)
+if (btnAbrirCamera) {
+  btnAbrirCamera.addEventListener('click', () => {
+    containerCamera.style.display = 'block';
+    codeReader = new ZXing.BrowserMultiFormatReader();
+
+    codeReader.decodeFromVideoDevice(null, 'videoCamera', (result, err) => {
+      if (result) {
+        adicionarAoCarrinho(result.text);
+        pararCamera();
+      }
+    }).catch(err => {
+      alert('Erro ao acessar a câmera: ' + err);
+      containerCamera.style.display = 'none';
+    });
+  });
+}
+
+if (btnFecharCamera) {
+  btnFecharCamera.addEventListener('click', pararCamera);
+}
+
+function pararCamera() {
+  if (codeReader) {
+    codeReader.reset();
+  }
+  if (containerCamera) {
+    containerCamera.style.display = 'none';
+  }
 }
 
 // Salvar Produto
@@ -85,7 +137,7 @@ function atualizarListaCadastrados() {
   });
 }
 
-// Processar Leitura no Caixa
+// Inserir Produto no Caixa
 if (codigoInput) {
   codigoInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -108,7 +160,7 @@ function adicionarAoCarrinho(codigo) {
   const produto = produtos.find(p => p.codigo === codigo);
 
   if (!produto) {
-    alert('Produto não encontrado! Cadastre na aba "Cadastrar Produtos".');
+    alert('Produto não encontrado! Cadastre na aba "Cadastrar Produtos" no menu superior.');
     return;
   }
 
