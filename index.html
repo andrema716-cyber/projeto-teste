@@ -3,82 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Caixa PDV</title>
+  <title>Caixa PDV</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Lib externa para leitura de código de barras via Câmera -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
 
-  <!-- Navegação superior -->
+  <!-- Topo / Navbar com Menu Três Pontinhos -->
   <header class="navbar">
     <div class="container navbar-content">
       <div class="logo">Caixa<span>PDV</span></div>
-      <nav>
-        <button id="btnAbaCaixa" class="nav-btn active">🛒 Caixa / Vendas</button>
-        <button id="btnAbaCadastro" class="nav-btn">📦 Cadastrar Produtos</button>
-      </nav>
+      
+      <!-- Menu Três Pontinhos -->
+      <div class="menu-container">
+        <button id="btnMenu" class="btn-menu" aria-label="Abrir menu">⋮</button>
+        <div id="dropdownMenu" class="dropdown-menu">
+          <button class="menu-item" data-target="secaoCaixa">🛒 Caixa / Vendas</button>
+          <button class="menu-item" data-target="secaoCadastro">📦 Cadastrar Produtos</button>
+          <button class="menu-item" data-target="secaoClientes">👤 Clientes</button>
+          <button class="menu-item" data-target="secaoHistorico">📜 Histórico</button>
+          <button class="menu-item" data-target="secaoConfig">⚙️ Configurações</button>
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="container main-content">
 
-    <!-- SEÇÃO 1: TELA DE CAIXA / VENDAS -->
+    <!-- TELA INICIAL / OPERAÇÃO DE CAIXA -->
     <section id="secaoCaixa" class="aba-conteudo active">
-      <div class="pdv-grid">
+      
+      <!-- Card Mensagem Principal e Ações de Leitura -->
+      <div class="card-instrucao">
+        <p class="mensagem-inicial">Passe um item pelo leitor ou digite o código de barras</p>
         
-        <!-- Esquerda: Entrada de Código e Destaque do Produto -->
-        <div class="painel-leitura">
-          <div class="card-leitura">
-            <h2>Passar Produto</h2>
-            <div class="input-barcode-group">
-              <input type="text" id="codigoBarrasInput" placeholder="Bipe ou digite o Código..." autofocus>
-              <button id="btnAdicionarManual">Adicionar</button>
-            </div>
-          </div>
-
-          <!-- Destaque do produto lido atualmente -->
-          <div class="card-produto-destaque" id="produtoDestaque">
-            <div class="img-container">
-              <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto do Produto">
-            </div>
-            <div class="info-container">
-              <span class="tag-status">Último Item Lido</span>
-              <h3 id="destaqueNome">Aguardando produto...</h3>
-              <div class="preco-destaque">R$ <span id="destaquePreco">0,00</span></div>
-            </div>
-          </div>
+        <div class="input-barcode-group">
+          <input type="text" id="codigoBarrasInput" placeholder="Bipe ou digite o código..." autofocus>
+          <button id="btnAdicionarManual">Adicionar</button>
         </div>
 
-        <!-- Direita: Lista da Compra e Total -->
-        <div class="painel-carrinho">
-          <h2>Itens da Venda</h2>
-          <div class="tabela-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qtd</th>
-                  <th>Unit.</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody id="listaCarrinho">
-                <!-- Itens serão inseridos via JavaScript -->
-              </tbody>
-            </table>
-          </div>
+        <button id="btnAbrirCamera" class="btn-camera">
+          📷 Abrir Câmera para Leitura
+        </button>
 
-          <div class="painel-total">
-            <div class="total-label">TOTAL A PAGAR:</div>
-            <div class="total-valor">R$ <span id="valorTotal">0,00</span></div>
-            <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar Venda</button>
-          </div>
+        <!-- Área de pré-visualização da câmera (oculta inicialmente) -->
+        <div id="containerCamera" class="container-camera" style="display: none;">
+          <video id="videoCamera" playsinline></video>
+          <button id="btnFecharCamera" class="btn-fechar-camera">Cancelar Câmera</button>
         </div>
-
       </div>
+
+      <!-- Destaque do Último Item Lido -->
+      <div class="card-produto-destaque" id="produtoDestaque">
+        <div class="img-container">
+          <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto do Produto">
+        </div>
+        <div class="info-container">
+          <span class="tag-status">Último Item Lido</span>
+          <h3 id="destaqueNome">Aguardando produto...</h3>
+          <div class="preco-destaque">R$ <span id="destaquePreco">0,00</span></div>
+        </div>
+      </div>
+
+      <!-- Tabela da Compra Atual e Total -->
+      <div class="painel-carrinho">
+        <h2>Itens da Venda</h2>
+        <div class="tabela-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qtd</th>
+                <th>Unit.</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="listaCarrinho">
+              <!-- Itens do carrinho aparecem aqui -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="painel-total">
+          <div class="total-label">TOTAL A PAGAR:</div>
+          <div class="total-valor">R$ <span id="valorTotal">0,00</span></div>
+          <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar Venda</button>
+        </div>
+      </div>
+
     </section>
 
-    <!-- SEÇÃO 2: CADASTRO DE PRODUTOS -->
+    <!-- SEÇÃO: CADASTRO DE PRODUTOS -->
     <section id="secaoCadastro" class="aba-conteudo">
       <div class="card-form">
         <h2>Cadastrar Novo Produto</h2>
@@ -105,9 +122,31 @@
 
       <div class="card-lista-produtos">
         <h3>Produtos Cadastrados (<span id="totalCadastrados">0</span>)</h3>
-        <ul id="listaProdutosCadastrados" class="lista-cadastrados">
-          <!-- Produtos cadastrados aparecerão aqui -->
-        </ul>
+        <ul id="listaProdutosCadastrados" class="lista-cadastrados"></ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: CLIENTES (Em breve) -->
+    <section id="secaoClientes" class="aba-conteudo">
+      <div class="card-form">
+        <h2>Gestão de Clientes</h2>
+        <p style="color: #94a3b8;">Módulo de cadastro de clientes em desenvolvimento...</p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: HISTÓRICO (Em breve) -->
+    <section id="secaoHistorico" class="aba-conteudo">
+      <div class="card-form">
+        <h2>Histórico de Vendas</h2>
+        <p style="color: #94a3b8;">Módulo de relatórios e histórico em desenvolvimento...</p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: CONFIGURAÇÕES (Em breve) -->
+    <section id="secaoConfig" class="aba-conteudo">
+      <div class="card-form">
+        <h2>Configurações do Sistema</h2>
+        <p style="color: #94a3b8;">Módulo de configurações em desenvolvimento...</p>
       </div>
     </section>
 
