@@ -1,118 +1,173 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Caixa PDV</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
+// Base de dados de produtos salva no navegador
+let produtos = JSON.parse(localStorage.getItem('produtos_pdv')) || [
+  { codigo: '123', nome: 'Produto Exemplo', preco: 10.50, foto: 'https://via.placeholder.com/150?text=Exemplo' }
+];
 
-  <!-- Navegação superior -->
-  <header class="navbar">
-    <div class="container navbar-content">
-      <div class="logo">Caixa<span>PDV</span></div>
-      <nav>
-        <button id="btnAbaCaixa" class="nav-btn active">🛒 Caixa / Vendas</button>
-        <button id="btnAbaCadastro" class="nav-btn">📦 Cadastrar Produtos</button>
-      </nav>
-    </div>
-  </header>
+let carrinho = [];
 
-  <main class="container main-content">
+// Elementos das Abas
+const btnAbaCaixa = document.getElementById('btnAbaCaixa');
+const btnAbaCadastro = document.getElementById('btnAbaCadastro');
+const secaoCaixa = document.getElementById('secaoCaixa');
+const secaoCadastro = document.getElementById('secaoCadastro');
 
-    <!-- SEÇÃO 1: TELA DE CAIXA / VENDAS -->
-    <section id="secaoCaixa" class="aba-conteudo active">
-      <div class="pdv-grid">
-        
-        <!-- Esquerda: Entrada de Código e Destaque do Produto -->
-        <div class="painel-leitura">
-          <div class="card-leitura">
-            <h2>Passar Produto</h2>
-            <div class="input-barcode-group">
-              <input type="text" id="codigoBarrasInput" placeholder="Bipe ou digite o Código de Barras..." autofocus>
-              <button id="btnAdicionarManual">Adicionar</button>
-            </div>
-          </div>
+// Elementos do Caixa
+const codigoInput = document.getElementById('codigoBarrasInput');
+const btnAdicionarManual = document.getElementById('btnAdicionarManual');
+const destaqueImg = document.getElementById('destaqueImg');
+const destaqueNome = document.getElementById('destaqueNome');
+const destaquePreco = document.getElementById('destaquePreco');
+const listaCarrinho = document.getElementById('listaCarrinho');
+const valorTotalEl = document.getElementById('valorTotal');
+const btnFinalizarVenda = document.getElementById('btnFinalizarVenda');
 
-          <!-- Destaque do produto lido atualmente -->
-          <div class="card-produto-destaque" id="produtoDestaque">
-            <div class="img-container">
-              <img id="destaqueImg" src="https://via.placeholder.com/150?text=Sem+Foto" alt="Foto do Produto">
-            </div>
-            <div class="info-container">
-              <span class="tag-status">Último Item Lido</span>
-              <h3 id="destaqueNome">Aguardando produto...</h3>
-              <div class="preco-destaque">R$ <span id="destaquePreco">0,00</span></div>
-            </div>
-          </div>
-        </div>
+// Elementos do Cadastro
+const formCadastro = document.getElementById('formCadastro');
+const listaProdutosCadastrados = document.getElementById('listaProdutosCadastrados');
+const totalCadastrados = document.getElementById('totalCadastrados');
 
-        <!-- Direita: Lista da Compra e Total -->
-        <div class="painel-carrinho">
-          <h2>Itens da Venda</h2>
-          <div class="tabela-container">
-            <table id="tabelaCarrinho">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qtd</th>
-                  <th>Unit.</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody id="listaCarrinho">
-                <!-- Itens serão inseridos via JavaScript -->
-              </tbody>
-            </table>
-          </div>
+// Troca de Abas
+if (btnAbaCaixa && btnAbaCadastro) {
+  btnAbaCaixa.addEventListener('click', () => {
+    btnAbaCaixa.classList.add('active');
+    btnAbaCadastro.classList.remove('active');
+    secaoCaixa.classList.add('active');
+    secaoCadastro.classList.remove('active');
+    if (codigoInput) codigoInput.focus();
+  });
 
-          <div class="painel-total">
-            <div class="total-label">TOTAL A PAGAR:</div>
-            <div class="total-valor">R$ <span id="valorTotal">0,00</span></div>
-            <button id="btnFinalizarVenda" class="btn-finalizar">Finalizar Venda</button>
-          </div>
-        </div>
+  btnAbaCadastro.addEventListener('click', () => {
+    btnAbaCadastro.classList.add('active');
+    btnAbaCaixa.classList.remove('active');
+    secaoCadastro.classList.add('active');
+    secaoCaixa.classList.remove('active');
+    atualizarListaCadastrados();
+  });
+}
 
-      </div>
-    </section>
+// Salvar Produto
+if (formCadastro) {
+  formCadastro.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const codigo = document.getElementById('cadCodigo').value.trim();
+    const nome = document.getElementById('cadNome').value.trim();
+    const preco = parseFloat(document.getElementById('cadPreco').value);
+    const foto = document.getElementById('cadFoto').value.trim() || 'https://via.placeholder.com/150?text=Sem+Foto';
 
-    <!-- SEÇÃO 2: CADASTRO DE PRODUTOS -->
-    <section id="secaoCadastro" class="aba-conteudo">
-      <div class="card-form">
-        <h2>Cadastrar Novo Produto</h2>
-        <form id="formCadastro">
-          <div class="form-group">
-            <label>Código de Barras:</label>
-            <input type="text" id="cadCodigo" placeholder="Ex: 7891234567890" required>
-          </div>
-          <div class="form-group">
-            <label>Descrição / Nome do Produto:</label>
-            <input type="text" id="cadNome" placeholder="Ex: Refrigerante Coca-Cola 2L" required>
-          </div>
-          <div class="form-group">
-            <label>Preço de Venda (R$):</label>
-            <input type="number" step="0.01" id="cadPreco" placeholder="Ex: 8.50" required>
-          </div>
-          <div class="form-group">
-            <label>URL da Foto do Produto (Opcional):</label>
-            <input type="url" id="cadFoto" placeholder="https://link-da-imagem.com/foto.jpg">
-          </div>
-          <button type="submit" class="btn-salvar">Salvar Produto</button>
-        </form>
-      </div>
+    const index = produtos.findIndex(p => p.codigo === codigo);
+    if (index !== -1) {
+      produtos[index] = { codigo, nome, preco, foto };
+      alert('Produto atualizado com sucesso!');
+    } else {
+      produtos.push({ codigo, nome, preco, foto });
+      alert('Produto cadastrado com sucesso!');
+    }
 
-      <div class="card-lista-produtos">
-        <h3>Produtos Cadastrados (<span id="totalCadastrados">0</span>)</h3>
-        <ul id="listaProdutosCadastrados" class="lista-cadastrados">
-          <!-- Produtos cadastrados aparecerão aqui -->
-        </ul>
-      </div>
-    </section>
+    localStorage.setItem('produtos_pdv', JSON.stringify(produtos));
+    formCadastro.reset();
+    atualizarListaCadastrados();
+  });
+}
 
-  </main>
+function atualizarListaCadastrados() {
+  if (!listaProdutosCadastrados) return;
+  listaProdutosCadastrados.innerHTML = '';
+  if (totalCadastrados) totalCadastrados.textContent = produtos.length;
 
-  <script src="script.js"></script>
-</body>
-</html>
+  produtos.forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span><strong>${p.codigo}</strong> - ${p.nome}</span>
+      <span>R$ ${p.preco.toFixed(2)}</span>
+    `;
+    listaProdutosCadastrados.appendChild(li);
+  });
+}
+
+// Processar Leitura no Caixa
+if (codigoInput) {
+  codigoInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      adicionarAoCarrinho(codigoInput.value.trim());
+      codigoInput.value = '';
+    }
+  });
+}
+
+if (btnAdicionarManual) {
+  btnAdicionarManual.addEventListener('click', () => {
+    adicionarAoCarrinho(codigoInput.value.trim());
+    codigoInput.value = '';
+  });
+}
+
+function adicionarAoCarrinho(codigo) {
+  if (!codigo) return;
+
+  const produto = produtos.find(p => p.codigo === codigo);
+
+  if (!produto) {
+    alert('Produto não encontrado! Cadastre na aba "Cadastrar Produtos".');
+    return;
+  }
+
+  if (destaqueImg) destaqueImg.src = produto.foto;
+  if (destaqueNome) destaqueNome.textContent = produto.nome;
+  if (destaquePreco) destaquePreco.textContent = produto.preco.toFixed(2);
+
+  const itemExistente = carrinho.find(item => item.codigo === codigo);
+  if (itemExistente) {
+    itemExistente.qtd += 1;
+    itemExistente.subtotal = itemExistente.qtd * itemExistente.preco;
+  } else {
+    carrinho.push({
+      codigo: produto.codigo,
+      nome: produto.nome,
+      preco: produto.preco,
+      qtd: 1,
+      subtotal: produto.preco
+    });
+  }
+
+  atualizarCarrinhoGUI();
+}
+
+function atualizarCarrinhoGUI() {
+  if (!listaCarrinho) return;
+  listaCarrinho.innerHTML = '';
+  let total = 0;
+
+  carrinho.forEach(item => {
+    total += item.subtotal;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.nome}</td>
+      <td>${item.qtd}x</td>
+      <td>R$ ${item.preco.toFixed(2)}</td>
+      <td>R$ ${item.subtotal.toFixed(2)}</td>
+    `;
+    listaCarrinho.appendChild(tr);
+  });
+
+  if (valorTotalEl) valorTotalEl.textContent = total.toFixed(2);
+}
+
+// Finalizar Venda
+if (btnFinalizarVenda) {
+  btnFinalizarVenda.addEventListener('click', () => {
+    if (carrinho.length === 0) {
+      alert('O carrinho está vazio!');
+      return;
+    }
+
+    alert(`Venda finalizada com sucesso!\nTotal: R$ ${valorTotalEl.textContent}`);
+    carrinho = [];
+    atualizarCarrinhoGUI();
+    
+    if (destaqueImg) destaqueImg.src = 'https://via.placeholder.com/150?text=Sem+Foto';
+    if (destaqueNome) destaqueNome.textContent = 'Aguardando produto...';
+    if (destaquePreco) destaquePreco.textContent = '0,00';
+    if (codigoInput) codigoInput.focus();
+  });
+}
