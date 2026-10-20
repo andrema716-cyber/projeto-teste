@@ -73,7 +73,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.2</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.3</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
@@ -450,7 +450,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (MÓDULO 2) -->
+  <!-- JAVASCRIPT ENGINE (MÓDULO 2.3) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
@@ -465,6 +465,7 @@
     let selectedPaymentMethod = null;
     let isFiadoAuthorized = false;
     let editingProductId = null;
+    let activeStream = null;
     let modalStream = null;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -489,11 +490,15 @@
         productsContent.style.display = 'none';
         posBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-600 text-white";
         productsBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+        if (document.getElementById('activeSaleScreen').style.display !== 'none' && isCameraActive) {
+          initCamera();
+        }
       } else {
         posContent.style.display = 'none';
         productsContent.style.display = 'flex';
         posBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
         productsBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-600 text-white";
+        stopCamera();
         renderProductList();
       }
     }
@@ -519,7 +524,7 @@
       cart = [];
       clearLastScannedCard();
       renderCart();
-      toggleCameraState(false);
+      stopCamera();
 
       const standbyScreen = document.getElementById('standbyScreen');
       const activeSaleScreen = document.getElementById('activeSaleScreen');
@@ -544,14 +549,34 @@
       returnToStandby();
     }
 
-    // CÂMARA PRINCIPAL DO CAIXA
+    // CÂMARA PRINCIPAL DO CAIXA (ROBUSTA)
     function initCamera() {
       const video = document.getElementById('webcamVideo');
+      if (!video) return;
+
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-          .then(stream => { video.srcObject = stream; })
-          .catch(err => { console.log('Câmara indisponível'); });
+        navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        })
+        .then(stream => {
+          activeStream = stream;
+          video.srcObject = stream;
+          video.play().catch(e => console.log("Autoplay bloqueado:", e));
+        })
+        .catch(err => {
+          console.error("Erro ao iniciar câmara do caixa:", err);
+        });
       }
+    }
+
+    function stopCamera() {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+        activeStream = null;
+      }
+      const video = document.getElementById('webcamVideo');
+      if (video) video.srcObject = null;
+      isCameraActive = false;
     }
 
     function toggleCameraState(forceState) {
@@ -563,6 +588,7 @@
       const btnIcon = document.getElementById('toggleCameraIcon');
 
       if (isCameraActive) {
+        if (!activeStream) initCamera();
         if (overlay) overlay.classList.add('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (statusText) {
@@ -572,6 +598,7 @@
         if (btnText) btnText.textContent = "Pausar Leitor";
         if (btnIcon) btnIcon.className = "fa-solid fa-pause mr-1";
       } else {
+        stopCamera();
         if (overlay) overlay.classList.remove('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
         if (statusText) {
@@ -583,12 +610,10 @@
       }
     }
 
-    // CÂMARA LEITORA ROBUSTA NO MODAL DE CADASTRO
+    // CÂMARA LEITORA NO MODAL DE CADASTRO
     function startModalCameraScan() {
       const box = document.getElementById('modalScannerBox');
       const video = document.getElementById('modalWebcamVideo');
-      
-      // Remove o hidden primeiro para que o elemento video exista e receba o stream
       box.classList.remove('hidden');
 
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -598,15 +623,13 @@
         .then(stream => {
           modalStream = stream;
           video.srcObject = stream;
-          video.play().catch(e => console.log("Autoplay prevent:", e));
+          video.play().catch(e => console.log("Autoplay modal prevent:", e));
         })
         .catch(err => {
           console.error("Erro na câmara do modal:", err);
-          alert('Não foi possível acessar a câmara. Verifique as permissões do navegador.');
+          alert('Não foi possível acessar a câmara.');
           box.classList.add('hidden');
         });
-      } else {
-        alert('Seu navegador não suporta acesso à câmara.');
       }
     }
 
@@ -618,12 +641,8 @@
         modalStream.getTracks().forEach(track => track.stop());
         modalStream = null;
       }
-      if (video) {
-        video.srcObject = null;
-      }
-      if (box) {
-        box.classList.add('hidden');
-      }
+      if (video) video.srcObject = null;
+      if (box) box.classList.add('hidden');
     }
 
     // MANUSEIO DE CÓDIGO DE BARRAS NO CAIXA
@@ -732,7 +751,7 @@
         return;
       }
       
-      toggleCameraState(false);
+      stopCamera();
 
       const total = getCartTotal();
       document.getElementById('modalCartTotalDisplay').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
@@ -744,7 +763,7 @@
     function closePaymentModal() {
       document.getElementById('paymentModal').classList.add('hidden');
       if (document.getElementById('activeSaleScreen').style.display !== 'none') {
-        toggleCameraState(true);
+        initCamera();
       }
     }
 
