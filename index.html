@@ -65,7 +65,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.8</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.9</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
@@ -211,7 +211,7 @@
     </div>
   </div>
 
-  <!-- MODAL: PAGAMENTO -->
+  <!-- MODAL: PAGAMENTO (COM TODAS AS OPÇÕES RESTAURADAS) -->
   <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -225,6 +225,7 @@
         </div>
       </div>
 
+      <!-- GRID DE SELEÇÃO DE MÉTODOS DE PAGAMENTO (COMPLETO) -->
       <div class="grid grid-cols-3 gap-2 mb-4">
         <button type="button" onclick="selectPaymentMethod('DINHEIRO')" id="btnMethodDinheiro" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5">
           <i class="fa-solid fa-money-bill-wave text-emerald-400 text-lg"></i>
@@ -238,9 +239,20 @@
           <i class="fa-solid fa-credit-card text-blue-400 text-lg"></i>
           <span class="text-xs font-semibold">Cartão</span>
         </button>
+        <button type="button" onclick="selectPaymentMethod('FIADO')" id="btnMethodFiado" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5">
+          <i class="fa-solid fa-user-clock text-purple-400 text-lg"></i>
+          <span class="text-xs font-semibold">Fiado</span>
+        </button>
+        <button type="button" onclick="selectPaymentMethod('MISTO')" id="btnMethodMisto" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5 col-span-2">
+          <i class="fa-solid fa-sliders text-pink-400 text-lg"></i>
+          <span class="text-xs font-semibold">Misto / Dividido</span>
+        </button>
       </div>
 
+      <!-- PAINÉIS DINÂMICOS DE PAGAMENTO -->
       <div id="paymentDetailsPanel" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-5">
+        
+        <!-- DINHEIRO COM TROCO -->
         <div id="panelDinheiro" class="payment-subpanel hidden space-y-3">
           <label class="text-xs text-slate-400 font-medium block">Valor Recebido:</label>
           <input type="number" step="0.01" id="cashReceivedInput" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-lg rounded-xl px-3 py-2">
@@ -249,19 +261,59 @@
             <span id="changeDisplay" class="text-base font-extrabold text-emerald-400">R$ 0,00</span>
           </div>
         </div>
+
+        <!-- PIX / CARTÃO -->
         <div id="panelSimple" class="payment-subpanel hidden text-center py-3">
+          <i id="simpleMethodIcon" class="text-3xl mb-2 text-slate-500"></i>
           <p id="simpleMethodText" class="text-xs text-slate-300 font-medium">Aguardando confirmação do pagamento...</p>
         </div>
+
+        <!-- FIADO COM TRAVA DE DEVEDOR -->
+        <div id="panelFiado" class="payment-subpanel hidden space-y-3">
+          <label class="text-xs text-slate-400 font-medium block">Selecione o Cliente:</label>
+          <select id="customerSelect" onchange="checkCustomerDelinquency()" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
+            <option value="">-- Selecione --</option>
+            <option value="1" data-overdue="true" data-debt="145.00">João da Silva (⚠️ EM ATRASO)</option>
+            <option value="2" data-overdue="false" data-debt="0.00">Maria Oliveira (Em Dia)</option>
+          </select>
+          <div id="overdueWarning" class="hidden bg-rose-950/60 border border-rose-800/80 rounded-xl p-3 text-xs text-rose-300 space-y-2">
+            <p class="font-bold text-rose-200">Cliente possui débitos em atraso!</p>
+            <p class="text-[11px]">Dívida: <span id="overdueAmount" class="font-bold">R$ 0,00</span></p>
+            <div class="flex items-center justify-between pt-1">
+              <span>Autorizar venda?</span>
+              <div class="flex gap-2">
+                <button type="button" onclick="overrideDelinquency(true)" class="bg-rose-600 text-white text-[10px] px-2 py-1 rounded">Sim</button>
+                <button type="button" onclick="overrideDelinquency(false)" class="bg-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded">Não</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MISTO -->
+        <div id="panelMisto" class="payment-subpanel hidden space-y-3">
+          <p class="text-xs text-slate-400">Divida o valor total:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Parte 1 (Dinheiro):</span>
+              <input type="number" step="0.01" id="mistoPart1" oninput="calculateMistoSplit()" placeholder="R$ 0,00" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-xl p-2">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Parte 2 (Outros):</span>
+              <input type="number" step="0.01" id="mistoPart2" readonly placeholder="R$ 0,00" class="w-full bg-slate-800 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl p-2">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <div class="flex items-center gap-3 mt-auto pt-2 border-t border-slate-800">
         <button type="button" onclick="closePaymentModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Voltar</button>
-        <button type="button" onclick="finalizeSale()" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar & Finalizar</button>
+        <button type="button" onclick="finalizeSale()" id="confirmSaleBtn" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar & Finalizar</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO COM BOTÃO BIPAR RESTAURADO -->
+  <!-- MODAL: CADASTRO DE PRODUTO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -275,13 +327,12 @@
       </div>
 
       <form onsubmit="handleProductFormSubmit(event)" class="space-y-3">
-        <!-- ALERTA ANTIDUPLICIDADE / CUSTO MÉDIO PONDERADO -->
         <div id="duplicateWarning" class="hidden bg-amber-950/70 border border-amber-800/80 rounded-xl p-3 text-xs text-amber-300 space-y-2">
           <div class="flex items-start gap-2">
             <i class="fa-solid fa-boxes-packing text-amber-400 text-base shrink-0 mt-0.5"></i>
             <div>
               <p class="font-bold text-amber-200">Produto já cadastrado!</p>
-              <p class="text-[11px] text-amber-300 mt-0.5">As novas quantidades serão somadas e o custo será recalculado pelo <span class="font-bold">Custo Médio Ponderado</span>.</p>
+              <p class="text-[11px] text-amber-300 mt-0.5">As quantidades serão somadas e o custo recalculado pelo <span class="font-bold">Custo Médio Ponderado</span>.</p>
             </div>
           </div>
         </div>
@@ -290,7 +341,6 @@
           <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Código de Barras *</label>
           <div class="flex gap-2">
             <input type="text" id="prodBarcode" required oninput="checkBarcodeDuplicate()" placeholder="Bipe ou digite o código..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-            <!-- BOTÃO BIPAR RESTAURADO -->
             <button type="button" onclick="startModalScanner()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-md">
               <i class="fa-solid fa-camera"></i>
               <span>Bipar</span>
@@ -298,10 +348,9 @@
           </div>
         </div>
 
-        <!-- CONTAINER DA CÂMARA NO MODAL -->
         <div id="modalScannerContainer" class="hidden relative w-full">
           <div id="modalReader" class="w-full"></div>
-          <button type="button" onclick="stopModalScanner()" class="mt-2 w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2 rounded-xl transition">Fechar Câmara do Cadastro</button>
+          <button type="button" onclick="stopModalScanner()" class="mt-2 w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2 rounded-xl transition">Fechar Câmara</button>
         </div>
 
         <div>
@@ -342,7 +391,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v2.8) -->
+  <!-- JAVASCRIPT ENGINE (v2.9) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
@@ -357,6 +406,7 @@
     let isCameraActive = false;
     let isProcessingScan = false;
     let selectedPaymentMethod = null;
+    let isFiadoAuthorized = false;
 
     window.addEventListener('DOMContentLoaded', () => {
       saveProductsToStorage();
@@ -477,7 +527,6 @@
       }
     }
 
-    // LEITOR DO MODAL DE CADASTRO
     function startModalScanner() {
       const container = document.getElementById('modalScannerContainer');
       container.classList.remove('hidden');
@@ -517,7 +566,6 @@
       }
     }
 
-    // PROCESSAMENTO DO BIP NA TELA DE VENDAS COM TRAVA DE 1s
     function onScanSuccess(decodedText) {
       if (isProcessingScan) return;
       isProcessingScan = true;
@@ -653,12 +701,36 @@
 
     function selectPaymentMethod(method) {
       selectedPaymentMethod = method;
+      document.querySelectorAll('.payment-method-btn').forEach(btn => btn.classList.remove('border-emerald-500', 'bg-emerald-950/40'));
       document.querySelectorAll('.payment-subpanel').forEach(panel => panel.classList.add('hidden'));
 
       if (method === 'DINHEIRO') {
+        document.getElementById('btnMethodDinheiro').classList.add('border-emerald-500', 'bg-emerald-950/40');
         document.getElementById('panelDinheiro').classList.remove('hidden');
-      } else {
-        document.getElementById('panelSimple').classList.remove('hidden');
+        document.getElementById('cashReceivedInput').value = '';
+        calculateChange();
+      } else if (method === 'PIX' || method === 'CARTAO') {
+        const btnId = method === 'PIX' ? 'btnMethodPix' : 'btnMethodCartao';
+        document.getElementById(btnId).classList.add('border-emerald-500', 'bg-emerald-950/40');
+        const panel = document.getElementById('panelSimple');
+        const icon = document.getElementById('simpleMethodIcon');
+        const text = document.getElementById('simpleMethodText');
+        panel.classList.remove('hidden');
+        if (method === 'PIX') {
+          icon.className = 'fa-solid fa-qrcode text-3xl mb-2 text-amber-400';
+          text.textContent = 'Mostre o QR Code do PIX ao cliente.';
+        } else {
+          icon.className = 'fa-solid fa-credit-card text-3xl mb-2 text-blue-400';
+          text.textContent = 'Aproxime ou insira o cartão na maquininha.';
+        }
+      } else if (method === 'FIADO') {
+        document.getElementById('btnMethodFiado').classList.add('border-emerald-500', 'bg-emerald-950/40');
+        document.getElementById('panelFiado').classList.remove('hidden');
+        checkCustomerDelinquency();
+      } else if (method === 'MISTO') {
+        document.getElementById('btnMethodMisto').classList.add('border-emerald-500', 'bg-emerald-950/40');
+        document.getElementById('panelMisto').classList.remove('hidden');
+        calculateMistoSplit();
       }
     }
 
@@ -677,7 +749,67 @@
       }
     }
 
+    function checkCustomerDelinquency() {
+      const select = document.getElementById('customerSelect');
+      const selectedOpt = select.options[select.selectedIndex];
+      const warning = document.getElementById('overdueWarning');
+      const confirmBtn = document.getElementById('confirmSaleBtn');
+
+      if (!selectedOpt || !selectedOpt.value) {
+        if (warning) warning.classList.add('hidden');
+        return;
+      }
+
+      const isOverdue = selectedOpt.getAttribute('data-overdue') === 'true';
+      const debtAmount = selectedOpt.getAttribute('data-debt');
+
+      if (isOverdue) {
+        document.getElementById('overdueAmount').textContent = `R$ ${parseFloat(debtAmount).toFixed(2).replace('.', ',')}`;
+        if (warning) warning.classList.remove('hidden');
+        isFiadoAuthorized = false;
+        confirmBtn.disabled = true;
+        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        if (warning) warning.classList.add('hidden');
+        isFiadoAuthorized = true;
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function overrideDelinquency(allow) {
+      const confirmBtn = document.getElementById('confirmSaleBtn');
+      if (allow) {
+        isFiadoAuthorized = true;
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        isFiadoAuthorized = false;
+        confirmBtn.disabled = true;
+        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function calculateMistoSplit() {
+      const total = getCartTotal();
+      const part1 = parseFloat(document.getElementById('mistoPart1').value) || 0;
+      const part2 = Math.max(0, total - part1);
+      document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
+    }
+
     function finalizeSale() {
+      if (selectedPaymentMethod === 'FIADO') {
+        const select = document.getElementById('customerSelect');
+        if (!select.value) {
+          alert('Por favor, selecione um cliente!');
+          return;
+        }
+        if (!isFiadoAuthorized) {
+          alert('Venda bloqueada por débitos em atraso.');
+          return;
+        }
+      }
+
       cart.forEach(item => {
         const prod = products.find(p => p.id === item.id);
         if (prod) prod.stock = Math.max(0, prod.stock - item.qty);
