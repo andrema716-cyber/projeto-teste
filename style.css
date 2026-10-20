@@ -128,6 +128,38 @@ body {
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
 }
 
+/* Painel de Quantidade Rápida */
+.card-qtd-rapida {
+  background: #1e293b;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #334155;
+}
+
+.botoes-qtd {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-qtd, .btn-filtro {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-qtd.active, .btn-filtro.active {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
 .card-camera-box {
   background: #1e293b;
   padding: 1rem;
@@ -164,7 +196,7 @@ body {
 .visor-retangular {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 150px;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
@@ -328,12 +360,11 @@ th {
   color: #94a3b8;
 }
 
-/* Maior Espaçamento dos Botões no Carrinho */
 .acoes-item-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem; /* Espaço seguro para evitar cliques acidentais */
+  gap: 1rem;
 }
 
 .btn-acao-tabela {
@@ -355,7 +386,6 @@ th {
   color: #fff;
 }
 
-/* Estilos do Modal de Pagamento */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -480,4 +510,16 @@ th {
 .status-debito.emdia {
   background: #22c55e;
   color: #0f172a;
+}
+
+.btn-baixa {
+  background: #22c55e;
+  color: #0f172a;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 5px;
 }
