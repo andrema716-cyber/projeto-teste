@@ -1,5 +1,5 @@
 let produtos = JSON.parse(localStorage.getItem('produtos_pdv')) || [
-  { codigo: '123', nome: 'Produto Exemplo', custo: 5.00, preco: 10.50, foto: 'https://via.placeholder.com/150?text=Exemplo' }
+  { codigo: '123', nome: 'Produto Exemplo', categoria: 'Mercearia', custo: 5.00, preco: 10.50, foto: 'https://via.placeholder.com/150?text=Exemplo' }
 ];
 
 let clientes = JSON.parse(localStorage.getItem('clientes_pdv')) || [];
@@ -8,13 +8,13 @@ let chavePixConfig = localStorage.getItem('chave_pix_pdv') || 'sua-chave-pix';
 
 let carrinho = [];
 let codeReader = null;
+let codeReaderCad = null;
 let fotoBase64Temp = '';
 let formaPagamentoSelecionada = 'dinheiro';
 let qtdMultiplicador = 1;
 let periodoFiltroAtual = 'hoje';
 let clienteSelecionadoBaixaIdx = null;
-
-// Intervalo de Trava da Câmera (2 Segundos)
+let produtoEditCatIdx = null;
 let cameraBloqueadaTemporariamente = false;
 
 function tocarSomBip() {
@@ -70,7 +70,30 @@ const selectClientePrazo = document.getElementById('selectClientePrazo');
 const compradorNomeInput = document.getElementById('compradorNomeInput');
 const infoVencimentoPrazo = document.getElementById('infoVencimentoPrazo');
 
-// Modais de Clientes
+// Modais de Produto e Categorias
+const modalNovoProduto = document.getElementById('modalNovoProduto');
+const btnAbrirNovoProduto = document.getElementById('btnAbrirNovoProduto');
+const btnFecharModalProduto = document.getElementById('btnFecharModalProduto');
+const formCadastroModal = document.getElementById('formCadastroModal');
+const btnBiparCadProduto = document.getElementById('btnBiparCadProduto');
+const containerCameraCad = document.getElementById('containerCameraCad');
+const btnFecharCameraCad = document.getElementById('btnFecharCameraCad');
+const cadCodigo = document.getElementById('cadCodigo');
+const cadNome = document.getElementById('cadNome');
+const cadCategoria = document.getElementById('cadCategoria');
+const cadCusto = document.getElementById('cadCusto');
+const cadPreco = document.getElementById('cadPreco');
+const cadFotoArquivo = document.getElementById('cadFotoArquivo');
+const previewFotoContainer = document.getElementById('previewFotoContainer');
+const previewFoto = document.getElementById('previewFoto');
+
+const modalEditarCategoria = document.getElementById('modalEditarCategoria');
+const nomeProdutoEditCat = document.getElementById('nomeProdutoEditCat');
+const selectNovaCategoria = document.getElementById('selectNovaCategoria');
+const btnSalvarNovaCategoria = document.getElementById('btnSalvarNovaCategoria');
+const btnCancelarNovaCategoria = document.getElementById('btnCancelarNovaCategoria');
+
+// Modais Clientes
 const modalNovoCliente = document.getElementById('modalNovoCliente');
 const btnAbrirNovoCliente = document.getElementById('btnAbrirNovoCliente');
 const btnFecharModalCliente = document.getElementById('btnFecharModalCliente');
@@ -89,13 +112,8 @@ const valorBaixaInput = document.getElementById('valorBaixaInput');
 const btnConfirmarBaixa = document.getElementById('btnConfirmarBaixa');
 const btnCancelarBaixa = document.getElementById('btnCancelarBaixa');
 
-const formCadastro = document.getElementById('formCadastro');
-const cadFotoArquivo = document.getElementById('cadFotoArquivo');
-const previewFotoContainer = document.getElementById('previewFotoContainer');
-const previewFoto = document.getElementById('previewFoto');
 const listaProdutosCadastrados = document.getElementById('listaProdutosCadastrados');
 const totalCadastrados = document.getElementById('totalCadastrados');
-
 const listaClientesCadastrados = document.getElementById('listaClientesCadastrados');
 const relFaturamento = document.getElementById('relFaturamento');
 const relLucro = document.getElementById('relLucro');
@@ -133,7 +151,7 @@ function navegarPara(secaoId) {
   if (secaoId === 'secaoConfig' && cfgChavePix) cfgChavePix.value = chavePixConfig;
 }
 
-// Multiplicador de Quantidade
+// Multiplicadores
 btnsQtd.forEach(b => {
   b.addEventListener('click', () => {
     btnsQtd.forEach(btn => btn.classList.remove('active'));
@@ -142,7 +160,7 @@ btnsQtd.forEach(b => {
   });
 });
 
-// Vendas
+// Caixa / Câmera Venda
 if (btnIniciarVenda) {
   btnIniciarVenda.addEventListener('click', () => {
     navegarPara('secaoCaixa');
@@ -165,7 +183,6 @@ function iniciarCamera() {
     if (result && !cameraBloqueadaTemporariamente) {
       adicionarAoCarrinho(result.text);
 
-      // Trava de 2 segundos para evitar leitura tripla
       cameraBloqueadaTemporariamente = true;
       if (statusLeitorText) {
         statusLeitorText.textContent = '⏳ Aguarde 2s...';
@@ -212,7 +229,7 @@ function adicionarAoCarrinho(codigo) {
   if (!codigo) return;
   const produto = produtos.find(p => p.codigo === codigo);
   if (!produto) {
-    alert('Produto não encontrado!');
+    alert('Produto não encontrado! Cadastre-o na aba Produtos Cadastrados.');
     return;
   }
 
@@ -360,7 +377,6 @@ function atualizarInfoPrazo() {
   }
 }
 
-// Finalizar Venda
 if (btnConfirmarPagamento) {
   btnConfirmarPagamento.addEventListener('click', () => {
     const totalVenda = parseFloat(valorTotalEl.textContent);
@@ -408,7 +424,6 @@ if (btnConfirmarPagamento) {
     historicoVendas.push(venda);
     localStorage.setItem('historico_pdv', JSON.stringify(historicoVendas));
 
-    // Formatar Cupom WhatsApp
     let mensagemCupom = `*--- CUPOM DE COMPRA ---*\nCliente: ${clienteNome}\n`;
     if (formaPagamentoSelecionada === 'prazo') {
       mensagemCupom += `Retirado por: ${compradorNome}\nVencimento: ${dataVencFiado}\n`;
@@ -431,7 +446,174 @@ if (btnConfirmarPagamento) {
   });
 }
 
-// Gestão de Novo Cliente (Modal)
+// BUSCA AUTOMÁTICA DE DADOS DO PRODUTO (OPEN FOOD FACTS API)
+async function buscarDadosProdutoWeb(codigo) {
+  if (!codigo || codigo.length < 8) return;
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${codigo}.json`);
+    const data = await res.json();
+    if (data.status === 1 && data.product) {
+      const p = data.product;
+      if (p.product_name_pt || p.product_name) {
+        cadNome.value = p.product_name_pt || p.product_name;
+      }
+      if (p.image_url) {
+        fotoBase64Temp = p.image_url;
+        previewFoto.src = p.image_url;
+        previewFotoContainer.style.display = 'block';
+      }
+      
+      // Auto Categoria
+      const catTexto = (p.categories || '').toLowerCase();
+      if (catTexto.includes('drink') || catTexto.includes('beverage') || catTexto.includes('refrigerante') || catTexto.includes('suco')) cadCategoria.value = 'Bebidas';
+      else if (catTexto.includes('cheese') || catTexto.includes('queijo') || catTexto.includes('leite') || catTexto.includes('iogurte')) cadCategoria.value = 'Resfriados';
+      else if (catTexto.includes('frozen') || catTexto.includes('sorvete')) cadCategoria.value = 'Congelados';
+      else if (catTexto.includes('fruit') || catTexto.includes('vegetable')) cadCategoria.value = 'Hortifrúti';
+      else cadCategoria.value = 'Mercearia';
+
+      tocarSomBip();
+    }
+  } catch (e) {
+    console.log('Busca OpenFoodFacts indisponível:', e);
+  }
+}
+
+if (cadCodigo) {
+  cadCodigo.addEventListener('blur', () => buscarDadosProdutoWeb(cadCodigo.value.trim()));
+}
+
+// Câmera no Cadastro de Produtos
+if (btnBiparCadProduto) {
+  btnBiparCadProduto.addEventListener('click', () => {
+    containerCameraCad.style.display = 'block';
+    codeReaderCad = new ZXing.BrowserMultiFormatReader();
+    codeReaderCad.decodeFromVideoDevice(null, 'videoCameraCad', (result) => {
+      if (result) {
+        cadCodigo.value = result.text;
+        tocarSomBip();
+        pararCameraCad();
+        buscarDadosProdutoWeb(result.text);
+      }
+    }).catch(err => console.error(err));
+  });
+}
+
+if (btnFecharCameraCad) {
+  btnFecharCameraCad.addEventListener('click', pararCameraCad);
+}
+
+function pararCameraCad() {
+  if (codeReaderCad) {
+    codeReaderCad.reset();
+    codeReaderCad = null;
+  }
+  if (containerCameraCad) containerCameraCad.style.display = 'none';
+}
+
+// Modais do Cadastro de Produtos
+if (btnAbrirNovoProduto) {
+  btnAbrirNovoProduto.addEventListener('click', () => {
+    formCadastroModal.reset();
+    fotoBase64Temp = '';
+    if (previewFotoContainer) previewFotoContainer.style.display = 'none';
+    modalNovoProduto.style.display = 'flex';
+  });
+}
+
+if (btnFecharModalProduto) {
+  btnFecharModalProduto.addEventListener('click', () => {
+    pararCameraCad();
+    modalNovoProduto.style.display = 'none';
+  });
+}
+
+if (cadFotoArquivo) {
+  cadFotoArquivo.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        fotoBase64Temp = evt.target.result;
+        previewFoto.src = fotoBase64Temp;
+        previewFotoContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+if (formCadastroModal) {
+  formCadastroModal.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const codigo = cadCodigo.value.trim();
+    const nome = cadNome.value.trim();
+    const categoria = cadCategoria.value;
+    const custo = parseFloat(cadCusto.value);
+    const preco = parseFloat(cadPreco.value);
+    const foto = fotoBase64Temp || 'https://via.placeholder.com/150?text=Sem+Foto';
+
+    const index = produtos.findIndex(p => p.codigo === codigo);
+    if (index !== -1) {
+      produtos[index] = { codigo, nome, categoria, custo, preco, foto };
+    } else {
+      produtos.push({ codigo, nome, categoria, custo, preco, foto });
+    }
+
+    localStorage.setItem('produtos_pdv', JSON.stringify(produtos));
+    pararCameraCad();
+    modalNovoProduto.style.display = 'none';
+    alert('Produto salvo com sucesso!');
+    atualizarListaCadastrados();
+  });
+}
+
+function abrirModalEdicaoCat(idx) {
+  produtoEditCatIdx = idx;
+  const p = produtos[idx];
+  nomeProdutoEditCat.textContent = p.nome;
+  selectNovaCategoria.value = p.categoria || 'Mercearia';
+  modalEditarCategoria.style.display = 'flex';
+}
+
+if (btnCancelarNovaCategoria) {
+  btnCancelarNovaCategoria.addEventListener('click', () => modalEditarCategoria.style.display = 'none');
+}
+
+if (btnSalvarNovaCategoria) {
+  btnSalvarNovaCategoria.addEventListener('click', () => {
+    if (produtos[produtoEditCatIdx]) {
+      produtos[produtoEditCatIdx].categoria = selectNovaCategoria.value;
+      localStorage.setItem('produtos_pdv', JSON.stringify(produtos));
+      modalEditarCategoria.style.display = 'none';
+      atualizarListaCadastrados();
+    }
+  });
+}
+
+function atualizarListaCadastrados() {
+  if (!listaProdutosCadastrados) return;
+  listaProdutosCadastrados.innerHTML = '';
+  if (totalCadastrados) totalCadastrados.textContent = produtos.length;
+
+  produtos.forEach((p, idx) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div style="display:flex; align-items:center;">
+        <img src="${p.foto}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; margin-right:10px;">
+        <div>
+          <strong>${p.nome}</strong> 
+          <span class="tag-cat">${p.categoria || 'Mercearia'}</span>
+          <button class="btn-edit-cat" onclick="abrirModalEdicaoCat(${idx})">✏️</button>
+          <div style="font-size:0.75rem; color:#94a3b8;">Cód: ${p.codigo}</div>
+        </div>
+      </div>
+      <strong>R$ ${p.preco.toFixed(2)}</strong>
+    `;
+    listaProdutosCadastrados.appendChild(li);
+  });
+}
+
+// Clientes & Fiado
 if (btnAbrirNovoCliente) {
   btnAbrirNovoCliente.addEventListener('click', () => modalNovoCliente.style.display = 'flex');
 }
@@ -468,7 +650,7 @@ function atualizarListaClientes() {
     const li = document.createElement('li');
     li.innerHTML = `
       <div onclick="verFichaCliente(${idx})" style="cursor: pointer; flex: 1;">
-        <strong>${cli.nome}</strong> <span style="font-size:0.75rem; color:#38bdf8;">(Ver Ficha 📋)</span>
+        <strong>${cli.nome}</strong> <span style="font-size:0.75rem; color:#38bdf8;">(Ficha 📋)</span>
         <div style="font-size:0.8rem; color:#94a3b8;">Débito: R$ ${(cli.saldoDevedor || 0).toFixed(2)} | Venc: dia ${cli.diaVencimento}</div>
       </div>
       <div style="display:flex; align-items:center; gap: 5px;">
@@ -480,7 +662,6 @@ function atualizarListaClientes() {
   });
 }
 
-// Abrir Ficha do Cliente
 function verFichaCliente(idx) {
   const cli = clientes[idx];
   if (!cli) return;
@@ -523,7 +704,6 @@ if (btnFecharDetalhesCliente) {
   btnFecharDetalhesCliente.addEventListener('click', () => modalDetalhesCliente.style.display = 'none');
 }
 
-// Baixa de Fiado
 function abrirModalBaixa(cliIdx) {
   clienteSelecionadoBaixaIdx = cliIdx;
   const cli = clientes[cliIdx];
@@ -576,67 +756,8 @@ if (btnConfirmarBaixa) {
     localStorage.setItem('historico_pdv', JSON.stringify(historicoVendas));
 
     modalBaixaFiado.style.display = 'none';
-    alert('Baixa de fiado registrada com sucesso!');
+    alert('Baixa de fiado registrada!');
     atualizarListaClientes();
-  });
-}
-
-// Foto Galeria e Produtos
-if (cadFotoArquivo) {
-  cadFotoArquivo.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        fotoBase64Temp = evt.target.result;
-        previewFoto.src = fotoBase64Temp;
-        previewFotoContainer.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-}
-
-if (formCadastro) {
-  formCadastro.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const codigo = document.getElementById('cadCodigo').value.trim();
-    const nome = document.getElementById('cadNome').value.trim();
-    const custo = parseFloat(document.getElementById('cadCusto').value);
-    const preco = parseFloat(document.getElementById('cadPreco').value);
-    const foto = fotoBase64Temp || 'https://via.placeholder.com/150?text=Sem+Foto';
-
-    const index = produtos.findIndex(p => p.codigo === codigo);
-    if (index !== -1) {
-      produtos[index] = { codigo, nome, custo, preco, foto };
-    } else {
-      produtos.push({ codigo, nome, custo, preco, foto });
-    }
-
-    localStorage.setItem('produtos_pdv', JSON.stringify(produtos));
-    formCadastro.reset();
-    fotoBase64Temp = '';
-    if (previewFotoContainer) previewFotoContainer.style.display = 'none';
-    alert('Produto salvo!');
-    atualizarListaCadastrados();
-  });
-}
-
-function atualizarListaCadastrados() {
-  if (!listaProdutosCadastrados) return;
-  listaProdutosCadastrados.innerHTML = '';
-  if (totalCadastrados) totalCadastrados.textContent = produtos.length;
-
-  produtos.forEach(p => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <div style="display:flex; align-items:center;">
-        <img src="${p.foto}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; margin-right:10px;">
-        <span><strong>${p.codigo}</strong> - ${p.nome}</span>
-      </div>
-      <span>R$ ${p.preco.toFixed(2)}</span>
-    `;
-    listaProdutosCadastrados.appendChild(li);
   });
 }
 
