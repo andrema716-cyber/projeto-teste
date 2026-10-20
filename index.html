@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - Operação & Gestão Completa</title>
+  <title>Caixa PDV - Operação & Gestão Comercial</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- BIBLIOTECA OFICIAL E LEVE DE LEITURA DE CÓDIGO DE BARRAS -->
+  <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
@@ -64,7 +64,7 @@
     <span id="toastMessage">Operação realizada com sucesso!</span>
   </div>
 
-  <!-- HEADER COM NAVEGAÇÃO DE TODOS OS MÓDULOS -->
+  <!-- HEADER -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-md">
     <div class="max-w-md mx-auto flex flex-col gap-2">
       <div class="flex items-center justify-between">
@@ -73,13 +73,13 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.0</span></h1>
-            <p class="text-xs text-slate-400">Gestão Completa de Vendas</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.1</span></h1>
+            <p class="text-xs text-slate-400">Gestão & Vendas Inteligentes</p>
           </div>
         </div>
       </div>
 
-      <!-- NAV BAR COM TODAS AS ABAS -->
+      <!-- NAV BAR -->
       <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl overflow-x-auto no-scrollbar gap-1">
         <button onclick="switchTab('pos')" id="tabPosBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 bg-emerald-600 text-white">
           <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
@@ -103,7 +103,7 @@
   <!-- ÁREA PRINCIPAL -->
   <main class="max-w-md mx-auto w-full px-4 pt-4 pb-safe-footer flex-1 flex flex-col gap-4">
 
-    <!-- MÓDULO 1: CAIXA (PDV) -->
+    <!-- TAB 1: CAIXA (PDV) -->
     <div id="tabPosContent" class="flex flex-col gap-4 flex-1">
       
       <!-- STANDBY -->
@@ -137,7 +137,6 @@
             </button>
           </div>
 
-          <!-- CONTAINER DO LEITOR -->
           <div id="readerBox" class="relative rounded-xl overflow-hidden">
             <div id="reader" class="w-full"></div>
             <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10 rounded-xl">
@@ -150,7 +149,6 @@
             </div>
           </div>
 
-          <!-- ENTRADA MANUAL DE CÓDIGO -->
           <form onsubmit="handleManualBarcodeSubmit(event)" class="mt-3 flex gap-2">
             <div class="relative flex-1">
               <i class="fa-solid fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
@@ -196,7 +194,7 @@
       </div>
     </div>
 
-    <!-- MÓDULO 2: PRODUTOS -->
+    <!-- TAB 2: PRODUTOS -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-slate-200">Catálogo de Produtos</h2>
@@ -215,14 +213,13 @@
       </section>
     </div>
 
-    <!-- MÓDULO 3: HISTÓRICO DETALHADO DE VENDAS -->
+    <!-- TAB 3: HISTÓRICO DE VENDAS -->
     <div id="tabHistoryContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-slate-200">Histórico de Vendas</h2>
         <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300">Limpar Histórico</button>
       </div>
 
-      <!-- CARD RESUMO -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
         <div>
           <span class="text-[11px] text-slate-400 block uppercase">Total Vendido</span>
@@ -234,49 +231,49 @@
         </div>
       </div>
 
-      <!-- LISTA DE VENDAS -->
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[420px]">
         <div id="historyList" class="space-y-3"></div>
       </section>
     </div>
 
-    <!-- MÓDULO 4: CLIENTES (FIADO / CRÉDITO) -->
+    <!-- TAB 4: CLIENTES E GESTÃO DE FIADO/BAIXAS -->
     <div id="tabCustomersContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-bold text-slate-200">Gestão de Clientes</h2>
+        <h2 class="text-sm font-bold text-slate-200">Gestão de Clientes & Débitos</h2>
         <button onclick="openCustomerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
           <i class="fa-solid fa-user-plus"></i> Novo Cliente
         </button>
       </div>
+
+      <p class="text-xs text-slate-400">Clique sobre o cliente para ver extrato, compras fiado e dar baixa no pagamento.</p>
 
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
         <div id="customerList" class="space-y-2.5"></div>
       </section>
     </div>
 
-    <!-- MÓDULO 5: CONFIGURAÇÕES -->
+    <!-- TAB 5: CONFIGURAÇÕES -->
     <div id="tabSettingsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <h2 class="text-sm font-bold text-slate-200">Configurações & Backup</h2>
 
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
         <div>
           <h3 class="text-xs font-bold text-slate-300 mb-1">Dados & Armazenamento</h3>
-          <p class="text-[11px] text-slate-400 mb-3">Exporte seus produtos e vendas ou restaure dados salvos.</p>
+          <p class="text-[11px] text-slate-400 mb-3">Exporte seus produtos, histórico de vendas e clientes para backup.</p>
           <div class="flex gap-2">
             <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">
-              <i class="fa-solid fa-download mr-1"></i> Exportar
+              <i class="fa-solid fa-download mr-1"></i> Exportar JSON
             </button>
             <button onclick="importData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">
-              <i class="fa-solid fa-upload mr-1"></i> Importar
+              <i class="fa-solid fa-upload mr-1"></i> Importar JSON
             </button>
           </div>
         </div>
 
         <div class="pt-3 border-t border-slate-800">
-          <h3 class="text-xs font-bold text-rose-400 mb-1">Zona de Perigo</h3>
-          <p class="text-[11px] text-slate-400 mb-3">Limpar todo o banco de dados do sistema local.</p>
+          <h3 class="text-xs font-bold text-rose-400 mb-1">Resetar Dados</h3>
           <button onclick="resetAllSystemData()" class="w-full bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/80 text-rose-300 font-bold text-xs py-2.5 rounded-xl transition">
-            <i class="fa-solid fa-trash-can mr-1"></i> Resetar Todo o Caixa
+            <i class="fa-solid fa-trash-can mr-1"></i> Zerar Banco de Dados Local
           </button>
         </div>
       </section>
@@ -355,12 +352,12 @@
           <select id="customerSelect" onchange="checkCustomerDelinquency()" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5"></select>
           <div id="overdueWarning" class="hidden bg-rose-950/60 border border-rose-800/80 rounded-xl p-3 text-xs text-rose-300 space-y-2">
             <p class="font-bold text-rose-200">Cliente possui débitos em atraso!</p>
-            <p class="text-[11px]">Dívida: <span id="overdueAmount" class="font-bold">R$ 0,00</span></p>
+            <p class="text-[11px]">Dívida acumulada: <span id="overdueAmount" class="font-bold">R$ 0,00</span></p>
             <div class="flex items-center justify-between pt-1">
-              <span>Autorizar venda?</span>
+              <span>Autorizar nova venda fiado?</span>
               <div class="flex gap-2">
-                <button type="button" onclick="overrideDelinquency(true)" class="bg-rose-600 text-white text-[10px] px-2 py-1 rounded">Sim</button>
-                <button type="button" onclick="overrideDelinquency(false)" class="bg-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded">Não</button>
+                <button type="button" onclick="overrideDelinquency(true)" class="bg-rose-600 text-white text-[10px] px-2.5 py-1 rounded font-bold">Sim</button>
+                <button type="button" onclick="overrideDelinquency(false)" class="bg-slate-800 text-slate-300 text-[10px] px-2.5 py-1 rounded">Não</button>
               </div>
             </div>
           </div>
@@ -384,6 +381,72 @@
       <div class="flex items-center gap-3 mt-auto pt-2 border-t border-slate-800">
         <button type="button" onclick="closePaymentModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Voltar</button>
         <button type="button" onclick="finalizeSale()" id="confirmSaleBtn" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar & Finalizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FICHA DO CLIENTE / DAR BAIXA NO FIADO (EXTRATO COMPLETO) -->
+  <div id="customerDetailsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+        <div>
+          <h2 id="modalCustName" class="text-base font-bold text-slate-100">---</h2>
+          <p id="modalCustPhone" class="text-xs text-slate-400">---</p>
+        </div>
+        <button onclick="closeCustomerDetailsModal()" class="text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- CARD DO SALDO DEVEDOR -->
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Saldo Devedor Atual</span>
+          <span id="modalCustDebtDisplay" class="text-2xl font-black text-rose-400">R$ 0,00</span>
+        </div>
+        <button onclick="openSettlePaymentModal()" id="settlePaymentBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg">
+          <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
+          <span>Receber / Baixar</span>
+        </button>
+      </div>
+
+      <!-- EXTRATO DE COMPRAS E PAGAMENTOS -->
+      <h3 class="text-xs font-bold uppercase text-slate-300 mb-2">Extrato do Cliente</h3>
+      <div id="customerLedgerList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1 flex-1"></div>
+
+      <div class="pt-4 mt-auto border-t border-slate-800">
+        <button onclick="closeCustomerDetailsModal()" class="w-full bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Fechar Ficha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RECEBER / DAR BAIXA NO FIADO -->
+  <div id="settlePaymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100">Baixar Pagamento Fiado</h3>
+        <button onclick="closeSettlePaymentModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 uppercase block mb-1">Valor a Receber (R$) *</label>
+        <input type="number" step="0.01" id="settleAmountInput" placeholder="0,00" class="w-full bg-slate-950 border border-slate-700 text-emerald-400 font-bold text-lg rounded-xl p-3">
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 uppercase block mb-1">Forma de Pagamento *</label>
+        <select id="settleMethodSelect" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-3">
+          <option value="DINHEIRO">Dinheiro</option>
+          <option value="PIX">Pix</option>
+          <option value="CARTAO">Cartão</option>
+        </select>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeSettlePaymentModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Cancelar</button>
+        <button type="button" onclick="confirmSettlePayment()" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar Baixa</button>
       </div>
     </div>
   </div>
@@ -497,7 +560,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v3.0 - COMPLETO) -->
+  <!-- JAVASCRIPT ENGINE (v3.1) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -511,8 +574,24 @@
 
     let salesHistory = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
     let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [
-      { id: '1', name: 'João da Silva', phone: '(47) 99888-7766', overdue: true, debt: 145.00 },
-      { id: '2', name: 'Maria Oliveira', phone: '(47) 99111-2233', overdue: false, debt: 0.00 }
+      { 
+        id: '1', 
+        name: 'João da Silva', 
+        phone: '(47) 99888-7766', 
+        overdue: true, 
+        debt: 145.00,
+        ledger: [
+          { type: 'DEBT', date: '20/10/2026 14:10', description: 'Compra Fiado', amount: 145.00 }
+        ]
+      },
+      { 
+        id: '2', 
+        name: 'Maria Oliveira', 
+        phone: '(47) 99111-2233', 
+        overdue: false, 
+        debt: 0.00,
+        ledger: []
+      }
     ];
 
     let cart = [];
@@ -522,6 +601,7 @@
     let isProcessingScan = false;
     let selectedPaymentMethod = null;
     let isFiadoAuthorized = false;
+    let activeCustomerForDetails = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       saveData();
@@ -537,7 +617,6 @@
       localStorage.setItem(STORAGE_KEY_CUSTOMERS, JSON.stringify(customers));
     }
 
-    // ALTERNÂNCIA DE ABAS
     function switchTab(tab) {
       const tabs = ['pos', 'products', 'history', 'customers', 'settings'];
       tabs.forEach(t => {
@@ -568,7 +647,6 @@
       document.getElementById('standbyScreen').style.display = 'none';
       document.getElementById('activeSaleScreen').style.display = 'flex';
       document.getElementById('bottomActionBar').style.display = 'block';
-
       setTimeout(() => initScanner(), 200);
     }
 
@@ -577,7 +655,6 @@
       clearLastScannedCard();
       renderCart();
       stopScanner();
-
       document.getElementById('activeSaleScreen').style.display = 'none';
       document.getElementById('bottomActionBar').style.display = 'none';
       document.getElementById('standbyScreen').style.display = 'flex';
@@ -592,7 +669,6 @@
 
     function initScanner() {
       if (html5QrcodeScanner) stopScanner();
-
       html5QrcodeScanner = new Html5Qrcode("reader");
       const config = { fps: 15, qrbox: { width: 250, height: 120 } };
 
@@ -658,9 +734,7 @@
         checkBarcodeDuplicate();
         stopModalScanner();
         showToastSuccess('Código capturado!');
-      }).catch(err => {
-        container.classList.add('hidden');
-      });
+      }).catch(err => container.classList.add('hidden'));
     }
 
     function stopModalScanner() {
@@ -877,7 +951,7 @@
       const isOverdue = selectedOpt.getAttribute('data-overdue') === 'true';
       const debtAmount = selectedOpt.getAttribute('data-debt');
 
-      if (isOverdue) {
+      if (isOverdue && parseFloat(debtAmount) > 0) {
         document.getElementById('overdueAmount').textContent = `R$ ${parseFloat(debtAmount).toFixed(2).replace('.', ',')}`;
         if (warning) warning.classList.remove('hidden');
         isFiadoAuthorized = false;
@@ -913,6 +987,7 @@
 
     function finalizeSale() {
       const total = getCartTotal();
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
       if (selectedPaymentMethod === 'FIADO') {
         const select = document.getElementById('customerSelect');
@@ -925,7 +1000,17 @@
           return;
         }
         const cust = customers.find(c => c.id === select.value);
-        if (cust) cust.debt += total;
+        if (cust) {
+          cust.debt += total;
+          cust.overdue = true;
+          if (!cust.ledger) cust.ledger = [];
+          cust.ledger.unshift({
+            type: 'DEBT',
+            date: nowStr,
+            description: `Compra Fiado (${cart.length} itens)`,
+            amount: total
+          });
+        }
       }
 
       // Atualiza Estoque
@@ -934,10 +1019,10 @@
         if (prod) prod.stock = Math.max(0, prod.stock - item.qty);
       });
 
-      // Registra Histórico
+      // Registra no Histórico
       const newSale = {
         id: Date.now().toString(),
-        date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        date: nowStr,
         method: selectedPaymentMethod,
         total: total,
         items: [...cart]
@@ -948,6 +1033,173 @@
       document.getElementById('paymentModal').classList.add('hidden');
       returnToStandby();
       showToastSuccess("Venda Concluída com Sucesso!");
+    }
+
+    // LISTAGEM E FICHA INTERATIVA DE CLIENTES
+    function renderCustomerList() {
+      const listContainer = document.getElementById('customerList');
+      if (customers.length === 0) {
+        listContainer.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum cliente cadastrado</p></div>`;
+        return;
+      }
+
+      listContainer.innerHTML = customers.map(c => `
+        <div onclick="openCustomerDetails('${c.id}')" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex items-center justify-between transition cursor-pointer">
+          <div class="space-y-1">
+            <h4 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <span>${c.name}</span>
+              ${c.debt > 0 ? '<span class="text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800 px-2 py-0.5 rounded-full">EM DEBIDO</span>' : '<span class="text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full">EM DIA</span>'}
+            </h4>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-phone text-[10px] mr-1"></i>${c.phone || 'Sem telefone'}</p>
+            <p class="text-xs ${c.debt > 0 ? 'text-rose-400 font-black' : 'text-emerald-400 font-bold'}">
+              Débito Total: R$ ${c.debt.toFixed(2).replace('.', ',')}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-chevron-right text-slate-500 text-sm"></i>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openCustomerDetails(id) {
+      activeCustomerForDetails = customers.find(c => c.id === id);
+      if (!activeCustomerForDetails) return;
+
+      document.getElementById('modalCustName').textContent = activeCustomerForDetails.name;
+      document.getElementById('modalCustPhone').textContent = activeCustomerForDetails.phone || 'Sem telefone cadastrado';
+      document.getElementById('modalCustDebtDisplay').textContent = `R$ ${activeCustomerForDetails.debt.toFixed(2).replace('.', ',')}`;
+
+      renderCustomerLedger();
+      document.getElementById('customerDetailsModal').classList.remove('hidden');
+    }
+
+    function closeCustomerDetailsModal() {
+      document.getElementById('customerDetailsModal').classList.add('hidden');
+      activeCustomerForDetails = null;
+    }
+
+    function renderCustomerLedger() {
+      const container = document.getElementById('customerLedgerList');
+      const ledger = activeCustomerForDetails.ledger || [];
+
+      if (ledger.length === 0) {
+        container.innerHTML = `<div class="py-6 text-center text-slate-500 text-xs">Nenhum registro de compras ou baixas.</div>`;
+        return;
+      }
+
+      container.innerHTML = ledger.map(l => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
+          <div>
+            <span class="text-[10px] text-slate-500 block">${l.date}</span>
+            <span class="font-semibold text-slate-200">${l.description}</span>
+          </div>
+          <span class="font-bold ${l.type === 'DEBT' ? 'text-rose-400' : 'text-emerald-400'}">
+            ${l.type === 'DEBT' ? '+' : '-'} R$ ${l.amount.toFixed(2).replace('.', ',')}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function openSettlePaymentModal() {
+      if (!activeCustomerForDetails || activeCustomerForDetails.debt <= 0) {
+        alert('Este cliente não possui débitos pendentes para dar baixa!');
+        return;
+      }
+      document.getElementById('settleAmountInput').value = activeCustomerForDetails.debt.toFixed(2);
+      document.getElementById('settlePaymentModal').classList.remove('hidden');
+    }
+
+    function closeSettlePaymentModal() {
+      document.getElementById('settlePaymentModal').classList.add('hidden');
+    }
+
+    function confirmSettlePayment() {
+      const amount = parseFloat(document.getElementById('settleAmountInput').value) || 0;
+      const method = document.getElementById('settleMethodSelect').value;
+
+      if (amount <= 0) {
+        alert('Informe um valor de pagamento válido!');
+        return;
+      }
+
+      if (amount > activeCustomerForDetails.debt) {
+        if (!confirm('O valor informado é maior que a dívida. Deseja quitar totalmente o débito do cliente?')) return;
+      }
+
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      // Baixa no débito do cliente
+      activeCustomerForDetails.debt = Math.max(0, activeCustomerForDetails.debt - amount);
+      if (activeCustomerForDetails.debt === 0) {
+        activeCustomerForDetails.overdue = false;
+      }
+
+      if (!activeCustomerForDetails.ledger) activeCustomerForDetails.ledger = [];
+      activeCustomerForDetails.ledger.unshift({
+        type: 'PAYMENT',
+        date: nowStr,
+        description: `Pagamento de Fiado (${method})`,
+        amount: amount
+      });
+
+      // Lançamento de Recebimento no Histórico do Caixa
+      salesHistory.unshift({
+        id: Date.now().toString(),
+        date: nowStr,
+        method: `${method} (Baixa Fiado: ${activeCustomerForDetails.name})`,
+        total: amount,
+        items: [{ name: `Recebimento Fiado - ${activeCustomerForDetails.name}`, qty: 1, price: amount }]
+      });
+
+      saveData();
+      closeSettlePaymentModal();
+      document.getElementById('modalCustDebtDisplay').textContent = `R$ ${activeCustomerForDetails.debt.toFixed(2).replace('.', ',')}`;
+      renderCustomerLedger();
+      renderCustomerList();
+      showToastSuccess('Baixa de pagamento registrada com sucesso!');
+    }
+
+    function openCustomerModal() {
+      document.getElementById('custName').value = '';
+      document.getElementById('custPhone').value = '';
+      document.getElementById('custDebt').value = '';
+      document.getElementById('customerModal').classList.remove('hidden');
+    }
+
+    function closeCustomerModal() {
+      document.getElementById('customerModal').classList.add('hidden');
+    }
+
+    function handleCustomerFormSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const debt = parseFloat(document.getElementById('custDebt').value) || 0;
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const newCust = {
+        id: Date.now().toString(),
+        name,
+        phone,
+        overdue: debt > 0,
+        debt: debt,
+        ledger: debt > 0 ? [{ type: 'DEBT', date: nowStr, description: 'Saldo Devedor Inicial', amount: debt }] : []
+      };
+
+      customers.push(newCust);
+      saveData();
+      closeCustomerModal();
+      renderCustomerList();
+      showToastSuccess('Cliente cadastrado com sucesso!');
+    }
+
+    function deleteCustomer(id) {
+      if (confirm('Deseja excluir este cliente?')) {
+        customers = customers.filter(c => c.id !== id);
+        saveData();
+        renderCustomerList();
+      }
     }
 
     // PRODUTOS
@@ -1113,66 +1365,7 @@
       }
     }
 
-    // CLIENTES
-    function renderCustomerList() {
-      const listContainer = document.getElementById('customerList');
-      if (customers.length === 0) {
-        listContainer.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum cliente cadastrado</p></div>`;
-        return;
-      }
-
-      listContainer.innerHTML = customers.map(c => `
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-          <div>
-            <h4 class="text-xs font-bold text-slate-100">${c.name}</h4>
-            <p class="text-[11px] text-slate-400">${c.phone || 'Sem telefone'}</p>
-            <p class="text-[11px] ${c.debt > 0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}">Débito: R$ ${c.debt.toFixed(2).replace('.', ',')}</p>
-          </div>
-          <button onclick="deleteCustomer('${c.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      `).join('');
-    }
-
-    function openCustomerModal() {
-      document.getElementById('custName').value = '';
-      document.getElementById('custPhone').value = '';
-      document.getElementById('custDebt').value = '';
-      document.getElementById('customerModal').classList.remove('hidden');
-    }
-
-    function closeCustomerModal() {
-      document.getElementById('customerModal').classList.add('hidden');
-    }
-
-    function handleCustomerFormSubmit(e) {
-      e.preventDefault();
-      const name = document.getElementById('custName').value.trim();
-      const phone = document.getElementById('custPhone').value.trim();
-      const debt = parseFloat(document.getElementById('custDebt').value) || 0;
-
-      customers.push({
-        id: Date.now().toString(),
-        name,
-        phone,
-        overdue: debt > 0,
-        debt
-      });
-
-      saveData();
-      closeCustomerModal();
-      renderCustomerList();
-      showToastSuccess('Cliente cadastrado com sucesso!');
-    }
-
-    function deleteCustomer(id) {
-      if (confirm('Deseja excluir este cliente?')) {
-        customers = customers.filter(c => c.id !== id);
-        saveData();
-        renderCustomerList();
-      }
-    }
-
-    // CONFIGURAÇÕES
+    // BACKUP & RESET
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ products, salesHistory, customers }));
       const dlAnchor = document.createElement('a');
@@ -1209,7 +1402,7 @@
     }
 
     function resetAllSystemData() {
-      if (confirm('ATENÇÃO: Deseja apagar TODOS os produtos, clientes e histórico de vendas? Esta ação não pode ser desfeita.')) {
+      if (confirm('ATENÇÃO: Deseja apagar TODOS os produtos, clientes e histórico de vendas?')) {
         localStorage.clear();
         location.reload();
       }
