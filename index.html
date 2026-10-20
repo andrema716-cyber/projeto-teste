@@ -59,7 +59,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500 selection:text-white">
 
-  <!-- NOTIFICAÇÃO TOAST DE SUCESSO SUAVE -->
+  <!-- NOTIFICAÇÃO TOAST DE SUCESSO -->
   <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30 transition-all duration-300">
     <i class="fa-solid fa-circle-check text-base"></i>
     <span>Venda Concluída com Sucesso!</span>
@@ -73,99 +73,119 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v1.2</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v1.3</span></h1>
           <p class="text-xs text-slate-400">Operação de Vendas Rápidas</p>
         </div>
       </div>
       <div id="statusBadge" class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Caixa Aberto</span>
+        <span>Caixa Livre</span>
       </div>
     </div>
   </header>
 
   <!-- MAIN CONTENT AREA -->
-  <main class="max-w-md mx-auto w-full px-4 pt-3 pb-safe-footer flex-1 flex flex-col gap-4">
+  <main class="max-w-md mx-auto w-full px-4 pt-4 pb-safe-footer flex-1 flex flex-col gap-4">
 
-    <!-- CAMERA SCANNER CARD -->
-    <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <span id="cameraDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
-        </div>
-        <button id="toggleCameraBtn" onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
-          <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
-          <span id="toggleCameraBtnText">Pausar Leitor</span>
-        </button>
+    <!-- ESTADO 1: TELA INICIAL (STANDBY / AGUARDANDO NOVA VENDA) -->
+    <section id="standbyScreen" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center shadow-xl flex flex-col items-center justify-center gap-5 my-auto py-12">
+      <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
+        <i class="fa-solid fa-cart-plus text-4xl"></i>
       </div>
+      <div>
+        <h2 class="text-xl font-bold text-slate-100">Pronto para Atendimento</h2>
+        <p class="text-xs text-slate-400 mt-1">Clique abaixo para ativar o leitor e registrar os produtos do cliente.</p>
+      </div>
+      <button onclick="startNewSale()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-base py-4 px-6 rounded-2xl transition flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/40">
+        <i class="fa-solid fa-play text-sm"></i>
+        <span>Iniciar Nova Venda</span>
+      </button>
+    </section>
 
-      <!-- CAMERA VIEWPORT -->
-      <div id="scannerContainer" class="scanner-container relative flex items-center justify-center">
-        <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-        <div id="scannerOverlay" class="scanner-overlay">
-          <div class="scanner-laser"></div>
-        </div>
-        <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10">
-          <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
-          <p class="text-xs text-slate-400 font-medium">Pronto para o próximo atendimento</p>
-          <button onclick="toggleCameraState(true)" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
-            <i class="fa-solid fa-play"></i>
-            <span>Iniciar Venda</span>
+    <!-- ESTADO 2: TELA ATIVA DE OPERAÇÃO DE CAIXA -->
+    <div id="activeSaleScreen" class="hidden flex flex-col gap-4 flex-1">
+      
+      <!-- CAMERA SCANNER CARD -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span id="cameraDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
+          </div>
+          <button id="toggleCameraBtn" onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+            <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
+            <span id="toggleCameraBtnText">Pausar Leitor</span>
           </button>
         </div>
-      </div>
 
-      <!-- MANUAL CODE ENTRY -->
-      <form onsubmit="handleManualBarcodeSubmit(event)" class="mt-3 flex gap-2">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-          <input type="text" id="manualBarcodeInput" placeholder="Ou digite o código de barras..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600">
+        <!-- CAMERA VIEWPORT -->
+        <div id="scannerContainer" class="scanner-container relative flex items-center justify-center">
+          <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+          <div id="scannerOverlay" class="scanner-overlay">
+            <div class="scanner-laser"></div>
+          </div>
+          <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10">
+            <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
+            <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
+            <button onclick="toggleCameraState(true)" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
+              <i class="fa-solid fa-play"></i>
+              <span>Reativar Leitor</span>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-900/20">
-          <span>Add</span>
-        </button>
-      </form>
-    </section>
 
-    <!-- CARD: ÚLTIMO ITEM LIDO -->
-    <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-      <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
-        <i class="fa-solid fa-box text-lg"></i>
-      </div>
-      <div class="flex-1 min-w-0">
-        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
-        <h3 id="lastScannedName" class="text-sm font-semibold text-slate-100 truncate mt-0.5">---</h3>
-        <p id="lastScannedPrice" class="text-xs font-bold text-emerald-400">R$ 0,00</p>
-      </div>
-    </section>
+        <!-- MANUAL CODE ENTRY -->
+        <form onsubmit="handleManualBarcodeSubmit(event)" class="mt-3 flex gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+            <input type="text" id="manualBarcodeInput" placeholder="Digite o código de barras..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600">
+          </div>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-900/20">
+            <span>Add</span>
+          </button>
+        </form>
+      </section>
 
-    <!-- CARRINHO DE COMPRAS -->
-    <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-cart-shopping text-blue-400 text-sm"></i>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
+      <!-- CARD: ÚLTIMO ITEM LIDO -->
+      <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+          <i class="fa-solid fa-box text-lg"></i>
         </div>
-        <button onclick="clearCart()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
-          <i class="fa-solid fa-trash-can"></i> Limpar
-        </button>
-      </div>
-
-      <!-- LISTA DE PRODUTOS NO CARRINHO -->
-      <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[220px] pr-1">
-        <!-- Estado Vazio -->
-        <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
-          <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
-          <p class="text-xs font-medium text-slate-400">Nenhum produto adicionado</p>
-          <p class="text-[11px] text-slate-600 mt-0.5">Use a câmara acima ou digite o código</p>
+        <div class="flex-1 min-w-0">
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
+          <h3 id="lastScannedName" class="text-sm font-semibold text-slate-100 truncate mt-0.5">---</h3>
+          <p id="lastScannedPrice" class="text-xs font-bold text-emerald-400">R$ 0,00</p>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- CARRINHO DE COMPRAS -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-cart-shopping text-blue-400 text-sm"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
+          </div>
+          <button onclick="cancelSale()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> Cancelar Venda
+          </button>
+        </div>
+
+        <!-- LISTA DE PRODUTOS NO CARRINHO -->
+        <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[220px] pr-1">
+          <!-- Estado Vazio -->
+          <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
+            <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
+            <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">Use o leitor de câmara ou digite o código</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
   </main>
 
-  <!-- ELEVATED FIXED BOTTOM ACTION BAR -->
-  <div class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
+  <!-- ELEVATED FIXED BOTTOM ACTION BAR (EXIBIDO APENAS EM VENDA ATIVA) -->
+  <div id="bottomActionBar" class="hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-between gap-3 mb-2">
       <div>
         <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
@@ -307,7 +327,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (MÓDULO 1) -->
+  <!-- JAVASCRIPT ENGINE -->
   <script>
     // DADOS MOCK DE PRODUTOS
     const mockProducts = {
@@ -319,15 +339,54 @@
     };
 
     let cart = [];
-    let isCameraActive = true;
+    let isCameraActive = false;
     let selectedPaymentMethod = null;
     let isFiadoAuthorized = false;
 
-    // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
-      initCamera();
-      renderCart();
+      // Inicia no modo Standby
+      returnToStandby();
     });
+
+    // CONTROLE DE ESTADOS DO CAIXA
+    function startNewSale() {
+      document.getElementById('standbyScreen').classList.add('hidden');
+      document.getElementById('activeSaleScreen').classList.remove('hidden');
+      document.getElementById('bottomActionBar').classList.remove('hidden');
+
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Em Venda</span>`;
+
+      // Ativa leitor e foca no input
+      initCamera();
+      toggleCameraState(true);
+      setTimeout(() => {
+        const input = document.getElementById('manualBarcodeInput');
+        if (input) input.focus();
+      }, 300);
+    }
+
+    function returnToStandby() {
+      cart = [];
+      clearLastScannedCard();
+      renderCart();
+
+      toggleCameraState(false);
+
+      document.getElementById('activeSaleScreen').classList.add('hidden');
+      document.getElementById('bottomActionBar').classList.add('hidden');
+      document.getElementById('standbyScreen').classList.remove('hidden');
+
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Caixa Livre</span>`;
+    }
+
+    function cancelSale() {
+      if (cart.length > 0) {
+        if (!confirm('Deseja cancelar a venda atual e limpar os itens do carrinho?')) return;
+      }
+      returnToStandby();
+    }
 
     // SIMULAÇÃO DA CÂMARA LEITORA
     function initCamera() {
@@ -411,12 +470,6 @@
       if (item.qty <= 0) {
         cart = cart.filter(i => i.id !== id);
       }
-      renderCart();
-    }
-
-    function clearCart() {
-      cart = [];
-      clearLastScannedCard();
       renderCart();
     }
 
@@ -584,7 +637,7 @@
       document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
     }
 
-    // FINALIZAÇÃO DE VENDA COM FECHAMENTO AUTOMÁTICO
+    // FINALIZAÇÃO DE VENDA COM RETORNO À TELA INICIAL
     function finalizeSale() {
       if (selectedPaymentMethod === 'FIADO') {
         const select = document.getElementById('customerSelect');
@@ -601,16 +654,11 @@
       // 1. FECHA O MODAL IMEDIATAMENTE
       document.getElementById('paymentModal').classList.add('hidden');
 
-      // 2. RESETA O CAIXA COMPLETAMENTE
-      cart = [];
-      clearLastScannedCard();
-      renderCart();
-
-      // 3. REATIVA A CÂMARA EM ESTADO LIMPO
-      toggleCameraState(true);
-
-      // 4. MOSTRA NOTIFICAÇÃO RÁPIDA (TOAST)
+      // 2. EXIBE NOTIFICAÇÃO DE SUCESSO
       showToastSuccess();
+
+      // 3. RETORNA À TELA INICIAL LIMPA
+      returnToStandby();
     }
 
     function showToastSuccess() {
