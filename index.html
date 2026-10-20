@@ -6,6 +6,8 @@
   <title>Caixa PDV - Operação & Gestão de Produtos</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- BIBLIOTECA OFICIAL E LEVE DE LEITURA DE CÓDIGO DE BARRAS -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
       --sat: env(safe-area-inset-top, 0px);
@@ -14,40 +16,22 @@
     body {
       background-color: #0f172a;
       color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding-top: var(--sat);
       padding-bottom: calc(var(--sab) + 90px);
       touch-action: manipulation;
     }
-    .scanner-container {
-      position: relative;
-      width: 100%;
-      max-height: 180px;
-      height: 180px;
+    #reader video {
+      width: 100% !important;
+      height: 180px !important;
+      object-fit: cover !important;
+      border-radius: 12px;
+    }
+    #reader {
+      border: none !important;
+      background: #000;
       border-radius: 12px;
       overflow: hidden;
-      background: #000;
-    }
-    .scanner-overlay {
-      position: absolute;
-      inset: 0;
-      border: 2px solid rgba(59, 130, 246, 0.5);
-      border-radius: 12px;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .scanner-laser {
-      width: 80%;
-      height: 2px;
-      background: #ef4444;
-      box-shadow: 0 0 8px #ef4444;
-      animation: scan 2s infinite ease-in-out;
-    }
-    @keyframes scan {
-      0%, 100% { transform: translateY(-40px); }
-      50% { transform: translateY(40px); }
     }
     .pb-safe-footer {
       padding-bottom: calc(var(--sab) + 95px);
@@ -57,15 +41,15 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500 selection:text-white">
+<body class="min-h-screen flex flex-col justify-between antialiased">
 
-  <!-- NOTIFICAÇÃO TOAST DE SUCESSO -->
-  <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30 transition-all duration-300">
+  <!-- NOTIFICAÇÃO TOAST -->
+  <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30">
     <i class="fa-solid fa-circle-check text-base"></i>
     <span id="toastMessage">Operação realizada com sucesso!</span>
   </div>
 
-  <!-- TOP HEADER COM NAVEGAÇÃO DE MÓDULOS -->
+  <!-- HEADER -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-md">
     <div class="max-w-md mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -73,11 +57,10 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.4</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.5</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
-      <!-- NAVEGADOR DE ABAS (CAIXA / PRODUTOS) -->
       <div class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl">
         <button onclick="switchTab('pos')" id="tabPosBtn" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-600 text-white">
           <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
@@ -89,13 +72,13 @@
     </div>
   </header>
 
-  <!-- MAIN CONTENT AREA -->
+  <!-- ÁREA PRINCIPAL -->
   <main class="max-w-md mx-auto w-full px-4 pt-4 pb-safe-footer flex-1 flex flex-col gap-4">
 
-    <!-- TAB 1: OPERAÇÃO DO CAIXA (PDV) -->
+    <!-- TAB 1: CAIXA (PDV) -->
     <div id="tabPosContent" class="flex flex-col gap-4 flex-1">
       
-      <!-- ESTADO 1: STANDBY / AGUARDANDO VENDA -->
+      <!-- STANDBY -->
       <section id="standbyScreen" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center shadow-xl flex flex-col items-center justify-center gap-5 my-auto py-12">
         <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
           <i class="fa-solid fa-cart-plus text-4xl"></i>
@@ -110,29 +93,26 @@
         </button>
       </section>
 
-      <!-- ESTADO 2: OPERAÇÃO DE VENDAS ATIVA -->
+      <!-- TELA DE VENDA ATIVA -->
       <div id="activeSaleScreen" style="display: none;" class="flex-col gap-4 flex-1">
         
-        <!-- CAMERA SCANNER CARD -->
+        <!-- CARD DO LEITOR -->
         <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
               <span id="cameraDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
             </div>
-            <button id="toggleCameraBtn" onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+            <button onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
               <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
               <span id="toggleCameraBtnText">Pausar Leitor</span>
             </button>
           </div>
 
-          <!-- CAMERA VIEWPORT -->
-          <div id="scannerContainer" class="scanner-container relative flex items-center justify-center">
-            <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-            <div id="scannerOverlay" class="scanner-overlay">
-              <div class="scanner-laser"></div>
-            </div>
-            <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10">
+          <!-- CONTAINER OFICIAL DO LEITOR DE CÂMERA -->
+          <div id="readerBox" class="relative">
+            <div id="reader" class="w-full"></div>
+            <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10 rounded-xl">
               <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
               <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
               <button onclick="toggleCameraState(true)" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
@@ -142,113 +122,101 @@
             </div>
           </div>
 
-          <!-- MANUAL CODE ENTRY -->
+          <!-- ENTRADA MANUAL DE CÓDIGO -->
           <form onsubmit="handleManualBarcodeSubmit(event)" class="mt-3 flex gap-2">
             <div class="relative flex-1">
               <i class="fa-solid fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-              <input type="text" id="manualBarcodeInput" placeholder="Digite o código de barras..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600">
+              <input type="text" id="manualBarcodeInput" placeholder="Digite o código de barras..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-900/20">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 rounded-xl transition flex items-center gap-1.5">
               <span>Add</span>
             </button>
           </form>
         </section>
 
-        <!-- CARD: ÚLTIMO ITEM LIDO -->
+        <!-- ÚLTIMO ITEM LIDO -->
         <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-          <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+          <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
             <i class="fa-solid fa-box text-lg"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
+            <span class="text-[10px] font-bold text-blue-400 uppercase bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
             <h3 id="lastScannedName" class="text-sm font-semibold text-slate-100 truncate mt-0.5">---</h3>
             <p id="lastScannedPrice" class="text-xs font-bold text-emerald-400">R$ 0,00</p>
           </div>
         </section>
 
-        <!-- CARRINHO DE COMPRAS -->
+        <!-- CARRINHO -->
         <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-cart-shopping text-blue-400 text-sm"></i>
-              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
+              <h2 class="text-xs font-bold uppercase text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
             </div>
             <button onclick="cancelSale()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
               <i class="fa-solid fa-xmark"></i> Cancelar Venda
             </button>
           </div>
 
-          <!-- LISTA DE PRODUTOS NO CARRINHO -->
           <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[220px] pr-1">
-            <!-- Estado Vazio -->
             <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
               <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
               <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
-              <p class="text-[11px] text-slate-600 mt-0.5">Use o leitor de câmara ou digite o código</p>
             </div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- TAB 2: GESTÃO & CADASTRO DE PRODUTOS -->
+    <!-- TAB 2: PRODUTOS -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
-      
-      <!-- BOTÃO NOVO CADASTRO -->
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-slate-200">Catálogo de Produtos</h2>
-        <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/20">
+        <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
           <i class="fa-solid fa-plus"></i> Novo Produto
         </button>
       </div>
 
-      <!-- BUSCA DE PRODUTOS -->
       <div class="relative">
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-        <input type="text" id="productSearchInput" oninput="renderProductList()" placeholder="Buscar por nome ou código..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-emerald-500 transition">
+        <input type="text" id="productSearchInput" oninput="renderProductList()" placeholder="Buscar por nome ou código..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-emerald-500">
       </div>
 
-      <!-- LISTA DE PRODUTOS CADASTRADOS -->
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
-        <div id="productList" class="space-y-2.5">
-          <!-- Renderizado via JS -->
-        </div>
+        <div id="productList" class="space-y-2.5"></div>
       </section>
     </div>
 
   </main>
 
-  <!-- ELEVATED FIXED BOTTOM ACTION BAR (PDV) -->
+  <!-- BARRA INFERIOR DA COMPRA -->
   <div id="bottomActionBar" style="display: none;" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-between gap-3 mb-2">
       <div>
         <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
         <span id="cartTotalDisplay" class="text-2xl font-black text-emerald-400">R$ 0,00</span>
       </div>
-      <button id="openPaymentModalBtn" onclick="openPaymentModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
+      <button onclick="openPaymentModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
         <span>Forma de Pagamento</span>
         <i class="fa-solid fa-arrow-right text-sm"></i>
       </button>
     </div>
   </div>
 
-  <!-- MODAL: FORMA DE PAGAMENTO -->
+  <!-- MODAL: PAGAMENTO -->
   <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
-      
-      <!-- MODAL HEADER -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div>
           <h2 class="text-base font-bold text-slate-100">Forma de Pagamento</h2>
           <p class="text-xs text-slate-400">Selecione como o cliente vai pagar</p>
         </div>
         <div class="text-right">
-          <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Total</span>
+          <span class="text-[10px] text-slate-400 uppercase block">Total</span>
           <span id="modalCartTotalDisplay" class="text-lg font-black text-emerald-400">R$ 0,00</span>
         </div>
       </div>
 
-      <!-- SELEÇÃO DE MÉTODOS DE PAGAMENTO -->
       <div class="grid grid-cols-3 gap-2 mb-4">
         <button type="button" onclick="selectPaymentMethod('DINHEIRO')" id="btnMethodDinheiro" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5">
           <i class="fa-solid fa-money-bill-wave text-emerald-400 text-lg"></i>
@@ -262,113 +230,35 @@
           <i class="fa-solid fa-credit-card text-blue-400 text-lg"></i>
           <span class="text-xs font-semibold">Cartão</span>
         </button>
-        <button type="button" onclick="selectPaymentMethod('FIADO')" id="btnMethodFiado" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5">
-          <i class="fa-solid fa-user-clock text-purple-400 text-lg"></i>
-          <span class="text-xs font-semibold">Fiado</span>
-        </button>
-        <button type="button" onclick="selectPaymentMethod('MISTO')" id="btnMethodMisto" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center hover:bg-slate-800 transition flex flex-col items-center gap-1.5 col-span-2">
-          <i class="fa-solid fa-sliders text-pink-400 text-lg"></i>
-          <span class="text-xs font-semibold">Pagamento Misto / Dividido</span>
-        </button>
       </div>
 
-      <!-- PAINEL DINÂMICO DE PAGAMENTO -->
       <div id="paymentDetailsPanel" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-5">
-        
-        <!-- OPÇÃO 1: DINHEIRO COM CALCULADORA DE TROCO -->
         <div id="panelDinheiro" class="payment-subpanel hidden space-y-3">
-          <label class="text-xs text-slate-400 font-medium block">Valor Recebido do Cliente:</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xs">R$</span>
-            <input type="number" step="0.01" id="cashReceivedInput" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-lg rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-emerald-500">
-          </div>
-          <!-- NOTAS RÁPIDAS -->
-          <div class="flex gap-1.5 pt-1">
-            <button type="button" onclick="setFastCash(10)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-1.5 rounded-lg border border-slate-700">R$ 10</button>
-            <button type="button" onclick="setFastCash(20)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-1.5 rounded-lg border border-slate-700">R$ 20</button>
-            <button type="button" onclick="setFastCash(50)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-1.5 rounded-lg border border-slate-700">R$ 50</button>
-            <button type="button" onclick="setFastCash(100)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-1.5 rounded-lg border border-slate-700">R$ 100</button>
-          </div>
-          <!-- EXIBIÇÃO DE TROCO -->
-          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-            <span class="text-xs text-slate-400">Troco a Devolver:</span>
+          <label class="text-xs text-slate-400 font-medium block">Valor Recebido:</label>
+          <input type="number" step="0.01" id="cashReceivedInput" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-lg rounded-xl px-3 py-2">
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+            <span class="text-xs text-slate-400">Troco:</span>
             <span id="changeDisplay" class="text-base font-extrabold text-emerald-400">R$ 0,00</span>
           </div>
         </div>
-
-        <!-- OPÇÃO 2: PIX OU CARTÃO -->
         <div id="panelSimple" class="payment-subpanel hidden text-center py-3">
-          <i id="simpleMethodIcon" class="text-3xl mb-2 text-slate-500"></i>
-          <p id="simpleMethodText" class="text-xs text-slate-300 font-medium">Aguardando confirmação do pagamento no terminal/PIX...</p>
-        </div>
-
-        <!-- OPÇÃO 3: FIADO COM TRAVA DE DEVEDOR -->
-        <div id="panelFiado" class="payment-subpanel hidden space-y-3">
-          <label class="text-xs text-slate-400 font-medium block">Selecione o Cliente Cadastrado:</label>
-          <select id="customerSelect" onchange="checkCustomerDelinquency()" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5 focus:outline-none focus:border-purple-500">
-            <option value="">-- Selecione um cliente --</option>
-            <option value="1" data-overdue="true" data-debt="145.00">João da Silva (⚠️ EM ATRASO)</option>
-            <option value="2" data-overdue="false" data-debt="0.00">Maria Oliveira (Em Dia)</option>
-            <option value="3" data-overdue="false" data-debt="25.00">Carlos Santos (Em Dia)</option>
-          </select>
-
-          <!-- ALERTA DE TRAVA DE FIADO EM ATRASO -->
-          <div id="overdueWarning" class="hidden bg-rose-950/60 border border-rose-800/80 rounded-xl p-3 text-xs text-rose-300 space-y-2">
-            <div class="flex items-start gap-2">
-              <i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm mt-0.5"></i>
-              <div>
-                <p class="font-bold text-rose-200">Cliente possui débitos em atraso!</p>
-                <p class="text-[11px] text-rose-300 mt-0.5">Dívida pendente: <span id="overdueAmount" class="font-bold">R$ 0,00</span></p>
-              </div>
-            </div>
-            <div class="pt-2 border-t border-rose-900/50 flex items-center justify-between">
-              <span class="text-[11px] text-rose-300">Autorizar venda mesmo assim?</span>
-              <div class="flex gap-2">
-                <button type="button" onclick="overrideDelinquency(true)" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded">Sim</button>
-                <button type="button" onclick="overrideDelinquency(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] px-2.5 py-1 rounded">Não</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- OPÇÃO 4: PAGAMENTO MISTO -->
-        <div id="panelMisto" class="payment-subpanel hidden space-y-3">
-          <p class="text-xs text-slate-400">Divida o valor total em até duas formas:</p>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <span class="text-[10px] text-slate-400 block mb-1">Parte 1 (Dinheiro):</span>
-              <input type="number" step="0.01" id="mistoPart1" oninput="calculateMistoSplit()" placeholder="R$ 0,00" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-xl p-2">
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-400 block mb-1">Parte 2 (Pix/Cartão):</span>
-              <input type="number" step="0.01" id="mistoPart2" readonly placeholder="R$ 0,00" class="w-full bg-slate-800 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl p-2">
-            </div>
-          </div>
+          <p id="simpleMethodText" class="text-xs text-slate-300 font-medium">Aguardando confirmação do pagamento...</p>
         </div>
       </div>
 
-      <!-- BOTOES DE AÇÃO DO MODAL -->
       <div class="flex items-center gap-3 mt-auto pt-2 border-t border-slate-800">
-        <button type="button" onclick="closePaymentModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition text-xs">
-          Voltar
-        </button>
-        <button type="button" onclick="finalizeSale()" id="confirmSaleBtn" class="w-2/3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-900/30">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Confirmar & Finalizar</span>
-        </button>
+        <button type="button" onclick="closePaymentModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Voltar</button>
+        <button type="button" onclick="finalizeSale()" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar & Finalizar</button>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO COM LEITOR ACOPLADO -->
+  <!-- MODAL: CADASTRO DE PRODUTO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
-      
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div>
           <h2 id="productModalTitle" class="text-base font-bold text-slate-100">Cadastrar Produto</h2>
-          <p class="text-xs text-slate-400">Preencha as informações do item</p>
         </div>
         <button onclick="closeProductModal()" class="text-slate-400 hover:text-white p-2">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -376,97 +266,56 @@
       </div>
 
       <form onsubmit="handleProductFormSubmit(event)" class="space-y-3">
-        <!-- ALERTA ANTIDUPLICIDADE / CUSTO MÉDIO PONDERADO -->
-        <div id="duplicateWarning" class="hidden bg-amber-950/70 border border-amber-800/80 rounded-xl p-3 text-xs text-amber-300 space-y-2">
-          <div class="flex items-start gap-2">
-            <i class="fa-solid fa-boxes-packing text-amber-400 text-base shrink-0 mt-0.5"></i>
-            <div>
-              <p class="font-bold text-amber-200">Produto já cadastrado!</p>
-              <p class="text-[11px] text-amber-300 mt-0.5">As novas quantidades serão somadas e o custo será recalculado pelo <span class="font-bold">Custo Médio Ponderado</span>.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- CÓDIGO DE BARRAS COM LEITOR DE CÂMARA -->
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Código de Barras *</label>
-          <div class="flex gap-2">
-            <input type="text" id="prodBarcode" required oninput="checkBarcodeDuplicate()" placeholder="Bipe ou digite o código..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
-            <button type="button" onclick="startModalCameraScan()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-900/20 shrink-0">
-              <i class="fa-solid fa-camera"></i>
-              <span>Bipar</span>
-            </button>
-          </div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Código de Barras *</label>
+          <input type="text" id="prodBarcode" required placeholder="Digite o código..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
         </div>
-
-        <!-- MINI CONTAINER DA CÂMARA NO MODAL -->
-        <div id="modalScannerBox" class="hidden relative w-full h-36 bg-black rounded-xl overflow-hidden border border-blue-500/50">
-          <video id="modalWebcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-          <div class="scanner-overlay"><div class="scanner-laser"></div></div>
-          <button type="button" onclick="stopModalCameraScan()" class="absolute top-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg z-20">Fechar Câmara</button>
-        </div>
-
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Nome do Produto *</label>
-          <input type="text" id="prodName" required placeholder="Ex: Refrigerante Cola 2L" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Nome do Produto *</label>
+          <input type="text" id="prodName" required placeholder="Ex: Refrigerante Cola 2L" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
         </div>
-
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Categoria</label>
-            <input type="text" id="prodCategory" placeholder="Ex: Bebidas" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Categoria</label>
+            <input type="text" id="prodCategory" placeholder="Ex: Bebidas" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
           </div>
           <div>
-            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Estoque (Qtd) *</label>
-            <input type="number" id="prodStock" required min="0" placeholder="0" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Estoque (Qtd) *</label>
+            <input type="number" id="prodStock" required min="0" placeholder="0" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
           </div>
         </div>
-
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Preço de Custo (R$) *</label>
-            <input type="number" step="0.01" id="prodCost" required oninput="calculateMargin()" placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Custo (R$) *</label>
+            <input type="number" step="0.01" id="prodCost" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
           </div>
           <div>
-            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Preço de Venda (R$) *</label>
-            <input type="number" step="0.01" id="prodPrice" required oninput="calculateMargin()" placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Venda (R$) *</label>
+            <input type="number" step="0.01" id="prodPrice" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5">
           </div>
         </div>
-
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
-          <span class="text-slate-400">Margem Estimada:</span>
-          <span id="marginDisplay" class="font-extrabold text-slate-300">0,0%</span>
-        </div>
-
         <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
-          <button type="button" onclick="closeProductModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition text-xs">
-            Cancelar
-          </button>
-          <button type="submit" class="w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition text-xs shadow-lg shadow-emerald-900/30">
-            Salvar Produto
-          </button>
+          <button type="button" onclick="closeProductModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Cancelar</button>
+          <button type="submit" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Salvar Produto</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (MÓDULO 2.4) -->
+  <!-- JAVASCRIPT ENGINE COM HTML5-QRCODE -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
       { id: '1', barcode: '7891000100100', name: 'Arroz Tipo 1 - 5kg', category: 'Mercearia', stock: 20, cost: 18.00, price: 24.90 },
       { id: '2', barcode: '7891000200200', name: 'Feijão Carioca - 1kg', category: 'Mercearia', stock: 15, cost: 5.20, price: 7.50 },
-      { id: '3', barcode: '7891000300300', name: 'Óleo de Soja 900ml', category: 'Mercearia', stock: 30, cost: 4.80, price: 6.80 },
-      { id: '4', barcode: '7891000400400', name: 'Refrigerante Cola 2L', category: 'Bebidas', stock: 12, cost: 5.50, price: 8.99 }
+      { id: '3', barcode: '7891000300300', name: 'Óleo de Soja 900ml', category: 'Mercearia', stock: 30, cost: 4.80, price: 6.80 }
     ];
 
     let cart = [];
+    let html5QrcodeScanner = null;
     let isCameraActive = false;
     let selectedPaymentMethod = null;
-    let isFiadoAuthorized = false;
     let editingProductId = null;
-    let mediaStream = null;
-    let modalMediaStream = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       saveProductsToStorage();
@@ -478,7 +327,6 @@
       localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
     }
 
-    // TROCA DE ABAS
     function switchTab(tab) {
       const posContent = document.getElementById('tabPosContent');
       const productsContent = document.getElementById('tabProductsContent');
@@ -490,156 +338,108 @@
         productsContent.style.display = 'none';
         posBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-600 text-white";
         productsBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
-        if (document.getElementById('activeSaleScreen').style.display !== 'none' && isCameraActive) {
-          initCamera();
-        }
       } else {
         posContent.style.display = 'none';
         productsContent.style.display = 'flex';
         posBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
         productsBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-600 text-white";
-        stopCamera();
+        stopScanner();
         renderProductList();
       }
     }
 
-    // CONTROLE DE ESTADOS DO CAIXA
     function startNewSale() {
       document.getElementById('standbyScreen').style.display = 'none';
       document.getElementById('activeSaleScreen').style.display = 'flex';
       document.getElementById('bottomActionBar').style.display = 'block';
 
-      const statusBadge = document.getElementById('statusBadge');
-      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Em Venda</span>`;
-
-      initCamera();
-      toggleCameraState(true);
+      // Aguarda a renderização do layout para anexar a câmera
       setTimeout(() => {
-        const input = document.getElementById('manualBarcodeInput');
-        if (input) input.focus();
-      }, 300);
+        initScanner();
+      }, 200);
     }
 
     function returnToStandby() {
       cart = [];
       clearLastScannedCard();
       renderCart();
-      stopCamera();
+      stopScanner();
 
-      const standbyScreen = document.getElementById('standbyScreen');
-      const activeSaleScreen = document.getElementById('activeSaleScreen');
-      const bottomActionBar = document.getElementById('bottomActionBar');
-      const paymentModal = document.getElementById('paymentModal');
-
-      if (paymentModal) paymentModal.classList.add('hidden');
-      if (activeSaleScreen) activeSaleScreen.style.display = 'none';
-      if (bottomActionBar) bottomActionBar.style.display = 'none';
-      if (standbyScreen) standbyScreen.style.display = 'flex';
-
-      const statusBadge = document.getElementById('statusBadge');
-      if (statusBadge) {
-        statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Caixa Livre</span>`;
-      }
+      document.getElementById('activeSaleScreen').style.display = 'none';
+      document.getElementById('bottomActionBar').style.display = 'none';
+      document.getElementById('standbyScreen').style.display = 'flex';
     }
 
     function cancelSale() {
       if (cart.length > 0) {
-        if (!confirm('Deseja cancelar a venda atual e limpar os itens do carrinho?')) return;
+        if (!confirm('Deseja cancelar a venda atual?')) return;
       }
       returnToStandby();
     }
 
-    // CÂMARA PRINCIPAL DO CAIXA (ESTILO VERSÃO 1)
-    function initCamera() {
-      const video = document.getElementById('webcamVideo');
-      if (!video) return;
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-          .then(stream => {
-            mediaStream = stream;
-            video.srcObject = stream;
-          })
-          .catch(err => {
-            console.log('Câmara indisponível no ambiente de testes:', err);
-          });
+    // INICIALIZAÇÃO DA CÂMERA DE ALTA PERFORMANCE (HTML5-QRCODE)
+    function initScanner() {
+      if (html5QrcodeScanner) {
+        stopScanner();
       }
+
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 120 } };
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess
+      ).then(() => {
+        isCameraActive = true;
+        updateCameraUI(true);
+      }).catch(err => {
+        console.error("Erro ao iniciar câmera:", err);
+      });
     }
 
-    function stopCamera() {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        mediaStream = null;
+    function stopScanner() {
+      if (html5QrcodeScanner && isCameraActive) {
+        html5QrcodeScanner.stop().then(() => {
+          isCameraActive = false;
+          updateCameraUI(false);
+        }).catch(err => console.error(err));
       }
-      const video = document.getElementById('webcamVideo');
-      if (video) video.srcObject = null;
-      isCameraActive = false;
     }
 
     function toggleCameraState(forceState) {
-      isCameraActive = forceState !== undefined ? forceState : !isCameraActive;
+      if (isCameraActive) {
+        stopScanner();
+      } else {
+        initScanner();
+      }
+    }
+
+    function updateCameraUI(active) {
       const overlay = document.getElementById('cameraPausedOverlay');
       const dot = document.getElementById('cameraDot');
       const statusText = document.getElementById('cameraStatusText');
-      const btnText = document.getElementById('toggleCameraBtnText');
-      const btnIcon = document.getElementById('toggleCameraIcon');
 
-      if (isCameraActive) {
-        if (!mediaStream) initCamera();
+      if (active) {
         if (overlay) overlay.classList.add('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        if (statusText) {
-          statusText.textContent = "Leitor Ativo";
-          statusText.className = "text-xs font-semibold text-emerald-400 uppercase tracking-wider";
-        }
-        if (btnText) btnText.textContent = "Pausar Leitor";
-        if (btnIcon) btnIcon.className = "fa-solid fa-pause mr-1";
+        if (statusText) statusText.textContent = "Leitor Ativo";
       } else {
-        stopCamera();
         if (overlay) overlay.classList.remove('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-        if (statusText) {
-          statusText.textContent = "Leitor Pausado";
-          statusText.className = "text-xs font-semibold text-amber-400 uppercase tracking-wider";
-        }
-        if (btnText) btnText.textContent = "Ligar Leitor";
-        if (btnIcon) btnIcon.className = "fa-solid fa-play mr-1";
+        if (statusText) statusText.textContent = "Leitor Pausado";
       }
     }
 
-    // CÂMARA LEITORA NO MODAL DE CADASTRO
-    function startModalCameraScan() {
-      const box = document.getElementById('modalScannerBox');
-      const video = document.getElementById('modalWebcamVideo');
-      box.classList.remove('hidden');
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-          .then(stream => {
-            modalMediaStream = stream;
-            video.srcObject = stream;
-          })
-          .catch(err => {
-            console.error("Erro na câmara do modal:", err);
-            alert('Não foi possível acessar a câmara.');
-            box.classList.add('hidden');
-          });
+    function onScanSuccess(decodedText, decodedResult) {
+      const foundProduct = products.find(p => p.barcode === decodedText);
+      if (foundProduct) {
+        addToCart(foundProduct);
+      } else {
+        alert(`Produto bipado (${decodedText}) não está cadastrado!`);
       }
     }
 
-    function stopModalCameraScan() {
-      const box = document.getElementById('modalScannerBox');
-      const video = document.getElementById('modalWebcamVideo');
-      
-      if (modalMediaStream) {
-        modalMediaStream.getTracks().forEach(track => track.stop());
-        modalMediaStream = null;
-      }
-      if (video) video.srcObject = null;
-      if (box) box.classList.add('hidden');
-    }
-
-    // MANUSEIO DE CÓDIGO DE BARRAS NO CAIXA
     function handleManualBarcodeSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('manualBarcodeInput');
@@ -647,14 +447,10 @@
       if (!code) return;
 
       const foundProduct = products.find(p => p.barcode === code);
-
       if (foundProduct) {
         addToCart(foundProduct);
       } else {
-        if (confirm(`Produto (${code}) não cadastrado! Deseja cadastrá-lo agora?`)) {
-          switchTab('products');
-          openProductModal(code);
-        }
+        alert(`Produto (${code}) não cadastrado!`);
       }
       input.value = '';
     }
@@ -680,10 +476,6 @@
     function clearLastScannedCard() {
       const card = document.getElementById('lastScannedCard');
       if (card) card.classList.add('hidden');
-      const name = document.getElementById('lastScannedName');
-      if (name) name.textContent = '---';
-      const price = document.getElementById('lastScannedPrice');
-      if (price) price.textContent = 'R$ 0,00';
     }
 
     function updateQuantity(id, delta) {
@@ -702,7 +494,6 @@
 
     function renderCart() {
       const cartList = document.getElementById('cartList');
-      const emptyState = document.getElementById('emptyCartState');
       const cartCount = document.getElementById('cartCount');
       const totalDisplay = document.getElementById('cartTotalDisplay');
 
@@ -712,11 +503,8 @@
       if (cartCount) cartCount.textContent = totalItems;
       if (totalDisplay) totalDisplay.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
 
-      if (!cartList) return;
-
       if (cart.length === 0) {
-        cartList.innerHTML = '';
-        if (emptyState) cartList.appendChild(emptyState);
+        cartList.innerHTML = `<div class="py-8 text-center text-slate-500"><i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i><p class="text-xs">Aguardando leitura de produtos</p></div>`;
         return;
       }
 
@@ -727,93 +515,52 @@
             <p class="text-[11px] text-slate-400">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.qty}</p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-emerald-400 mr-1">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
+            <span class="text-xs font-bold text-emerald-400">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
             <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg">
-              <button onclick="updateQuantity('${item.id}', -1)" class="w-6 h-6 text-slate-400 hover:text-rose-400 text-xs font-bold">-</button>
+              <button onclick="updateQuantity('${item.id}', -1)" class="w-6 h-6 text-slate-400 text-xs font-bold">-</button>
               <span class="text-xs text-slate-200 font-bold px-1">${item.qty}</span>
-              <button onclick="updateQuantity('${item.id}', 1)" class="w-6 h-6 text-slate-400 hover:text-emerald-400 text-xs font-bold">+</button>
+              <button onclick="updateQuantity('${item.id}', 1)" class="w-6 h-6 text-slate-400 text-xs font-bold">+</button>
             </div>
           </div>
         </div>
       `).join('');
     }
 
-    // MODAL DE PAGAMENTO
     function openPaymentModal() {
       if (cart.length === 0) {
         alert('Adicione produtos ao carrinho antes de prosseguir!');
         return;
       }
-      
-      stopCamera();
-
+      stopScanner();
       const total = getCartTotal();
       document.getElementById('modalCartTotalDisplay').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
       document.getElementById('paymentModal').classList.remove('hidden');
-
       selectPaymentMethod('DINHEIRO');
     }
 
     function closePaymentModal() {
       document.getElementById('paymentModal').classList.add('hidden');
-      if (document.getElementById('activeSaleScreen').style.display !== 'none') {
-        initCamera();
-      }
+      initScanner();
     }
 
     function selectPaymentMethod(method) {
       selectedPaymentMethod = method;
-      document.querySelectorAll('.payment-method-btn').forEach(btn => btn.classList.remove('border-emerald-500', 'bg-emerald-950/40'));
       document.querySelectorAll('.payment-subpanel').forEach(panel => panel.classList.add('hidden'));
 
       if (method === 'DINHEIRO') {
-        document.getElementById('btnMethodDinheiro').classList.add('border-emerald-500', 'bg-emerald-950/40');
         document.getElementById('panelDinheiro').classList.remove('hidden');
-        document.getElementById('cashReceivedInput').value = '';
-        calculateChange();
-      } else if (method === 'PIX' || method === 'CARTAO') {
-        const btnId = method === 'PIX' ? 'btnMethodPix' : 'btnMethodCartao';
-        document.getElementById(btnId).classList.add('border-emerald-500', 'bg-emerald-950/40');
-        const panel = document.getElementById('panelSimple');
-        const icon = document.getElementById('simpleMethodIcon');
-        const text = document.getElementById('simpleMethodText');
-        panel.classList.remove('hidden');
-        if (method === 'PIX') {
-          icon.className = 'fa-solid fa-qrcode text-3xl mb-2 text-amber-400';
-          text.textContent = 'Mostre o QR Code do PIX ao cliente para receber.';
-        } else {
-          icon.className = 'fa-solid fa-credit-card text-3xl mb-2 text-blue-400';
-          text.textContent = 'Aproxime ou insira o cartão na máquina de cartão.';
-        }
-      } else if (method === 'FIADO') {
-        document.getElementById('btnMethodFiado').classList.add('border-emerald-500', 'bg-emerald-950/40');
-        document.getElementById('panelFiado').classList.remove('hidden');
-        checkCustomerDelinquency();
-      } else if (method === 'MISTO') {
-        document.getElementById('btnMethodMisto').classList.add('border-emerald-500', 'bg-emerald-950/40');
-        document.getElementById('panelMisto').classList.remove('hidden');
-        calculateMistoSplit();
+      } else {
+        document.getElementById('panelSimple').classList.remove('hidden');
       }
-    }
-
-    function setFastCash(amount) {
-      document.getElementById('cashReceivedInput').value = amount.toFixed(2);
-      calculateChange();
     }
 
     function calculateChange() {
       const total = getCartTotal();
-      const receivedInput = document.getElementById('cashReceivedInput');
-      const received = parseFloat(receivedInput.value) || 0;
+      const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
       const change = received - total;
       const display = document.getElementById('changeDisplay');
 
-      if (!display) return;
-
-      if (receivedInput.value === '') {
-        display.textContent = `R$ 0,00`;
-        display.className = "text-base font-extrabold text-emerald-400";
-      } else if (change >= 0) {
+      if (change >= 0) {
         display.textContent = `R$ ${change.toFixed(2).replace('.', ',')}`;
         display.className = "text-base font-extrabold text-emerald-400";
       } else {
@@ -822,291 +569,78 @@
       }
     }
 
-    function checkCustomerDelinquency() {
-      const select = document.getElementById('customerSelect');
-      const selectedOpt = select.options[select.selectedIndex];
-      const warning = document.getElementById('overdueWarning');
-      const confirmBtn = document.getElementById('confirmSaleBtn');
-
-      if (!selectedOpt || !selectedOpt.value) {
-        if (warning) warning.classList.add('hidden');
-        return;
-      }
-
-      const isOverdue = selectedOpt.getAttribute('data-overdue') === 'true';
-      const debtAmount = selectedOpt.getAttribute('data-debt');
-
-      if (isOverdue) {
-        document.getElementById('overdueAmount').textContent = `R$ ${parseFloat(debtAmount).toFixed(2).replace('.', ',')}`;
-        if (warning) warning.classList.remove('hidden');
-        isFiadoAuthorized = false;
-        confirmBtn.disabled = true;
-        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      } else {
-        if (warning) warning.classList.add('hidden');
-        isFiadoAuthorized = true;
-        confirmBtn.disabled = false;
-        confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      }
-    }
-
-    function overrideDelinquency(allow) {
-      const confirmBtn = document.getElementById('confirmSaleBtn');
-      if (allow) {
-        isFiadoAuthorized = true;
-        confirmBtn.disabled = false;
-        confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      } else {
-        isFiadoAuthorized = false;
-        confirmBtn.disabled = true;
-        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      }
-    }
-
-    function calculateMistoSplit() {
-      const total = getCartTotal();
-      const part1 = parseFloat(document.getElementById('mistoPart1').value) || 0;
-      const part2 = Math.max(0, total - part1);
-      document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
-    }
-
-    // FINALIZAÇÃO DA VENDA
     function finalizeSale() {
-      try {
-        if (selectedPaymentMethod === 'FIADO') {
-          const select = document.getElementById('customerSelect');
-          if (!select.value) {
-            alert('Por favor, selecione um cliente para a venda no Fiado!');
-            return;
-          }
-          if (!isFiadoAuthorized) {
-            alert('Esta venda necessita de autorização manual para prosseguir.');
-            return;
-          }
-        }
-
-        cart.forEach(item => {
-          const prod = products.find(p => p.id === item.id);
-          if (prod) {
-            prod.stock = Math.max(0, prod.stock - item.qty);
-          }
-        });
-        saveProductsToStorage();
-
-        returnToStandby();
-        showToastSuccess("Venda Concluída com Sucesso!");
-      } catch (err) {
-        console.error('Erro ao finalizar venda:', err);
-        returnToStandby();
-      }
+      cart.forEach(item => {
+        const prod = products.find(p => p.id === item.id);
+        if (prod) prod.stock = Math.max(0, prod.stock - item.qty);
+      });
+      saveProductsToStorage();
+      document.getElementById('paymentModal').classList.add('hidden');
+      returnToStandby();
+      showToastSuccess("Venda Concluída com Sucesso!");
     }
 
-    // GESTÃO DE PRODUTOS
     function renderProductList() {
       const listContainer = document.getElementById('productList');
       const query = (document.getElementById('productSearchInput')?.value || '').toLowerCase();
-
-      const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.barcode.includes(query) || p.category.toLowerCase().includes(query));
+      const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.barcode.includes(query));
 
       if (filtered.length === 0) {
-        listContainer.innerHTML = `
-          <div class="py-8 text-center text-slate-500">
-            <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-700"></i>
-            <p class="text-xs font-medium text-slate-400">Nenhum produto encontrado</p>
-          </div>
-        `;
+        listContainer.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum produto cadastrado</p></div>`;
         return;
       }
 
-      listContainer.innerHTML = filtered.map(p => {
-        const margin = p.cost > 0 ? (((p.price - p.cost) / p.cost) * 100).toFixed(1) : 0;
-        return `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="text-[9px] font-bold text-blue-400 bg-blue-950/80 px-1.5 py-0.5 rounded border border-blue-800/40">${p.category || 'Geral'}</span>
-                <span class="text-[10px] text-slate-500 font-mono">${p.barcode}</span>
-              </div>
-              <h4 class="text-xs font-semibold text-slate-100 truncate">${p.name}</h4>
-              <div class="flex items-center gap-3 mt-1 text-[11px]">
-                <span class="text-slate-400">Estoque: <strong class="${p.stock < 5 ? 'text-rose-400' : 'text-slate-200'}">${p.stock} un</strong></span>
-                <span class="text-slate-400">Custo: <strong class="text-slate-300">R$ ${p.cost.toFixed(2).replace('.', ',')}</strong></span>
-                <span class="text-emerald-400 font-bold">Margem: ${margin}%</span>
-              </div>
-            </div>
-            <div class="flex flex-col items-end gap-1.5 shrink-0">
-              <span class="text-sm font-black text-emerald-400">R$ ${p.price.toFixed(2).replace('.', ',')}</span>
-              <div class="flex items-center gap-1">
-                <button onclick="editProduct('${p.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-lg text-xs transition">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button onclick="deleteProduct('${p.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg text-xs transition">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            </div>
+      listContainer.innerHTML = filtered.map(p => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-500 font-mono">${p.barcode}</span>
+            <h4 class="text-xs font-semibold text-slate-100">${p.name}</h4>
+            <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | R$ ${p.price.toFixed(2).replace('.', ',')}</p>
           </div>
-        `;
-      }).join('');
+          <button onclick="deleteProduct('${p.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `).join('');
     }
 
-    function openProductModal(barcodePreset = '') {
-      editingProductId = null;
-      document.getElementById('productModalTitle').textContent = 'Cadastrar Produto';
-      document.getElementById('duplicateWarning').classList.add('hidden');
-      stopModalCameraScan();
-
-      document.getElementById('prodBarcode').value = barcodePreset;
-      document.getElementById('prodName').value = '';
-      document.getElementById('prodCategory').value = '';
-      document.getElementById('prodStock').value = '';
-      document.getElementById('prodCost').value = '';
-      document.getElementById('prodPrice').value = '';
-      document.getElementById('marginDisplay').textContent = '0,0%';
-
-      if (barcodePreset) {
-        checkBarcodeDuplicate();
-      }
-
+    function openProductModal() {
       document.getElementById('productModal').classList.remove('hidden');
     }
 
     function closeProductModal() {
-      stopModalCameraScan();
       document.getElementById('productModal').classList.add('hidden');
     }
 
-    function editProduct(id) {
-      const p = products.find(prod => prod.id === id);
-      if (!p) return;
-
-      editingProductId = p.id;
-      document.getElementById('productModalTitle').textContent = 'Editar Produto';
-      document.getElementById('duplicateWarning').classList.add('hidden');
-      stopModalCameraScan();
-
-      document.getElementById('prodBarcode').value = p.barcode;
-      document.getElementById('prodName').value = p.name;
-      document.getElementById('prodCategory').value = p.category || '';
-      document.getElementById('prodStock').value = p.stock;
-      document.getElementById('prodCost').value = p.cost.toFixed(2);
-      document.getElementById('prodPrice').value = p.price.toFixed(2);
-
-      calculateMargin();
-      document.getElementById('productModal').classList.remove('hidden');
-    }
-
     function deleteProduct(id) {
-      const p = products.find(prod => prod.id === id);
-      if (!p) return;
-
-      if (confirm(`Tem certeza que deseja excluir o produto "${p.name}"?`)) {
-        products = products.filter(prod => prod.id !== id);
+      if (confirm('Deseja excluir este produto?')) {
+        products = products.filter(p => p.id !== id);
         saveProductsToStorage();
         renderProductList();
-        showToastSuccess('Produto excluído com sucesso!');
-      }
-    }
-
-    function checkBarcodeDuplicate() {
-      if (editingProductId) return;
-
-      const barcode = document.getElementById('prodBarcode').value.trim();
-      const warning = document.getElementById('duplicateWarning');
-      const existing = products.find(p => p.barcode === barcode);
-
-      if (existing) {
-        warning.classList.remove('hidden');
-        document.getElementById('prodName').value = existing.name;
-        document.getElementById('prodCategory').value = existing.category || '';
-      } else {
-        warning.classList.add('hidden');
-      }
-    }
-
-    function calculateMargin() {
-      const cost = parseFloat(document.getElementById('prodCost').value) || 0;
-      const price = parseFloat(document.getElementById('prodPrice').value) || 0;
-      const marginDisplay = document.getElementById('marginDisplay');
-
-      if (cost > 0 && price > 0) {
-        const margin = ((price - cost) / cost) * 100;
-        marginDisplay.textContent = `${margin.toFixed(1)}%`;
-        marginDisplay.className = margin >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
-      } else {
-        marginDisplay.textContent = '0,0%';
-        marginDisplay.className = "font-extrabold text-slate-300";
       }
     }
 
     function handleProductFormSubmit(e) {
       e.preventDefault();
-
-      const barcode = document.getElementById('prodBarcode').value.trim();
-      const name = document.getElementById('prodName').value.trim();
-      const category = document.getElementById('prodCategory').value.trim();
-      const inputStock = parseInt(document.getElementById('prodStock').value) || 0;
-      const inputCost = parseFloat(document.getElementById('prodCost').value) || 0;
-      const inputPrice = parseFloat(document.getElementById('prodPrice').value) || 0;
-
-      const existingIndex = products.findIndex(p => p.barcode === barcode);
-
-      if (editingProductId) {
-        const pIndex = products.findIndex(p => p.id === editingProductId);
-        if (pIndex !== -1) {
-          products[pIndex] = { ...products[pIndex], barcode, name, category, stock: inputStock, cost: inputCost, price: inputPrice };
-        }
-      } else if (existingIndex !== -1) {
-        const currentProd = products[existingIndex];
-        const currentStock = currentProd.stock;
-        const currentCost = currentProd.cost;
-
-        const totalStock = currentStock + inputStock;
-        let weightedCost = inputCost;
-
-        if (totalStock > 0) {
-          weightedCost = ((currentStock * currentCost) + (inputStock * inputCost)) / totalStock;
-        }
-
-        products[existingIndex] = {
-          ...currentProd,
-          name,
-          category,
-          stock: totalStock,
-          cost: parseFloat(weightedCost.toFixed(2)),
-          price: inputPrice
-        };
-
-        alert(`Entrada realizada! Novo estoque: ${totalStock} un | Custo Médio Ponderado: R$ ${weightedCost.toFixed(2).replace('.', ',')}`);
-      } else {
-        const newProduct = {
-          id: Date.now().toString(),
-          barcode,
-          name,
-          category,
-          stock: inputStock,
-          cost: inputCost,
-          price: inputPrice
-        };
-        products.push(newProduct);
-      }
-
+      const newProduct = {
+        id: Date.now().toString(),
+        barcode: document.getElementById('prodBarcode').value.trim(),
+        name: document.getElementById('prodName').value.trim(),
+        category: document.getElementById('prodCategory').value.trim(),
+        stock: parseInt(document.getElementById('prodStock').value) || 0,
+        cost: parseFloat(document.getElementById('prodCost').value) || 0,
+        price: parseFloat(document.getElementById('prodPrice').value) || 0
+      };
+      products.push(newProduct);
       saveProductsToStorage();
       closeProductModal();
       renderProductList();
-      showToastSuccess('Produto salvo com sucesso!');
+      showToastSuccess('Produto cadastrado com sucesso!');
     }
 
     function showToastSuccess(msg) {
       const toast = document.getElementById('toastSuccess');
-      const message = document.getElementById('toastMessage');
-      if (message) message.textContent = msg || 'Operação realizada com sucesso!';
-      if (toast) {
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-          toast.classList.add('hidden');
-        }, 2500);
-      }
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2500);
     }
   </script>
 </body>
