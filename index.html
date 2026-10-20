@@ -73,7 +73,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v1.3.1</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v1.3.2</span></h1>
           <p class="text-xs text-slate-400">Operação de Vendas Rápidas</p>
         </div>
       </div>
@@ -103,7 +103,7 @@
     </section>
 
     <!-- ESTADO 2: TELA ATIVA DE OPERAÇÃO DE CAIXA -->
-    <div id="activeSaleScreen" class="hidden flex flex-col gap-4 flex-1">
+    <div id="activeSaleScreen" style="display: none;" class="flex-col gap-4 flex-1">
       
       <!-- CAMERA SCANNER CARD -->
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
@@ -185,7 +185,7 @@
   </main>
 
   <!-- ELEVATED FIXED BOTTOM ACTION BAR -->
-  <div id="bottomActionBar" class="hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
+  <div id="bottomActionBar" style="display: none;" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
     <div class="max-w-md mx-auto flex items-center justify-between gap-3 mb-2">
       <div>
         <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
@@ -349,9 +349,13 @@
 
     // CONTROLE RIGOROSO DE ESTADOS DO CAIXA
     function startNewSale() {
-      document.getElementById('standbyScreen').classList.add('hidden');
-      document.getElementById('activeSaleScreen').classList.remove('hidden');
-      document.getElementById('bottomActionBar').classList.remove('hidden');
+      const standbyScreen = document.getElementById('standbyScreen');
+      const activeSaleScreen = document.getElementById('activeSaleScreen');
+      const bottomActionBar = document.getElementById('bottomActionBar');
+
+      standbyScreen.style.display = 'none';
+      activeSaleScreen.style.display = 'flex';
+      bottomActionBar.style.display = 'block';
 
       const statusBadge = document.getElementById('statusBadge');
       statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Em Venda</span>`;
@@ -369,15 +373,17 @@
       clearLastScannedCard();
       renderCart();
 
-      // Pausa câmara obrigatoriamente
+      // Pausa câmara
       toggleCameraState(false);
 
-      // Oculta completamente a tela de venda e rodapé
-      document.getElementById('activeSaleScreen').classList.add('hidden');
-      document.getElementById('bottomActionBar').classList.add('hidden');
-      
-      // Exibe obrigatoriamente a tela Standby com o botão Iniciar
-      document.getElementById('standbyScreen').classList.remove('hidden');
+      const standbyScreen = document.getElementById('standbyScreen');
+      const activeSaleScreen = document.getElementById('activeSaleScreen');
+      const bottomActionBar = document.getElementById('bottomActionBar');
+
+      // Força a troca de visibilidade via style.display
+      activeSaleScreen.style.display = 'none';
+      bottomActionBar.style.display = 'none';
+      standbyScreen.style.display = 'flex';
 
       const statusBadge = document.getElementById('statusBadge');
       statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Caixa Livre</span>`;
@@ -533,8 +539,7 @@
 
     function closePaymentModal() {
       document.getElementById('paymentModal').classList.add('hidden');
-      // Se apenas fechar sem finalizar, mantém na venda
-      if (document.getElementById('activeSaleScreen').classList.contains('hidden') === false) {
+      if (document.getElementById('activeSaleScreen').style.display !== 'none') {
         toggleCameraState(true);
       }
     }
@@ -622,7 +627,7 @@
       }
     }
 
-    function overrideDelinquency(allow) {
+    overrideDelinquency = function(allow) {
       const confirmBtn = document.getElementById('confirmSaleBtn');
       if (allow) {
         isFiadoAuthorized = true;
@@ -642,7 +647,7 @@
       document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
     }
 
-    // FINALIZAÇÃO DE VENDA COM RETORNO OBRIGATÓRIO PARA STANDBY
+    // FINALIZAÇÃO DE VENDA E RETORNO PARA STANDBY
     function finalizeSale() {
       if (selectedPaymentMethod === 'FIADO') {
         const select = document.getElementById('customerSelect');
@@ -659,7 +664,7 @@
       // 1. FECHA O MODAL DE PAGAMENTO
       document.getElementById('paymentModal').classList.add('hidden');
 
-      // 2. RETORNA OBRIGATORIAMENTE PARA A TELA DE REPOUSO (STANDBY)
+      // 2. RETORNA PARA STANDBY
       returnToStandby();
 
       // 3. MOSTRA A NOTIFICAÇÃO DE SUCESSO
