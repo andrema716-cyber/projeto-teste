@@ -73,7 +73,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.0</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.2</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
@@ -361,7 +361,7 @@
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO / ENTRADA DE ESTOQUE -->
+  <!-- MODAL: CADASTRO DE PRODUTO COM LEITOR ACOPLADO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       
@@ -387,11 +387,23 @@
           </div>
         </div>
 
+        <!-- CÓDIGO DE BARRAS COM LEITOR DE CÂMARA -->
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Código de Barras *</label>
           <div class="flex gap-2">
             <input type="text" id="prodBarcode" required oninput="checkBarcodeDuplicate()" placeholder="Bipe ou digite o código..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <button type="button" onclick="startModalCameraScan()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-900/20 shrink-0">
+              <i class="fa-solid fa-camera"></i>
+              <span>Bipar</span>
+            </button>
           </div>
+        </div>
+
+        <!-- MINI CONTAINER DA CÂMARA NO MODAL -->
+        <div id="modalScannerBox" class="hidden relative w-full h-36 bg-black rounded-xl overflow-hidden border border-blue-500/50">
+          <video id="modalWebcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+          <div class="scanner-overlay"><div class="scanner-laser"></div></div>
+          <button type="button" onclick="stopModalCameraScan()" class="absolute top-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg z-20">Fechar Câmara</button>
         </div>
 
         <div>
@@ -440,7 +452,6 @@
 
   <!-- JAVASCRIPT ENGINE (MÓDULO 2) -->
   <script>
-    // ARMAZENAMENTO EM LOCALSTORAGE
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
       { id: '1', barcode: '7891000100100', name: 'Arroz Tipo 1 - 5kg', category: 'Mercearia', stock: 20, cost: 18.00, price: 24.90 },
@@ -454,6 +465,7 @@
     let selectedPaymentMethod = null;
     let isFiadoAuthorized = false;
     let editingProductId = null;
+    let modalStream = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       saveProductsToStorage();
@@ -465,7 +477,7 @@
       localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
     }
 
-    // TROCA DE ABAS (CAIXA / PRODUTOS)
+    // TROCA DE ABAS
     function switchTab(tab) {
       const posContent = document.getElementById('tabPosContent');
       const productsContent = document.getElementById('tabProductsContent');
@@ -532,13 +544,13 @@
       returnToStandby();
     }
 
-    // LEITOR DE CÂMARA
+    // CÂMARA PRINCIPAL DO CAIXA
     function initCamera() {
       const video = document.getElementById('webcamVideo');
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
           .then(stream => { video.srcObject = stream; })
-          .catch(err => { console.log('Câmara indisponível no ambiente de testes'); });
+          .catch(err => { console.log('Câmara indisponível'); });
       }
     }
 
@@ -568,6 +580,49 @@
         }
         if (btnText) btnText.textContent = "Ligar Leitor";
         if (btnIcon) btnIcon.className = "fa-solid fa-play mr-1";
+      }
+    }
+
+    // CÂMARA LEITORA ROBUSTA NO MODAL DE CADASTRO
+    function startModalCameraScan() {
+      const box = document.getElementById('modalScannerBox');
+      const video = document.getElementById('modalWebcamVideo');
+      
+      // Remove o hidden primeiro para que o elemento video exista e receba o stream
+      box.classList.remove('hidden');
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        })
+        .then(stream => {
+          modalStream = stream;
+          video.srcObject = stream;
+          video.play().catch(e => console.log("Autoplay prevent:", e));
+        })
+        .catch(err => {
+          console.error("Erro na câmara do modal:", err);
+          alert('Não foi possível acessar a câmara. Verifique as permissões do navegador.');
+          box.classList.add('hidden');
+        });
+      } else {
+        alert('Seu navegador não suporta acesso à câmara.');
+      }
+    }
+
+    function stopModalCameraScan() {
+      const box = document.getElementById('modalScannerBox');
+      const video = document.getElementById('modalWebcamVideo');
+      
+      if (modalStream) {
+        modalStream.getTracks().forEach(track => track.stop());
+        modalStream = null;
+      }
+      if (video) {
+        video.srcObject = null;
+      }
+      if (box) {
+        box.classList.add('hidden');
       }
     }
 
@@ -802,7 +857,7 @@
       document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
     }
 
-    // FINALIZAÇÃO DA VENDA E ABATIMENTO DE ESTOQUE
+    // FINALIZAÇÃO DA VENDA
     function finalizeSale() {
       try {
         if (selectedPaymentMethod === 'FIADO') {
@@ -817,7 +872,6 @@
           }
         }
 
-        // Abate do estoque dos produtos
         cart.forEach(item => {
           const prod = products.find(p => p.id === item.id);
           if (prod) {
@@ -834,7 +888,7 @@
       }
     }
 
-    // MÓDULO 2: GESTÃO DE PRODUTOS & CUSTO MÉDIO PONDERADO
+    // GESTÃO DE PRODUTOS
     function renderProductList() {
       const listContainer = document.getElementById('productList');
       const query = (document.getElementById('productSearchInput')?.value || '').toLowerCase();
@@ -887,7 +941,8 @@
       editingProductId = null;
       document.getElementById('productModalTitle').textContent = 'Cadastrar Produto';
       document.getElementById('duplicateWarning').classList.add('hidden');
-      
+      stopModalCameraScan();
+
       document.getElementById('prodBarcode').value = barcodePreset;
       document.getElementById('prodName').value = '';
       document.getElementById('prodCategory').value = '';
@@ -904,6 +959,7 @@
     }
 
     function closeProductModal() {
+      stopModalCameraScan();
       document.getElementById('productModal').classList.add('hidden');
     }
 
@@ -914,6 +970,7 @@
       editingProductId = p.id;
       document.getElementById('productModalTitle').textContent = 'Editar Produto';
       document.getElementById('duplicateWarning').classList.add('hidden');
+      stopModalCameraScan();
 
       document.getElementById('prodBarcode').value = p.barcode;
       document.getElementById('prodName').value = p.name;
@@ -939,7 +996,7 @@
     }
 
     function checkBarcodeDuplicate() {
-      if (editingProductId) return; // Em modo edição não mostra aviso de duplicado
+      if (editingProductId) return;
 
       const barcode = document.getElementById('prodBarcode').value.trim();
       const warning = document.getElementById('duplicateWarning');
@@ -982,13 +1039,11 @@
       const existingIndex = products.findIndex(p => p.barcode === barcode);
 
       if (editingProductId) {
-        // Atualização Direta do Produto
         const pIndex = products.findIndex(p => p.id === editingProductId);
         if (pIndex !== -1) {
           products[pIndex] = { ...products[pIndex], barcode, name, category, stock: inputStock, cost: inputCost, price: inputPrice };
         }
       } else if (existingIndex !== -1) {
-        // RECALCULA PELO CUSTO MÉDIO PONDERADO
         const currentProd = products[existingIndex];
         const currentStock = currentProd.stock;
         const currentCost = currentProd.cost;
@@ -1011,7 +1066,6 @@
 
         alert(`Entrada realizada! Novo estoque: ${totalStock} un | Custo Médio Ponderado: R$ ${weightedCost.toFixed(2).replace('.', ',')}`);
       } else {
-        // Novo Produto
         const newProduct = {
           id: Date.now().toString(),
           barcode,
