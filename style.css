@@ -503,6 +503,24 @@ th {
   align-items: center;
 }
 
+.tag-cat {
+  font-size: 0.7rem;
+  background: #334155;
+  color: #38bdf8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.btn-edit-cat {
+  background: transparent;
+  border: none;
+  color: #f59e0b;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-left: 0.3rem;
+}
+
 .status-debito {
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
@@ -530,13 +548,4 @@ th {
   cursor: pointer;
   font-size: 0.8rem;
   margin-left: 5px;
-}
-
-.item-historico-cliente {
-  border-bottom: 1px solid #334155;
-  padding: 0.6rem 0;
-}
-
-.item-historico-cliente:last-child {
-  border-bottom: none;
 }
