@@ -344,7 +344,7 @@
     let isFiadoAuthorized = false;
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Inicia no modo Standby
+      // Inicia obrigatoriamente no modo Standby
       returnToStandby();
     });
 
@@ -371,8 +371,10 @@
       clearLastScannedCard();
       renderCart();
 
+      // Pausa a câmara na tela de repouso
       toggleCameraState(false);
 
+      // Alterna as visibilidades das telas
       document.getElementById('activeSaleScreen').classList.add('hidden');
       document.getElementById('bottomActionBar').classList.add('hidden');
       document.getElementById('standbyScreen').classList.remove('hidden');
@@ -637,7 +639,7 @@
       document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
     }
 
-    // FINALIZAÇÃO DE VENDA COM RETORNO À TELA INICIAL
+    // FINALIZAÇÃO DE VENDA E RETORNO OBRIGATÓRIO PARA STANDBY
     function finalizeSale() {
       if (selectedPaymentMethod === 'FIADO') {
         const select = document.getElementById('customerSelect');
@@ -651,14 +653,14 @@
         }
       }
 
-      // 1. FECHA O MODAL IMEDIATAMENTE
+      // 1. FECHA O MODAL DE PAGAMENTO
       document.getElementById('paymentModal').classList.add('hidden');
 
-      // 2. EXIBE NOTIFICAÇÃO DE SUCESSO
-      showToastSuccess();
-
-      // 3. RETORNA À TELA INICIAL LIMPA
+      // 2. RETORNA OBRIGATORIAMENTE PARA A TELA DE REPOUSO (STANDBY)
       returnToStandby();
+
+      // 3. MOSTRA A NOTIFICAÇÃO DE SUCESSO
+      showToastSuccess();
     }
 
     function showToastSuccess() {
