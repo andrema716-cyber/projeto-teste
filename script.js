@@ -1,4 +1,3 @@
-// Dados em LocalStorage
 let produtos = JSON.parse(localStorage.getItem('produtos_pdv')) || [
   { codigo: '123', nome: 'Produto Exemplo', custo: 5.00, preco: 10.50, foto: 'https://via.placeholder.com/150?text=Exemplo' }
 ];
@@ -11,39 +10,39 @@ let carrinho = [];
 let codeReader = null;
 let fotoBase64Temp = '';
 let formaPagamentoSelecionada = 'dinheiro';
+let qtdMultiplicador = 1;
+let periodoFiltroAtual = 'hoje';
+let clienteSelecionadoBaixaIdx = null;
 
-// Áudio Bip Gerado via Web Audio API
+// Som de Bip
 function tocarSomBip() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(1800, audioCtx.currentTime); // Frequência do Bip
+    osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.08); // Duração de 80ms
+    osc.stop(audioCtx.currentTime + 0.08);
   } catch (e) {
-    console.error('Erro ao tocar áudio:', e);
+    console.error(e);
   }
 }
 
-// Elementos Globais
+// Elementos
 const btnMenu = document.getElementById('btnMenu');
 const dropdownMenu = document.getElementById('dropdownMenu');
 const menuItems = document.querySelectorAll('.menu-item');
 const secoes = document.querySelectorAll('.aba-conteudo');
 
-// Seção Caixa e Modal
 const btnIniciarVenda = document.getElementById('btnIniciarVenda');
 const btnCancelarVenda = document.getElementById('btnCancelarVenda');
 const codigoInput = document.getElementById('codigoBarrasInput');
 const btnAdicionarManual = document.getElementById('btnAdicionarManual');
+const btnsQtd = document.querySelectorAll('.btn-qtd');
 
 const destaqueImg = document.getElementById('destaqueImg');
 const destaqueNome = document.getElementById('destaqueNome');
@@ -66,7 +65,13 @@ const boxPrazo = document.getElementById('boxPrazo');
 const selectClientePrazo = document.getElementById('selectClientePrazo');
 const infoVencimentoPrazo = document.getElementById('infoVencimentoPrazo');
 
-// Formulários
+const modalBaixaFiado = document.getElementById('modalBaixaFiado');
+const nomeClienteBaixa = document.getElementById('nomeClienteBaixa');
+const dividaAtualCliente = document.getElementById('dividaAtualCliente');
+const valorBaixaInput = document.getElementById('valorBaixaInput');
+const btnConfirmarBaixa = document.getElementById('btnConfirmarBaixa');
+const btnCancelarBaixa = document.getElementById('btnCancelarBaixa');
+
 const formCadastro = document.getElementById('formCadastro');
 const cadFotoArquivo = document.getElementById('cadFotoArquivo');
 const previewFotoContainer = document.getElementById('previewFotoContainer');
@@ -80,25 +85,23 @@ const listaClientesCadastrados = document.getElementById('listaClientesCadastrad
 const relFaturamento = document.getElementById('relFaturamento');
 const relLucro = document.getElementById('relLucro');
 const listaHistoricoVendas = document.getElementById('listaHistoricoVendas');
+const btnsFiltro = document.querySelectorAll('.btn-filtro');
 
 const cfgChavePix = document.getElementById('cfgChavePix');
 const btnSalvarConfig = document.getElementById('btnSalvarConfig');
 
-// Menu Dropdown
+// Menu
 if (btnMenu && dropdownMenu) {
   btnMenu.addEventListener('click', (e) => {
     e.stopPropagation();
     dropdownMenu.classList.toggle('show');
   });
-
   document.addEventListener('click', () => dropdownMenu.classList.remove('show'));
 }
 
-// Navegação
 menuItems.forEach(item => {
   item.addEventListener('click', () => {
-    const targetId = item.getAttribute('data-target');
-    navegarPara(targetId);
+    navegarPara(item.getAttribute('data-target'));
     dropdownMenu.classList.remove('show');
   });
 });
@@ -108,17 +111,23 @@ function navegarPara(secaoId) {
   const target = document.getElementById(secaoId);
   if (target) target.classList.add('active');
 
-  if (secaoId !== 'secaoCaixa') {
-    pararCamera();
-  }
-
+  if (secaoId !== 'secaoCaixa') pararCamera();
   if (secaoId === 'secaoCadastro') atualizarListaCadastrados();
   if (secaoId === 'secaoClientes') atualizarListaClientes();
   if (secaoId === 'secaoHistorico') atualizarHistoricoERelatorios();
   if (secaoId === 'secaoConfig' && cfgChavePix) cfgChavePix.value = chavePixConfig;
 }
 
-// Iniciar e Parar Venda
+// Multiplicador de Quantidade Antes de Bipar
+btnsQtd.forEach(b => {
+  b.addEventListener('click', () => {
+    btnsQtd.forEach(btn => btn.classList.remove('active'));
+    b.classList.add('active');
+    qtdMultiplicador = parseInt(b.getAttribute('data-qtd'));
+  });
+});
+
+// Vendas
 if (btnIniciarVenda) {
   btnIniciarVenda.addEventListener('click', () => {
     navegarPara('secaoCaixa');
@@ -128,9 +137,7 @@ if (btnIniciarVenda) {
 
 if (btnCancelarVenda) {
   btnCancelarVenda.addEventListener('click', () => {
-    if (carrinho.length > 0) {
-      if (!confirm('Deseja cancelar a venda atual?')) return;
-    }
+    if (carrinho.length > 0 && !confirm('Deseja cancelar a venda atual?')) return;
     carrinho = [];
     atualizarCarrinhoGUI();
     navegarPara('secaoInicio');
@@ -139,10 +146,8 @@ if (btnCancelarVenda) {
 
 function iniciarCamera() {
   codeReader = new ZXing.BrowserMultiFormatReader();
-  codeReader.decodeFromVideoDevice(null, 'videoCamera', (result, err) => {
-    if (result) {
-      adicionarAoCarrinho(result.text);
-    }
+  codeReader.decodeFromVideoDevice(null, 'videoCamera', (result) => {
+    if (result) adicionarAoCarrinho(result.text);
   }).catch(err => console.error(err));
 }
 
@@ -153,7 +158,6 @@ function pararCamera() {
   }
 }
 
-// Entrada Manual
 if (codigoInput) {
   codigoInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -170,27 +174,27 @@ if (btnAdicionarManual) {
   });
 }
 
-// Adicionar Item e Bipar
 function adicionarAoCarrinho(codigo) {
   if (!codigo) return;
-
   const produto = produtos.find(p => p.codigo === codigo);
-
   if (!produto) {
     alert('Produto não encontrado!');
     return;
   }
 
-  // Tocar Som de Bip ao Registrar
   tocarSomBip();
-
   if (destaqueImg) destaqueImg.src = produto.foto;
   if (destaqueNome) destaqueNome.textContent = produto.nome;
   if (destaquePreco) destaquePreco.textContent = produto.preco.toFixed(2);
 
+  const qtdAdicionar = qtdMultiplicador;
+  // Reseta para 1 após bipar
+  qtdMultiplicador = 1;
+  btnsQtd.forEach(b => b.classList.toggle('active', b.getAttribute('data-qtd') === '1'));
+
   const itemExistente = carrinho.find(item => item.codigo === codigo);
   if (itemExistente) {
-    itemExistente.qtd += 1;
+    itemExistente.qtd += qtdAdicionar;
     itemExistente.subtotal = itemExistente.qtd * itemExistente.preco;
   } else {
     carrinho.push({
@@ -198,8 +202,8 @@ function adicionarAoCarrinho(codigo) {
       nome: produto.nome,
       custo: produto.custo || (produto.preco * 0.6),
       preco: produto.preco,
-      qtd: 1,
-      subtotal: produto.preco
+      qtd: qtdAdicionar,
+      subtotal: qtdAdicionar * produto.preco
     });
   }
 
@@ -216,7 +220,6 @@ function alterarQuantidade(codigo, delta) {
   } else {
     item.subtotal = item.qtd * item.preco;
   }
-
   atualizarCarrinhoGUI();
 }
 
@@ -256,12 +259,11 @@ function atualizarCarrinhoGUI() {
 
 if (btnVerItens && painelCarrinho) {
   btnVerItens.addEventListener('click', () => {
-    const visivel = painelCarrinho.style.display === 'block';
-    painelCarrinho.style.display = visivel ? 'none' : 'block';
+    painelCarrinho.style.display = painelCarrinho.style.display === 'block' ? 'none' : 'block';
   });
 }
 
-// Modal de Pagamento
+// Pagamento
 if (btnAbrirPagamento) {
   btnAbrirPagamento.addEventListener('click', () => {
     if (carrinho.length === 0) {
@@ -275,9 +277,7 @@ if (btnAbrirPagamento) {
 }
 
 if (btnCancelarPagamento) {
-  btnCancelarPagamento.addEventListener('click', () => {
-    modalPagamento.style.display = 'none';
-  });
+  btnCancelarPagamento.addEventListener('click', () => modalPagamento.style.display = 'none');
 }
 
 btnsPagamento.forEach(btn => {
@@ -296,8 +296,7 @@ function selecionarFormaPagamento(forma) {
   if (forma === 'pix') {
     const qrcodeDiv = document.getElementById('qrcode');
     qrcodeDiv.innerHTML = '';
-    const payloadPix = `PIX - Valor: R$ ${valorTotalEl.textContent} - Chave: ${chavePixConfig}`;
-    new QRCode(qrcodeDiv, { text: payloadPix, width: 128, height: 128 });
+    new QRCode(qrcodeDiv, { text: `PIX Valor: R$ ${valorTotalEl.textContent} Chave: ${chavePixConfig}`, width: 128, height: 128 });
   }
 
   if (forma === 'prazo') {
@@ -308,7 +307,6 @@ function selecionarFormaPagamento(forma) {
       opt.textContent = `${cli.nome} (Venc: dia ${cli.diaVencimento})`;
       selectClientePrazo.appendChild(opt);
     });
-
     atualizarInfoPrazo();
     selectClientePrazo.onchange = atualizarInfoPrazo;
   }
@@ -316,26 +314,19 @@ function selecionarFormaPagamento(forma) {
 
 function calcularDataVencimento(diaVenc) {
   const hoje = new Date();
-  let mesVenc = hoje.getMonth() + 1; // Próximo mês
+  let mesVenc = hoje.getMonth() + 1;
   let anoVenc = hoje.getFullYear();
-
-  if (mesVenc > 11) {
-    mesVenc = 0;
-    anoVenc += 1;
-  }
-
+  if (mesVenc > 11) { mesVenc = 0; anoVenc += 1; }
   return `${diaVenc.toString().padStart(2, '0')}/${(mesVenc + 1).toString().padStart(2, '0')}/${anoVenc}`;
 }
 
 function atualizarInfoPrazo() {
   const cliIdx = selectClientePrazo.value;
   if (clientes[cliIdx]) {
-    const dataVencStr = calcularDataVencimento(clientes[cliIdx].diaVencimento);
-    infoVencimentoPrazo.textContent = `Vencimento do Fiado: ${dataVencStr}`;
+    infoVencimentoPrazo.textContent = `Vencimento do Fiado: ${calcularDataVencimento(clientes[cliIdx].diaVencimento)}`;
   }
 }
 
-// Finalizar Venda Definitiva
 if (btnConfirmarPagamento) {
   btnConfirmarPagamento.addEventListener('click', () => {
     const totalVenda = parseFloat(valorTotalEl.textContent);
@@ -347,25 +338,19 @@ if (btnConfirmarPagamento) {
 
     if (formaPagamentoSelecionada === 'prazo') {
       const cliIdx = selectClientePrazo.value;
-      if (!clientes[cliIdx]) {
-        alert('Cadastre um cliente primeiro!');
-        return;
-      }
+      if (!clientes[cliIdx]) { alert('Cadastre um cliente primeiro!'); return; }
       const cli = clientes[cliIdx];
       clienteNome = cli.nome;
       dataVencFiado = calcularDataVencimento(cli.diaVencimento);
 
       cli.saldoDevedor = (cli.saldoDevedor || 0) + totalVenda;
       cli.historico = cli.historico || [];
-      cli.historico.push({
-        data: new Date().toLocaleDateString('pt-BR'),
-        valor: totalVenda,
-        vencimento: dataVencFiado
-      });
+      cli.historico.push({ data: new Date().toISOString(), tipo: 'Compra Fiado', valor: totalVenda });
       localStorage.setItem('clientes_pdv', JSON.stringify(clientes));
     }
 
     const venda = {
+      dataISO: new Date().toISOString(),
       data: new Date().toLocaleDateString('pt-BR'),
       hora: new Date().toLocaleTimeString('pt-BR'),
       itens: carrinho,
@@ -379,27 +364,70 @@ if (btnConfirmarPagamento) {
     historicoVendas.push(venda);
     localStorage.setItem('historico_pdv', JSON.stringify(historicoVendas));
 
-    // Opção Cupom WhatsApp
-    let mensagemCupom = `*--- CUPOM DE COMPRA ---*\nCliente: ${clienteNome}\n`;
-    carrinho.forEach(i => mensagemCupom += `${i.qtd}x ${i.nome} - R$ ${i.subtotal.toFixed(2)}\n`);
-    mensagemCupom += `*TOTAL: R$ ${totalVenda.toFixed(2)}*\nPagamento: ${formaPagamentoSelecionada.toUpperCase()}\n`;
-    if (dataVencFiado) mensagemCupom += `Vencimento: ${dataVencFiado}\n`;
-    mensagemCupom += `Obrigado pela preferência!`;
-
     modalPagamento.style.display = 'none';
-
-    if (confirm(`Venda finalizada com sucesso!\n\nDeseja enviar o cupom para o WhatsApp?`)) {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensagemCupom)}`, '_blank');
-    }
-
     carrinho = [];
     atualizarCarrinhoGUI();
     if (painelCarrinho) painelCarrinho.style.display = 'none';
     navegarPara('secaoInicio');
+    alert('Venda finalizada com sucesso!');
   });
 }
 
-// Cadastro Foto Galeria
+// Quitação de Débito (Baixa de Fiado)
+function abrirModalBaixa(cliIdx) {
+  clienteSelecionadoBaixaIdx = cliIdx;
+  const cli = clientes[cliIdx];
+  nomeClienteBaixa.textContent = cli.nome;
+  dividaAtualCliente.textContent = (cli.saldoDevedor || 0).toFixed(2);
+  valorBaixaInput.value = '';
+  modalBaixaFiado.style.display = 'flex';
+}
+
+if (btnCancelarBaixa) {
+  btnCancelarBaixa.addEventListener('click', () => modalBaixaFiado.style.display = 'none');
+}
+
+if (btnConfirmarBaixa) {
+  btnConfirmarBaixa.addEventListener('click', () => {
+    const valorBaixa = parseFloat(valorBaixaInput.value);
+    if (isNaN(valorBaixa) || valorBaixa <= 0) {
+      alert('Digite um valor válido!');
+      return;
+    }
+
+    const cli = clientes[clienteSelecionadoBaixaIdx];
+    if (valorBaixa > cli.saldoDevedor) {
+      alert('O valor da baixa não pode ser maior que a dívida atual.');
+      return;
+    }
+
+    cli.saldoDevedor -= valorBaixa;
+    cli.historico = cli.historico || [];
+    cli.historico.push({ data: new Date().toISOString(), tipo: 'Pagamento Débito', valor: -valorBaixa });
+    localStorage.setItem('clientes_pdv', JSON.stringify(clientes));
+
+    // Registrar entrada no histórico de faturamento/caixa
+    const baixaHistorico = {
+      dataISO: new Date().toISOString(),
+      data: new Date().toLocaleDateString('pt-BR'),
+      hora: new Date().toLocaleTimeString('pt-BR'),
+      itens: [],
+      total: valorBaixa,
+      custo: 0,
+      lucro: valorBaixa,
+      formaPagamento: 'quitação fiado',
+      cliente: cli.nome
+    };
+    historicoVendas.push(baixaHistorico);
+    localStorage.setItem('historico_pdv', JSON.stringify(historicoVendas));
+
+    modalBaixaFiado.style.display = 'none';
+    alert('Baixa de fiado registrada com sucesso!');
+    atualizarListaClientes();
+  });
+}
+
+// Cadastro Foto
 if (cadFotoArquivo) {
   cadFotoArquivo.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -415,7 +443,6 @@ if (cadFotoArquivo) {
   });
 }
 
-// Salvar Produto
 if (formCadastro) {
   formCadastro.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -428,16 +455,15 @@ if (formCadastro) {
     const index = produtos.findIndex(p => p.codigo === codigo);
     if (index !== -1) {
       produtos[index] = { codigo, nome, custo, preco, foto };
-      alert('Produto atualizado!');
     } else {
       produtos.push({ codigo, nome, custo, preco, foto });
-      alert('Produto cadastrado!');
     }
 
     localStorage.setItem('produtos_pdv', JSON.stringify(produtos));
     formCadastro.reset();
     fotoBase64Temp = '';
     if (previewFotoContainer) previewFotoContainer.style.display = 'none';
+    alert('Produto salvo!');
     atualizarListaCadastrados();
   });
 }
@@ -460,7 +486,7 @@ function atualizarListaCadastrados() {
   });
 }
 
-// Cadastro de Cliente
+// Cliente
 if (formCliente) {
   formCliente.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -471,7 +497,7 @@ if (formCliente) {
     clientes.push({ nome, telefone, diaVencimento, saldoDevedor: 0, historico: [] });
     localStorage.setItem('clientes_pdv', JSON.stringify(clientes));
     formCliente.reset();
-    alert('Cliente cadastrado com sucesso!');
+    alert('Cliente cadastrado!');
     atualizarListaClientes();
   });
 }
@@ -479,10 +505,9 @@ if (formCliente) {
 function atualizarListaClientes() {
   if (!listaClientesCadastrados) return;
   listaClientesCadastrados.innerHTML = '';
-
   const diaAtual = new Date().getDate();
 
-  clientes.forEach(cli => {
+  clientes.forEach((cli, idx) => {
     const temDebito = (cli.saldoDevedor || 0) > 0;
     const atrasado = temDebito && (diaAtual > cli.diaVencimento);
     
@@ -492,22 +517,48 @@ function atualizarListaClientes() {
         <strong>${cli.nome}</strong> (Venc: dia ${cli.diaVencimento})
         <div style="font-size:0.8rem; color:#94a3b8;">Débito: R$ ${(cli.saldoDevedor || 0).toFixed(2)}</div>
       </div>
-      <div>
-        ${temDebito ? `<span class="status-debito ${atrasado ? 'atrasado' : 'emdia'}">${atrasado ? '⚠️ Atrasado' : '✅ Em dia'}</span>` : '<span class="status-debito emdia">Sem Débitos</span>'}
+      <div style="display:flex; align-items:center; gap: 5px;">
+        ${temDebito ? `<span class="status-debito ${atrasado ? 'atrasado' : 'emdia'}">${atrasado ? '⚠️ Atrasado' : '✅ Em dia'}</span>` : '<span class="status-debito emdia">Em dia</span>'}
+        ${temDebito ? `<button class="btn-baixa" onclick="abrirModalBaixa(${idx})">Pagar</button>` : ''}
       </div>
     `;
     listaClientesCadastrados.appendChild(li);
   });
 }
 
-// Relatórios Financeiros
+// Filtros do Histórico
+btnsFiltro.forEach(b => {
+  b.addEventListener('click', () => {
+    btnsFiltro.forEach(btn => btn.classList.remove('active'));
+    b.classList.add('active');
+    periodoFiltroAtual = b.getAttribute('data-periodo');
+    atualizarHistoricoERelatorios();
+  });
+});
+
 function atualizarHistoricoERelatorios() {
   let fat = 0;
   let luc = 0;
-
   if (listaHistoricoVendas) listaHistoricoVendas.innerHTML = '';
 
-  historicoVendas.forEach(v => {
+  const hojeStr = new Date().toDateString();
+
+  const vendasFiltradas = historicoVendas.filter(v => {
+    const dataVenda = new Date(v.dataISO);
+    if (periodoFiltroAtual === 'hoje') {
+      return dataVenda.toDateString() === hojeStr;
+    } else if (periodoFiltroAtual === 'semana') {
+      const umDia = 24 * 60 * 60 * 1000;
+      const diff = Math.abs(new Date() - dataVenda);
+      return diff <= (7 * umDia);
+    } else if (periodoFiltroAtual === 'mes') {
+      const agora = new Date();
+      return dataVenda.getMonth() === agora.getMonth() && dataVenda.getFullYear() === agora.getFullYear();
+    }
+    return true; // todos
+  });
+
+  vendasFiltradas.forEach(v => {
     fat += v.total;
     luc += v.lucro;
 
@@ -528,7 +579,6 @@ function atualizarHistoricoERelatorios() {
   if (relLucro) relLucro.textContent = luc.toFixed(2);
 }
 
-// Configurações
 if (btnSalvarConfig) {
   btnSalvarConfig.addEventListener('click', () => {
     chavePixConfig = cfgChavePix.value.trim();
