@@ -128,7 +128,6 @@ body {
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Painel de Quantidade Rápida */
 .card-qtd-rapida {
   background: #1e293b;
   padding: 0.8rem 1rem;
@@ -182,6 +181,10 @@ body {
   text-transform: uppercase;
 }
 
+.status-camera.aguardando {
+  color: #f59e0b;
+}
+
 .btn-sair-venda {
   background: #ef4444;
   color: #fff;
@@ -218,6 +221,11 @@ body {
   background: #ef4444;
   box-shadow: 0 0 8px #ef4444;
   transform: translateY(-50%);
+}
+
+.mira-scanner.bloqueada {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
 }
 
 .input-barcode-group {
@@ -522,4 +530,13 @@ th {
   cursor: pointer;
   font-size: 0.8rem;
   margin-left: 5px;
+}
+
+.item-historico-cliente {
+  border-bottom: 1px solid #334155;
+  padding: 0.6rem 0;
+}
+
+.item-historico-cliente:last-child {
+  border-bottom: none;
 }
