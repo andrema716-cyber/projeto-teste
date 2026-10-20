@@ -73,7 +73,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.3</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.4</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
@@ -450,7 +450,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (MÓDULO 2.3) -->
+  <!-- JAVASCRIPT ENGINE (MÓDULO 2.4) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
@@ -465,8 +465,8 @@
     let selectedPaymentMethod = null;
     let isFiadoAuthorized = false;
     let editingProductId = null;
-    let activeStream = null;
-    let modalStream = null;
+    let mediaStream = null;
+    let modalMediaStream = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       saveProductsToStorage();
@@ -549,30 +549,27 @@
       returnToStandby();
     }
 
-    // CÂMARA PRINCIPAL DO CAIXA (ROBUSTA)
+    // CÂMARA PRINCIPAL DO CAIXA (ESTILO VERSÃO 1)
     function initCamera() {
       const video = document.getElementById('webcamVideo');
       if (!video) return;
 
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
-        })
-        .then(stream => {
-          activeStream = stream;
-          video.srcObject = stream;
-          video.play().catch(e => console.log("Autoplay bloqueado:", e));
-        })
-        .catch(err => {
-          console.error("Erro ao iniciar câmara do caixa:", err);
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(stream => {
+            mediaStream = stream;
+            video.srcObject = stream;
+          })
+          .catch(err => {
+            console.log('Câmara indisponível no ambiente de testes:', err);
+          });
       }
     }
 
     function stopCamera() {
-      if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop());
-        activeStream = null;
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
       }
       const video = document.getElementById('webcamVideo');
       if (video) video.srcObject = null;
@@ -588,7 +585,7 @@
       const btnIcon = document.getElementById('toggleCameraIcon');
 
       if (isCameraActive) {
-        if (!activeStream) initCamera();
+        if (!mediaStream) initCamera();
         if (overlay) overlay.classList.add('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (statusText) {
@@ -617,19 +614,16 @@
       box.classList.remove('hidden');
 
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
-        })
-        .then(stream => {
-          modalStream = stream;
-          video.srcObject = stream;
-          video.play().catch(e => console.log("Autoplay modal prevent:", e));
-        })
-        .catch(err => {
-          console.error("Erro na câmara do modal:", err);
-          alert('Não foi possível acessar a câmara.');
-          box.classList.add('hidden');
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(stream => {
+            modalMediaStream = stream;
+            video.srcObject = stream;
+          })
+          .catch(err => {
+            console.error("Erro na câmara do modal:", err);
+            alert('Não foi possível acessar a câmara.');
+            box.classList.add('hidden');
+          });
       }
     }
 
@@ -637,9 +631,9 @@
       const box = document.getElementById('modalScannerBox');
       const video = document.getElementById('modalWebcamVideo');
       
-      if (modalStream) {
-        modalStream.getTracks().forEach(track => track.stop());
-        modalStream = null;
+      if (modalMediaStream) {
+        modalMediaStream.getTracks().forEach(track => track.stop());
+        modalMediaStream = null;
       }
       if (video) video.srcObject = null;
       if (box) box.classList.add('hidden');
