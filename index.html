@@ -59,7 +59,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500 selection:text-white">
 
-  <!-- NOTIFICAÇÃO TOAST DE SUCESSO SUAVE (SEM BLOQUEAR) -->
+  <!-- NOTIFICAÇÃO TOAST DE SUCESSO SUAVE -->
   <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30 transition-all duration-300">
     <i class="fa-solid fa-circle-check text-base"></i>
     <span>Venda Concluída com Sucesso!</span>
@@ -95,7 +95,8 @@
           <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
         </div>
         <button id="toggleCameraBtn" onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
-          <i class="fa-solid fa-power-off mr-1"></i> Pausar Leitor
+          <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
+          <span id="toggleCameraBtnText">Pausar Leitor</span>
         </button>
       </div>
 
@@ -106,9 +107,12 @@
           <div class="scanner-laser"></div>
         </div>
         <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10">
-          <i class="fa-solid fa-camera-retro text-2xl text-slate-500"></i>
-          <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
-          <button onclick="toggleCameraState()" class="mt-1 text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg">Reativar Câmara</button>
+          <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
+          <p class="text-xs text-slate-400 font-medium">Pronto para o próximo atendimento</p>
+          <button onclick="toggleCameraState(true)" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
+            <i class="fa-solid fa-play"></i>
+            <span>Iniciar Venda</span>
+          </button>
         </div>
       </div>
 
@@ -340,17 +344,23 @@
       const overlay = document.getElementById('cameraPausedOverlay');
       const dot = document.getElementById('cameraDot');
       const statusText = document.getElementById('cameraStatusText');
+      const btnText = document.getElementById('toggleCameraBtnText');
+      const btnIcon = document.getElementById('toggleCameraIcon');
 
       if (isCameraActive) {
         overlay.classList.add('hidden');
         dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         statusText.textContent = "Leitor Ativo";
         statusText.className = "text-xs font-semibold text-emerald-400 uppercase tracking-wider";
+        btnText.textContent = "Pausar Leitor";
+        btnIcon.className = "fa-solid fa-pause mr-1";
       } else {
         overlay.classList.remove('hidden');
         dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
         statusText.textContent = "Leitor Pausado";
         statusText.className = "text-xs font-semibold text-amber-400 uppercase tracking-wider";
+        btnText.textContent = "Ligar Leitor";
+        btnIcon.className = "fa-solid fa-play mr-1";
       }
     }
 
