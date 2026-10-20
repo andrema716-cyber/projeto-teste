@@ -21,13 +21,13 @@
       padding-bottom: calc(var(--sab) + 90px);
       touch-action: manipulation;
     }
-    #reader video {
+    #reader video, #modalReader video {
       width: 100% !important;
       height: 180px !important;
       object-fit: cover !important;
       border-radius: 12px;
     }
-    #reader {
+    #reader, #modalReader {
       border: none !important;
       background: #000;
       border-radius: 12px;
@@ -65,7 +65,7 @@
           <i class="fa-solid fa-cash-register text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.6</span></h1>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v2.8</span></h1>
           <p class="text-xs text-slate-400">Gestão & Vendas Rápidas</p>
         </div>
       </div>
@@ -117,13 +117,13 @@
             </button>
           </div>
 
-          <!-- CONTAINER OFICIAL DO LEITOR DE CÂMARA -->
+          <!-- CONTAINER DO LEITOR DA TELA DE VENDAS -->
           <div id="readerBox" class="relative rounded-xl overflow-hidden">
             <div id="reader" class="w-full"></div>
             <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10 rounded-xl">
               <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
               <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
-              <button onclick="toggleCameraState(true)" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
+              <button onclick="toggleCameraState()" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
                 <i class="fa-solid fa-play"></i>
                 <span>Reativar Leitor</span>
               </button>
@@ -261,12 +261,13 @@
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO -->
+  <!-- MODAL: CADASTRO DE PRODUTO COM BOTÃO BIPAR RESTAURADO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div>
           <h2 id="productModalTitle" class="text-base font-bold text-slate-100">Cadastrar Produto</h2>
+          <p class="text-xs text-slate-400">Preencha as informações do item</p>
         </div>
         <button onclick="closeProductModal()" class="text-slate-400 hover:text-white p-2">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -274,10 +275,35 @@
       </div>
 
       <form onsubmit="handleProductFormSubmit(event)" class="space-y-3">
+        <!-- ALERTA ANTIDUPLICIDADE / CUSTO MÉDIO PONDERADO -->
+        <div id="duplicateWarning" class="hidden bg-amber-950/70 border border-amber-800/80 rounded-xl p-3 text-xs text-amber-300 space-y-2">
+          <div class="flex items-start gap-2">
+            <i class="fa-solid fa-boxes-packing text-amber-400 text-base shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-bold text-amber-200">Produto já cadastrado!</p>
+              <p class="text-[11px] text-amber-300 mt-0.5">As novas quantidades serão somadas e o custo será recalculado pelo <span class="font-bold">Custo Médio Ponderado</span>.</p>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Código de Barras *</label>
-          <input type="text" id="prodBarcode" required placeholder="Digite o código..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+          <div class="flex gap-2">
+            <input type="text" id="prodBarcode" required oninput="checkBarcodeDuplicate()" placeholder="Bipe ou digite o código..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500">
+            <!-- BOTÃO BIPAR RESTAURADO -->
+            <button type="button" onclick="startModalScanner()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-md">
+              <i class="fa-solid fa-camera"></i>
+              <span>Bipar</span>
+            </button>
+          </div>
         </div>
+
+        <!-- CONTAINER DA CÂMARA NO MODAL -->
+        <div id="modalScannerContainer" class="hidden relative w-full">
+          <div id="modalReader" class="w-full"></div>
+          <button type="button" onclick="stopModalScanner()" class="mt-2 w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2 rounded-xl transition">Fechar Câmara do Cadastro</button>
+        </div>
+
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Nome do Produto *</label>
           <input type="text" id="prodName" required placeholder="Ex: Refrigerante Cola 2L" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
@@ -295,13 +321,19 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Custo (R$) *</label>
-            <input type="number" step="0.01" id="prodCost" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+            <input type="number" step="0.01" id="prodCost" required oninput="calculateMargin()" placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
           </div>
           <div>
             <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Venda (R$) *</label>
-            <input type="number" step="0.01" id="prodPrice" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5">
+            <input type="number" step="0.01" id="prodPrice" required oninput="calculateMargin()" placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5">
           </div>
         </div>
+        
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
+          <span class="text-slate-400">Margem Estimada:</span>
+          <span id="marginDisplay" class="font-extrabold text-slate-300">0,0%</span>
+        </div>
+
         <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
           <button type="button" onclick="closeProductModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Cancelar</button>
           <button type="submit" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Salvar Produto</button>
@@ -310,7 +342,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE COM DEBOUNCE / TRAVA DE 1 SEGUNDO -->
+  <!-- JAVASCRIPT ENGINE (v2.8) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
@@ -321,8 +353,9 @@
 
     let cart = [];
     let html5QrcodeScanner = null;
+    let modalHtml5QrcodeScanner = null;
     let isCameraActive = false;
-    let isProcessingScan = false; // TRAVA ANTIDUPLICIDADE RÁPIDA DE 1s
+    let isProcessingScan = false;
     let selectedPaymentMethod = null;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -413,9 +446,10 @@
       }
     }
 
-    function toggleCameraState(forceState) {
+    function toggleCameraState() {
       if (isCameraActive) {
         stopScanner();
+        updateCameraUI(false);
       } else {
         initScanner();
       }
@@ -425,26 +459,69 @@
       const overlay = document.getElementById('cameraPausedOverlay');
       const dot = document.getElementById('cameraDot');
       const statusText = document.getElementById('cameraStatusText');
+      const btnText = document.getElementById('toggleCameraBtnText');
+      const btnIcon = document.getElementById('toggleCameraIcon');
 
       if (active) {
         if (overlay) overlay.classList.add('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (statusText) statusText.textContent = "Leitor Ativo";
+        if (btnText) btnText.textContent = "Pausar Leitor";
+        if (btnIcon) btnIcon.className = "fa-solid fa-pause mr-1";
       } else {
         if (overlay) overlay.classList.remove('hidden');
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
         if (statusText) statusText.textContent = "Leitor Pausado";
+        if (btnText) btnText.textContent = "Ligar Leitor";
+        if (btnIcon) btnIcon.className = "fa-solid fa-play mr-1";
       }
     }
 
-    // PROCESSAMENTO DO BIP COM TRAVA DE 1 SEGUNDO
-    function onScanSuccess(decodedText, decodedResult) {
-      // Se já estiver processando um bip nos últimos 1000ms (1 segundo), ignora
-      if (isProcessingScan) return;
+    // LEITOR DO MODAL DE CADASTRO
+    function startModalScanner() {
+      const container = document.getElementById('modalScannerContainer');
+      container.classList.remove('hidden');
 
+      if (modalHtml5QrcodeScanner) {
+        stopModalScanner();
+      }
+
+      modalHtml5QrcodeScanner = new Html5Qrcode("modalReader");
+      const config = { fps: 15, qrbox: { width: 250, height: 120 } };
+
+      modalHtml5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          document.getElementById('prodBarcode').value = decodedText;
+          checkBarcodeDuplicate();
+          stopModalScanner();
+          showToastSuccess('Código de barras capturado!');
+        }
+      ).catch(err => {
+        console.error("Erro ao iniciar câmera no modal:", err);
+        container.classList.add('hidden');
+      });
+    }
+
+    function stopModalScanner() {
+      if (modalHtml5QrcodeScanner) {
+        modalHtml5QrcodeScanner.stop().then(() => {
+          modalHtml5QrcodeScanner = null;
+          document.getElementById('modalScannerContainer').classList.add('hidden');
+        }).catch(err => {
+          document.getElementById('modalScannerContainer').classList.add('hidden');
+        });
+      } else {
+        document.getElementById('modalScannerContainer').classList.add('hidden');
+      }
+    }
+
+    // PROCESSAMENTO DO BIP NA TELA DE VENDAS COM TRAVA DE 1s
+    function onScanSuccess(decodedText) {
+      if (isProcessingScan) return;
       isProcessingScan = true;
 
-      // Efeito visual no leitor
       const readerEl = document.getElementById('reader');
       if (readerEl) {
         readerEl.classList.add('scan-flash');
@@ -455,10 +532,13 @@
       if (foundProduct) {
         addToCart(foundProduct);
       } else {
-        alert(`Produto bipado (${decodedText}) não está cadastrado!`);
+        if (confirm(`Produto (${decodedText}) não cadastrado! Deseja cadastrá-lo agora?`)) {
+          stopScanner();
+          switchTab('products');
+          openProductModal(decodedText);
+        }
       }
 
-      // Libera a câmara para o próximo bip após exatamente 1 segundo (1000ms)
       setTimeout(() => {
         isProcessingScan = false;
       }, 1000);
@@ -474,7 +554,11 @@
       if (foundProduct) {
         addToCart(foundProduct);
       } else {
-        alert(`Produto (${code}) não cadastrado!`);
+        if (confirm(`Produto (${code}) não cadastrado! Deseja cadastrá-lo agora?`)) {
+          stopScanner();
+          switchTab('products');
+          openProductModal(code);
+        }
       }
       input.value = '';
     }
@@ -626,11 +710,22 @@
       `).join('');
     }
 
-    function openProductModal() {
+    function openProductModal(barcodePreset = '') {
+      stopModalScanner();
+      document.getElementById('duplicateWarning').classList.add('hidden');
+      document.getElementById('prodBarcode').value = barcodePreset;
+      document.getElementById('prodName').value = '';
+      document.getElementById('prodCategory').value = '';
+      document.getElementById('prodStock').value = '';
+      document.getElementById('prodCost').value = '';
+      document.getElementById('prodPrice').value = '';
+      document.getElementById('marginDisplay').textContent = '0,0%';
+      if (barcodePreset) checkBarcodeDuplicate();
       document.getElementById('productModal').classList.remove('hidden');
     }
 
     function closeProductModal() {
+      stopModalScanner();
       document.getElementById('productModal').classList.add('hidden');
     }
 
@@ -642,22 +737,77 @@
       }
     }
 
+    function checkBarcodeDuplicate() {
+      const barcode = document.getElementById('prodBarcode').value.trim();
+      const warning = document.getElementById('duplicateWarning');
+      const existing = products.find(p => p.barcode === barcode);
+
+      if (existing) {
+        warning.classList.remove('hidden');
+        document.getElementById('prodName').value = existing.name;
+        document.getElementById('prodCategory').value = existing.category || '';
+      } else {
+        warning.classList.add('hidden');
+      }
+    }
+
+    function calculateMargin() {
+      const cost = parseFloat(document.getElementById('prodCost').value) || 0;
+      const price = parseFloat(document.getElementById('prodPrice').value) || 0;
+      const marginDisplay = document.getElementById('marginDisplay');
+
+      if (cost > 0 && price > 0) {
+        const margin = ((price - cost) / cost) * 100;
+        marginDisplay.textContent = `${margin.toFixed(1)}%`;
+        marginDisplay.className = margin >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
+      } else {
+        marginDisplay.textContent = '0,0%';
+        marginDisplay.className = "font-extrabold text-slate-300";
+      }
+    }
+
     function handleProductFormSubmit(e) {
       e.preventDefault();
-      const newProduct = {
-        id: Date.now().toString(),
-        barcode: document.getElementById('prodBarcode').value.trim(),
-        name: document.getElementById('prodName').value.trim(),
-        category: document.getElementById('prodCategory').value.trim(),
-        stock: parseInt(document.getElementById('prodStock').value) || 0,
-        cost: parseFloat(document.getElementById('prodCost').value) || 0,
-        price: parseFloat(document.getElementById('prodPrice').value) || 0
-      };
-      products.push(newProduct);
+      const barcode = document.getElementById('prodBarcode').value.trim();
+      const name = document.getElementById('prodName').value.trim();
+      const category = document.getElementById('prodCategory').value.trim();
+      const inputStock = parseInt(document.getElementById('prodStock').value) || 0;
+      const inputCost = parseFloat(document.getElementById('prodCost').value) || 0;
+      const inputPrice = parseFloat(document.getElementById('prodPrice').value) || 0;
+
+      const existingIndex = products.findIndex(p => p.barcode === barcode);
+
+      if (existingIndex !== -1) {
+        const currentProd = products[existingIndex];
+        const totalStock = currentProd.stock + inputStock;
+        let weightedCost = inputCost;
+        if (totalStock > 0) {
+          weightedCost = ((currentProd.stock * currentProd.cost) + (inputStock * inputCost)) / totalStock;
+        }
+        products[existingIndex] = {
+          ...currentProd,
+          name,
+          category,
+          stock: totalStock,
+          cost: parseFloat(weightedCost.toFixed(2)),
+          price: inputPrice
+        };
+      } else {
+        products.push({
+          id: Date.now().toString(),
+          barcode,
+          name,
+          category,
+          stock: inputStock,
+          cost: inputCost,
+          price: inputPrice
+        });
+      }
+
       saveProductsToStorage();
       closeProductModal();
       renderProductList();
-      showToastSuccess('Produto cadastrado com sucesso!');
+      showToastSuccess('Produto salvo com sucesso!');
     }
 
     function showToastSuccess(msg) {
