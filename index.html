@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - Operação & Fiado em Tempo Real</title>
+  <title>Caixa PDV - Histórico Financeiro & Lucro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -71,8 +71,8 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.1</span></h1>
-            <p class="text-xs text-slate-400">Gestão Comercial & Fiado Realtime</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.2</span></h1>
+            <p class="text-xs text-slate-400">Análise de Lucro & Finanças</p>
           </div>
         </div>
         
@@ -89,7 +89,7 @@
             </button>
             <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
               <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Histórico de Vendas
+                <i class="fa-solid fa-chart-line text-blue-400"></i> Relatório & Lucro
               </button>
               <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-users text-purple-400"></i> Clientes & Fiado
@@ -214,7 +214,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: PRODUTOS (COM VALIDADE E PREÇOS) -->
+    <!-- TAB 2: PRODUTOS -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
@@ -278,30 +278,43 @@
       </section>
     </div>
 
-    <!-- TAB 4: HISTÓRICO -->
+    <!-- TAB 4: HISTÓRICO COM LUCRO, INVESTIMENTO E PORCENTAGEM -->
     <div id="tabHistoryContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-bold text-slate-200">Histórico de Vendas</h2>
+        <h2 class="text-sm font-bold text-slate-200"><i class="fa-solid fa-chart-pie text-emerald-400 mr-1"></i> Desempenho Financeiro</h2>
         <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300">Limpar Histórico</button>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <span class="text-[11px] text-slate-400 block uppercase">Total Vendido</span>
-          <span id="historyTotalSales" class="text-xl font-black text-emerald-400">R$ 0,00</span>
+      <!-- CARDS DE RESUMO FINANCEIRO COMPLETO -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Vendido</span>
+          <span id="historyTotalSales" class="text-lg font-black text-slate-100">R$ 0,00</span>
         </div>
-        <div class="text-right">
-          <span class="text-[11px] text-slate-400 block uppercase">Atendimentos</span>
-          <span id="historyCount" class="text-xl font-black text-slate-200">0</span>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Investimento (Custo)</span>
+          <span id="historyTotalCost" class="text-lg font-black text-amber-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Lucro Líquido (R$)</span>
+          <span id="historyTotalProfit" class="text-lg font-black text-emerald-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Margem Lucro (%)</span>
+          <span id="historyTotalMargin" class="text-lg font-black text-blue-400">0.0%</span>
         </div>
       </div>
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[420px]">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs font-bold text-slate-300 uppercase">Vendas Registradas (<span id="historyCount">0</span>)</span>
+      </div>
+
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[380px]">
         <div id="historyList" class="space-y-3"></div>
       </section>
     </div>
 
-    <!-- TAB 5: CLIENTES & FIADO ATUALIZADO EM TEMPO REAL -->
+    <!-- TAB 5: CLIENTES & FIADO -->
     <div id="tabCustomersContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
@@ -746,7 +759,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v4.1 - Fiado Realtime & Persistent Customer List) -->
+  <!-- JAVASCRIPT ENGINE (v4.2 - Histórico com Lucro, Custo e Porcentagem de Margem) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -759,9 +772,7 @@
     ];
 
     let salesHistory = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
-    let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [
-      { id: 'c1', name: 'Maria Souza', phone: '47999999999', debt: 45.00, overdue: true, purchases: [{ id: 'p1', date: '19/10/2026 14:30', total: 45.00, items: [{ name: 'Arroz Tipo 1 - 5kg', qty: 1, price: 24.90 }, { name: 'Feijão Carioca - 1kg', qty: 2, price: 10.05 }] }] }
-    ];
+    let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [];
     let cashRegister = JSON.parse(localStorage.getItem(STORAGE_KEY_CASH)) || { fundo: 50.00, sangrias: 0.00, dinheiroEntradas: 0.00 };
 
     let cart = [];
@@ -1125,6 +1136,7 @@
 
     function finalizeSale() {
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const totalCost = cart.reduce((sum, item) => sum + ((item.cost || 0) * item.qty), 0);
       const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
       if (selectedPaymentMethod === 'FIADO') {
@@ -1140,7 +1152,7 @@
             id: Date.now().toString(),
             date: nowStr,
             total: total,
-            items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price }))
+            items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price, cost: i.cost || 0 }))
           });
         }
       }
@@ -1162,18 +1174,86 @@
         date: nowStr,
         method: selectedPaymentMethod,
         total: total,
-        items: [...cart]
+        cost: totalCost,
+        items: cart.map(i => ({ ...i, cost: i.cost || 0 }))
       };
 
       salesHistory.unshift(lastCompletedSale);
       saveData();
-      renderCustomerList(); // Atualização imediata em tempo real da lista de clientes
+      renderCustomerList();
+      renderHistoryList();
       document.getElementById('paymentModal').classList.add('hidden');
       returnToStandby();
       openReceiptModal();
     }
 
-    // GESTÃO DE CLIENTES & FIADO (CORRIGIDO PARA RENDERIZAÇÃO REALTIME E PERSISTENTE)
+    // HISTÓRICO COM LUCRO, INVESTIMENTO E PORCENTAGEM (v4.2)
+    function renderHistoryList() {
+      const historyList = document.getElementById('historyList');
+      const totalSalesEl = document.getElementById('historyTotalSales');
+      const totalCostEl = document.getElementById('historyTotalCost');
+      const totalProfitEl = document.getElementById('historyTotalProfit');
+      const totalMarginEl = document.getElementById('historyTotalMargin');
+      const countEl = document.getElementById('historyCount');
+
+      const totalVal = salesHistory.reduce((sum, s) => sum + s.total, 0);
+      const totalCost = salesHistory.reduce((sum, s) => {
+        if (s.cost !== undefined) return sum + s.cost;
+        const itemCostSum = (s.items || []).reduce((iSum, i) => iSum + ((i.cost || 0) * i.qty), 0);
+        return sum + itemCostSum;
+      }, 0);
+
+      const totalProfit = totalVal - totalCost;
+      const totalMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+
+      if (totalSalesEl) totalSalesEl.textContent = `R$ ${totalVal.toFixed(2).replace('.', ',')}`;
+      if (totalCostEl) totalCostEl.textContent = `R$ ${totalCost.toFixed(2).replace('.', ',')}`;
+      if (totalProfitEl) totalProfitEl.textContent = `R$ ${totalProfit.toFixed(2).replace('.', ',')}`;
+      if (totalMarginEl) totalMarginEl.textContent = `${totalMargin.toFixed(1)}%`;
+      if (countEl) countEl.textContent = salesHistory.length;
+
+      if (!historyList) return;
+
+      if (salesHistory.length === 0) {
+        historyList.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhuma venda registrada ainda</p></div>`;
+        return;
+      }
+
+      historyList.innerHTML = salesHistory.map(s => {
+        const saleCost = s.cost !== undefined ? s.cost : (s.items || []).reduce((sum, i) => sum + ((i.cost || 0) * i.qty), 0);
+        const saleProfit = s.total - saleCost;
+        const saleMargin = saleCost > 0 ? (saleProfit / saleCost) * 100 : 0;
+
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div>
+                <span class="text-[10px] text-slate-500 block">${s.date}</span>
+                <span class="text-xs font-bold text-blue-400">${s.method}</span>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-black text-emerald-400 block">R$ ${s.total.toFixed(2).replace('.', ',')}</span>
+                <span class="text-[10px] text-emerald-300 font-bold">Lucro: R$ ${saleProfit.toFixed(2).replace('.', ',')} (${saleMargin.toFixed(1)}%)</span>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 space-y-1">
+              ${s.items.map(i => `<div class="flex justify-between"><span>${i.name} (x${i.qty})</span><span>R$ ${(i.price * i.qty).toFixed(2).replace('.', ',')}</span></div>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('Deseja apagar o histórico de vendas?')) {
+        salesHistory = [];
+        saveData();
+        renderHistoryList();
+        showToastSuccess('Histórico apagado!');
+      }
+    }
+
+    // CLIENTES
     function renderCustomerList() {
       const container = document.getElementById('customerList');
       const totalDebtsEl = document.getElementById('totalDebtsBadge');
@@ -1279,7 +1359,7 @@
       window.open(`https://api.whatsapp.com/send?phone=${cust.phone.replace(/\D/g,'')}&text=${encodeURIComponent(text)}`, '_blank');
     }
 
-    // EDIÇÃO DE PREÇOS E VALIDADE (PRODUTOS)
+    // PRODUTOS & PREÇOS
     function openEditPriceModal(productId) {
       const prod = products.find(p => p.id === productId);
       if (!prod) return;
@@ -1314,7 +1394,6 @@
       }
     }
 
-    // ENTRADA DE REMESSA (COM VALIDADE)
     function openRemessaModal() {
       document.getElementById('remessaBarcode').value = '';
       document.getElementById('remessaProductInfo').classList.add('hidden');
@@ -1693,43 +1772,6 @@
       openCashRegisterModal();
       document.getElementById('sangriaInput').value = '';
       showToastSuccess('Sangria registrada!');
-    }
-
-    function renderHistoryList() {
-      const historyList = document.getElementById('historyList');
-      const totalSalesEl = document.getElementById('historyTotalSales');
-      const countEl = document.getElementById('historyCount');
-      const totalVal = salesHistory.reduce((sum, s) => sum + s.total, 0);
-      if (totalSalesEl) totalSalesEl.textContent = `R$ ${totalVal.toFixed(2).replace('.', ',')}`;
-      if (countEl) countEl.textContent = salesHistory.length;
-
-      if (salesHistory.length === 0) {
-        historyList.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhuma venda registrada ainda</p></div>`;
-        return;
-      }
-      historyList.innerHTML = salesHistory.map(s => `
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div>
-              <span class="text-[10px] text-slate-500 block">${s.date}</span>
-              <span class="text-xs font-bold text-blue-400">${s.method}</span>
-            </div>
-            <span class="text-sm font-black text-emerald-400">R$ ${s.total.toFixed(2).replace('.', ',')}</span>
-          </div>
-          <div class="text-[11px] text-slate-400 space-y-1">
-            ${s.items.map(i => `<div class="flex justify-between"><span>${i.name} (x${i.qty})</span><span>R$ ${(i.price * i.qty).toFixed(2).replace('.', ',')}</span></div>`).join('')}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function clearHistory() {
-      if (confirm('Deseja apagar o histórico de vendas?')) {
-        salesHistory = [];
-        saveData();
-        renderHistoryList();
-        showToastSuccess('Histórico apagado!');
-      }
     }
 
     function exportData() {
