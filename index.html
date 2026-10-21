@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - v4.3 Estável</title>
+  <title>Caixa PDV - v4.4 Com Extrato de Sangrias</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -71,8 +71,8 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.3 Estável</span></h1>
-            <p class="text-xs text-slate-400">Análise de Lucro & Cadastro Completo</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.4</span></h1>
+            <p class="text-xs text-slate-400">Controle de Caixa & Sangrias</p>
           </div>
         </div>
         
@@ -481,32 +481,49 @@
     </div>
   </div>
 
-  <!-- MODAL: CAIXA DIÁRIO -->
+  <!-- MODAL: CAIXA DIÁRIO & EXTRATO DE SANGRIAS (v4.4) -->
   <div id="cashRegisterModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 flex flex-col max-h-[90vh]">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-slate-100">Controle de Caixa Diário</h3>
-        <button onclick="closeCashRegisterModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-vault text-amber-400 mr-1.5"></i> Controle de Caixa Diário</h3>
+        <button onclick="closeCashRegisterModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <div class="bg-slate-950 p-3 rounded-2xl space-y-1 text-xs">
-        <div class="flex justify-between text-slate-400"><span>Fundo Troco Inicial:</span><span id="cashFundo">R$ 50,00</span></div>
-        <div class="flex justify-between text-emerald-400"><span>Vendas Dinheiro:</span><span id="cashDinheiro">R$ 0,00</span></div>
-        <div class="flex justify-between text-rose-400"><span>Sangrias (Retiradas):</span><span id="cashSangrias">R$ 0,00</span></div>
-        <div class="flex justify-between font-bold text-slate-100 text-sm pt-2 border-t border-slate-800">
-          <span>Esperado na Gaveta:</span><span id="cashTotalGaveta" class="text-emerald-400">R$ 50,00</span>
+      <!-- RESUMO DOS NÚMEROS -->
+      <div class="bg-slate-950 p-3.5 rounded-2xl space-y-1.5 text-xs border border-slate-800">
+        <div class="flex justify-between items-center text-slate-400">
+          <span class="flex items-center gap-1">
+            Fundo Troco Inicial:
+            <button onclick="editFundoTroco()" title="Alterar troco inicial" class="text-blue-400 text-[10px] hover:underline"><i class="fa-solid fa-pen"></i></button>
+          </span>
+          <span id="cashFundo" class="font-semibold text-slate-200">R$ 50,00</span>
+        </div>
+        <div class="flex justify-between text-emerald-400"><span>Vendas em Dinheiro:</span><span id="cashDinheiro" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between text-rose-400"><span>Sangrias (Retiradas):</span><span id="cashSangrias" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-extrabold text-slate-100 text-sm pt-2 border-t border-slate-800">
+          <span>Esperado na Gaveta:</span><span id="cashTotalGaveta" class="text-emerald-400 text-base">R$ 50,00</span>
         </div>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-[11px] text-slate-400 block">Registrar Sangria (Retirada de Dinheiro):</label>
-        <div class="flex gap-2">
-          <input type="number" step="0.01" id="sangriaInput" placeholder="Valor R$" class="flex-1 bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2">
-          <button onclick="registerSangria()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3 rounded-xl">Retirar</button>
+      <!-- FORMULÁRIO DE NOVA SANGRIA -->
+      <div class="space-y-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
+        <label class="text-[11px] font-bold text-rose-400 uppercase block">Registrar Sangria (Retirada de Dinheiro):</label>
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" step="0.01" id="sangriaInput" placeholder="Valor R$" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl px-3 py-2.5 font-bold">
+          <input type="text" id="sangriaReasonInput" placeholder="Motivo (Ex: Fornecedor)" class="col-span-2 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2.5">
         </div>
+        <button onclick="registerSangria()" class="w-full bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
+          <i class="fa-solid fa-minus-circle"></i> Confirmar Retirada
+        </button>
       </div>
 
-      <button onclick="closeCashRegisterModal()" class="w-full bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl text-xs">Fechar Painel</button>
+      <!-- EXTRATO DETALHADO DE RETIRADAS -->
+      <div class="flex-1 overflow-y-auto min-h-[120px] max-h-[180px] space-y-2 pr-1">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Histórico de Retiradas (<span id="sangriaCount">0</span>)</span>
+        <div id="sangriasHistoryList" class="space-y-1.5"></div>
+      </div>
+
+      <button onclick="closeCashRegisterModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs transition">Fechar Painel</button>
     </div>
   </div>
 
@@ -758,7 +775,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v4.3 - Blindado Anti-Erro) -->
+  <!-- JAVASCRIPT ENGINE (v4.4 - Extrato de Sangrias & Ajustes) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -768,7 +785,9 @@
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [];
     let salesHistory = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
     let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [];
-    let cashRegister = JSON.parse(localStorage.getItem(STORAGE_KEY_CASH)) || { fundo: 50.00, sangrias: 0.00, dinheiroEntradas: 0.00 };
+    let cashRegister = JSON.parse(localStorage.getItem(STORAGE_KEY_CASH)) || { fundo: 50.00, sangrias: 0.00, dinheiroEntradas: 0.00, sangriasList: [] };
+
+    if (!cashRegister.sangriasList) cashRegister.sangriasList = [];
 
     let cart = [];
     let html5QrcodeScanner = null;
@@ -801,7 +820,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // MIGRAÇÃO E TRATAMENTO ANTI-ERRO DE DADOS ANTIGOS
       products = products.map(p => ({
         ...p,
         cost: (p.cost !== undefined && !isNaN(p.cost)) ? Number(p.cost) : 0,
@@ -1806,24 +1824,99 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
+    // CAIXA DIÁRIO & EXTRATO DE SANGRIAS (SISTEMA v4.4)
     function openCashRegisterModal() {
-      document.getElementById('cashFundo').textContent = `R$ ${cashRegister.fundo.toFixed(2).replace('.', ',')}`;
-      document.getElementById('cashDinheiro').textContent = `R$ ${cashRegister.dinheiroEntradas.toFixed(2).replace('.', ',')}`;
-      document.getElementById('cashSangrias').textContent = `R$ ${cashRegister.sangrias.toFixed(2).replace('.', ',')}`;
-      const totalGaveta = cashRegister.fundo + cashRegister.dinheiroEntradas - cashRegister.sangrias;
+      document.getElementById('cashFundo').textContent = `R$ ${(cashRegister.fundo || 50).toFixed(2).replace('.', ',')}`;
+      document.getElementById('cashDinheiro').textContent = `R$ ${(cashRegister.dinheiroEntradas || 0).toFixed(2).replace('.', ',')}`;
+      document.getElementById('cashSangrias').textContent = `R$ ${(cashRegister.sangrias || 0).toFixed(2).replace('.', ',')}`;
+      const totalGaveta = (cashRegister.fundo || 50) + (cashRegister.dinheiroEntradas || 0) - (cashRegister.sangrias || 0);
       document.getElementById('cashTotalGaveta').textContent = `R$ ${totalGaveta.toFixed(2).replace('.', ',')}`;
+      
+      renderSangriasHistory();
       document.getElementById('cashRegisterModal').classList.remove('hidden');
     }
+
     function closeCashRegisterModal() { document.getElementById('cashRegisterModal').classList.add('hidden'); }
+
+    function editFundoTroco() {
+      const current = cashRegister.fundo || 50;
+      const valStr = prompt("Informe o novo valor do Fundo de Troco Inicial (R$):", current.toFixed(2));
+      if (valStr !== null) {
+        const val = parseFloat(valStr.replace(',', '.'));
+        if (!isNaN(val) && val >= 0) {
+          cashRegister.fundo = val;
+          saveData();
+          openCashRegisterModal();
+          showToastSuccess("Fundo de troco atualizado!");
+        }
+      }
+    }
 
     function registerSangria() {
       const val = parseFloat(document.getElementById('sangriaInput').value) || 0;
-      if (val <= 0) return alert('Informe um valor válido!');
-      cashRegister.sangrias += val;
+      const reason = document.getElementById('sangriaReasonInput').value.trim() || 'Retirada de Caixa';
+
+      if (val <= 0) return alert('Informe um valor válido para a sangria!');
+
+      const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      
+      if (!cashRegister.sangriasList) cashRegister.sangriasList = [];
+
+      cashRegister.sangriasList.unshift({
+        id: Date.now().toString(),
+        time: nowTime,
+        amount: val,
+        reason: reason
+      });
+
+      cashRegister.sangrias = (cashRegister.sangrias || 0) + val;
+
       saveData();
       openCashRegisterModal();
       document.getElementById('sangriaInput').value = '';
-      showToastSuccess('Sangria registrada!');
+      document.getElementById('sangriaReasonInput').value = '';
+      showToastSuccess('Sangria registrada com sucesso!');
+    }
+
+    function renderSangriasHistory() {
+      const container = document.getElementById('sangriasHistoryList');
+      const countEl = document.getElementById('sangriaCount');
+      const list = cashRegister.sangriasList || [];
+
+      if (countEl) countEl.textContent = list.length;
+
+      if (list.length === 0) {
+        container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-4">Nenhuma retirada registrada no caixa hoje.</p>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 flex items-center justify-between text-xs gap-2">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-slate-500 font-mono">${item.time}</span>
+              <span class="font-bold text-slate-200 truncate">${item.reason}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="font-black text-rose-400">- R$ ${item.amount.toFixed(2).replace('.', ',')}</span>
+            <button onclick="deleteSangria('${item.id}')" title="Estornar retirada" class="text-rose-400 hover:text-rose-300 text-[11px] p-1"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteSangria(id) {
+      if (confirm('Deseja estornar esta sangria e devolver o valor para o caixa?')) {
+        const item = (cashRegister.sangriasList || []).find(s => s.id === id);
+        if (item) {
+          cashRegister.sangrias = Math.max(0, (cashRegister.sangrias || 0) - item.amount);
+          cashRegister.sangriasList = cashRegister.sangriasList.filter(s => s.id !== id);
+          saveData();
+          openCashRegisterModal();
+          showToastSuccess('Sangria estornada com sucesso!');
+        }
+      }
     }
 
     function exportData() {
