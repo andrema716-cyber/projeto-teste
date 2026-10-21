@@ -78,7 +78,7 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.3</span></h1>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.4</span></h1>
             <p class="text-xs text-slate-400">Gestão & Reposição por Saídas</p>
           </div>
         </div>
@@ -518,7 +518,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v3.3) -->
+  <!-- JAVASCRIPT ENGINE (v3.4 - Bip Nativo, Trava 1.5s & Seleção de Pagamento) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -539,9 +539,31 @@
     let modalHtml5QrcodeScanner = null;
     let isCameraActive = false;
     let isProcessingScan = false;
-    let selectedPaymentMethod = null;
+    let selectedPaymentMethod = 'DINHEIRO';
+    let isFiadoAuthorized = false;
     let filterLowStockOnly = false;
     let lastCompletedSale = null;
+
+    // AUDIO BEEP SINTETIZADO NATIVO (WEB AUDIO API)
+    function playBeepSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime); // Frequência do Bip
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12); // Duração de 120ms
+      } catch (e) {
+        console.log("Áudio bloqueado pelo navegador até primeira interação.", e);
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       saveData();
@@ -635,6 +657,8 @@
       if (isProcessingScan) return;
       isProcessingScan = true;
 
+      playBeepSound(); // TOCA O BIP AUDÍVEL
+
       const foundProduct = products.find(p => p.barcode === decodedText);
       if (foundProduct) {
         addToCart(foundProduct);
@@ -645,13 +669,16 @@
           openProductModal(decodedText);
         }
       }
-      setTimeout(() => isProcessingScan = false, 1000);
+      // TRAVA DE LEITURA (COOLDOWN) AUMENTADA PARA 1.5 SEGUNDOS
+      setTimeout(() => isProcessingScan = false, 1500);
     }
 
     function handleManualBarcodeSubmit(e) {
       e.preventDefault();
       const code = document.getElementById('manualBarcodeInput').value.trim();
       if (!code) return;
+      
+      playBeepSound(); // TOCA O BIP AUDÍVEL
       const foundProduct = products.find(p => p.barcode === code);
       if (foundProduct) addToCart(foundProduct);
       document.getElementById('manualBarcodeInput').value = '';
@@ -660,7 +687,20 @@
     function addToCart(product) {
       const existing = cart.find(item => item.id === product.id);
       if (existing) { existing.qty += 1; } else { cart.push({ ...product, qty: 1 }); }
+      updateLastScannedCard(product);
       renderCart();
+    }
+
+    function updateLastScannedCard(product) {
+      const card = document.getElementById('lastScannedCard');
+      document.getElementById('lastScannedName').textContent = product.name;
+      document.getElementById('lastScannedPrice').textContent = `R$ ${product.price.toFixed(2).replace('.', ',')}`;
+      card.classList.remove('hidden');
+    }
+
+    function clearLastScannedCard() {
+      const card = document.getElementById('lastScannedCard');
+      if (card) card.classList.add('hidden');
     }
 
     function renderCart() {
@@ -691,8 +731,12 @@
     }
 
     function openPaymentModal() {
-      if (cart.length === 0) return alert('Carrinho vazio!');
+      if (!cart || cart.length === 0) {
+        alert('Carrinho vazio! Adicione produtos antes de prosseguir.');
+        return;
+      }
       stopScanner();
+      populateCustomerSelect();
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       document.getElementById('modalCartTotalDisplay').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
       document.getElementById('paymentModal').classList.remove('hidden');
@@ -704,22 +748,123 @@
       initScanner();
     }
 
+    // LÓGICA DE SELEÇÃO COMPLETA DAS FORMAS DE PAGAMENTO
     function selectPaymentMethod(method) {
       selectedPaymentMethod = method;
+      
+      // Reseta visual dos botões
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
+      });
       document.querySelectorAll('.payment-subpanel').forEach(p => p.classList.add('hidden'));
-      if (method === 'DINHEIRO') document.getElementById('panelDinheiro').classList.remove('hidden');
+
+      if (method === 'DINHEIRO') {
+        document.getElementById('btnMethodDinheiro').classList.add('border-emerald-500', 'bg-emerald-950/40');
+        document.getElementById('panelDinheiro').classList.remove('hidden');
+        document.getElementById('cashReceivedInput').value = '';
+        calculateChange();
+      } else if (method === 'PIX' || method === 'CARTAO') {
+        const btnId = method === 'PIX' ? 'btnMethodPix' : 'btnMethodCartao';
+        document.getElementById(btnId).classList.add('border-emerald-500', 'bg-emerald-950/40');
+        const panel = document.getElementById('panelSimple');
+        const icon = document.getElementById('simpleMethodIcon');
+        const text = document.getElementById('simpleMethodText');
+        panel.classList.remove('hidden');
+        if (method === 'PIX') {
+          icon.className = 'fa-solid fa-qrcode text-3xl mb-2 text-amber-400';
+          text.textContent = 'Aguardando escaneamento do QR Code PIX pelo cliente.';
+        } else {
+          icon.className = 'fa-solid fa-credit-card text-3xl mb-2 text-blue-400';
+          text.textContent = 'Passe ou aproxime o cartão na maquininha.';
+        }
+      } else if (method === 'FIADO') {
+        document.getElementById('btnMethodFiado').classList.add('border-emerald-500', 'bg-emerald-950/40');
+        document.getElementById('panelFiado').classList.remove('hidden');
+        checkCustomerDelinquency();
+      } else if (method === 'MISTO') {
+        document.getElementById('btnMethodMisto').classList.add('border-emerald-500', 'bg-emerald-950/40');
+        document.getElementById('panelMisto').classList.remove('hidden');
+        calculateMistoSplit();
+      }
     }
 
     function calculateChange() {
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
       const change = received - total;
-      document.getElementById('changeDisplay').textContent = change >= 0 ? `R$ ${change.toFixed(2).replace('.', ',')}` : `Falta R$ ${Math.abs(change).toFixed(2).replace('.', ',')}`;
+      const display = document.getElementById('changeDisplay');
+      if (change >= 0) {
+        display.textContent = `R$ ${change.toFixed(2).replace('.', ',')}`;
+        display.className = "text-base font-extrabold text-emerald-400";
+      } else {
+        display.textContent = `Falta R$ ${Math.abs(change).toFixed(2).replace('.', ',')}`;
+        display.className = "text-xs font-bold text-rose-400";
+      }
+    }
+
+    function populateCustomerSelect() {
+      const select = document.getElementById('customerSelect');
+      if (!select) return;
+      select.innerHTML = `<option value="">-- Selecione o Cliente --</option>` +
+        customers.map(c => `<option value="${c.id}" data-overdue="${c.overdue}" data-debt="${c.debt}">${c.name} ${c.debt > 0 ? '(⚠️ EM DEBIDO)' : '(Em Dia)'}</option>`).join('');
+    }
+
+    function checkCustomerDelinquency() {
+      const select = document.getElementById('customerSelect');
+      const selectedOpt = select.options[select.selectedIndex];
+      const warning = document.getElementById('overdueWarning');
+      const confirmBtn = document.getElementById('confirmSaleBtn');
+
+      if (!selectedOpt || !selectedOpt.value) {
+        if (warning) warning.classList.add('hidden');
+        return;
+      }
+
+      const isOverdue = selectedOpt.getAttribute('data-overdue') === 'true';
+      const debtAmount = selectedOpt.getAttribute('data-debt');
+
+      if (isOverdue && parseFloat(debtAmount) > 0) {
+        document.getElementById('overdueAmount').textContent = `R$ ${parseFloat(debtAmount).toFixed(2).replace('.', ',')}`;
+        if (warning) warning.classList.remove('hidden');
+        isFiadoAuthorized = false;
+        confirmBtn.disabled = true;
+        confirmBtn.classList.add('opacity-50');
+      } else {
+        if (warning) warning.classList.add('hidden');
+        isFiadoAuthorized = true;
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('opacity-50');
+      }
+    }
+
+    function overrideDelinquency(allow) {
+      const confirmBtn = document.getElementById('confirmSaleBtn');
+      isFiadoAuthorized = allow;
+      confirmBtn.disabled = !allow;
+      if (allow) confirmBtn.classList.remove('opacity-50'); else confirmBtn.classList.add('opacity-50');
+    }
+
+    function calculateMistoSplit() {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const part1 = parseFloat(document.getElementById('mistoPart1').value) || 0;
+      const part2 = Math.max(0, total - part1);
+      document.getElementById('mistoPart2').value = `R$ ${part2.toFixed(2).replace('.', ',')}`;
     }
 
     function finalizeSale() {
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      if (selectedPaymentMethod === 'FIADO') {
+        const select = document.getElementById('customerSelect');
+        if (!select.value) return alert('Selecione um cliente para o fiado!');
+        if (!isFiadoAuthorized) return alert('Venda bloqueada por débitos pendentes.');
+        const cust = customers.find(c => c.id === select.value);
+        if (cust) {
+          cust.debt += total;
+          cust.overdue = true;
+        }
+      }
 
       // Acumula saídas para reposição na loja
       cart.forEach(item => {
@@ -901,6 +1046,31 @@
       showToastSuccess('Produto salvo com sucesso!');
     }
 
+    function startModalScanner() {
+      const container = document.getElementById('modalScannerContainer');
+      container.classList.remove('hidden');
+      if (modalHtml5QrcodeScanner) stopModalScanner();
+      modalHtml5QrcodeScanner = new Html5Qrcode("modalReader");
+      const config = { fps: 15, qrbox: { width: 250, height: 120 } };
+
+      modalHtml5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
+        playBeepSound();
+        document.getElementById('prodBarcode').value = decodedText;
+        stopModalScanner();
+      }).catch(err => container.classList.add('hidden'));
+    }
+
+    function stopModalScanner() {
+      if (modalHtml5QrcodeScanner) {
+        modalHtml5QrcodeScanner.stop().then(() => {
+          modalHtml5QrcodeScanner = null;
+          document.getElementById('modalScannerContainer').classList.add('hidden');
+        }).catch(() => document.getElementById('modalScannerContainer').classList.add('hidden'));
+      } else {
+        document.getElementById('modalScannerContainer').classList.add('hidden');
+      }
+    }
+
     // MODAL RECIBO E WHATSAPP
     function openReceiptModal() {
       if (!lastCompletedSale) return;
@@ -911,10 +1081,7 @@
       document.getElementById('receiptModal').classList.remove('hidden');
     }
 
-    function closeReceiptModal() {
-      document.getElementById('receiptModal').classList.add('hidden');
-    }
-
+    function closeReceiptModal() { document.getElementById('receiptModal').classList.add('hidden'); }
     function printReceipt() { window.print(); }
 
     function shareWhatsAppReceipt() {
