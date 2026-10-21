@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - Operação, Estoque & Remessas</title>
+  <title>Caixa PDV - Operação, Estoque & Fotos</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -71,8 +71,8 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.5</span></h1>
-            <p class="text-xs text-slate-400">Operação & Gestão de Estoque</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.6</span></h1>
+            <p class="text-xs text-slate-400">Operação, Estoque & WhatsApp</p>
           </div>
         </div>
         
@@ -87,7 +87,7 @@
             <button onclick="toggleOptionsMenu()" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center hover:text-white transition">
               <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
-            <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
+            <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
               <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Histórico de Vendas
               </button>
@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <!-- NAV BAR PRINCIPAL (LIMPA) -->
+      <!-- NAV BAR PRINCIPAL -->
       <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl gap-1">
         <button onclick="switchTab('pos')" id="tabPosBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center">
           <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
@@ -172,9 +172,11 @@
           </form>
         </section>
 
+        <!-- CARD DE ÚLTIMO ITEM LIDO COM FOTO DO PRODUTO -->
         <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-          <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
-            <i class="fa-solid fa-box text-lg"></i>
+          <div id="lastScannedImgContainer" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+            <i id="lastScannedIcon" class="fa-solid fa-box text-lg"></i>
+            <img id="lastScannedImage" src="" class="hidden w-full h-full object-cover">
           </div>
           <div class="flex-1 min-w-0">
             <span class="text-[10px] font-bold text-blue-400 uppercase bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
@@ -204,18 +206,18 @@
       </div>
     </div>
 
-    <!-- TAB 2: PRODUTOS (COM BOTÃO DE CADASTRO, ENTRADA DE REMESSA E BAIXA DE PERDAS) -->
+    <!-- TAB 2: PRODUTOS (COM ENVIAR PEDIDO POR WHATSAPP) -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
           <h2 class="text-sm font-bold text-slate-200">Catálogo & Estoque</h2>
           <p class="text-[11px] text-slate-400">Total cadastrados: <span id="productCounterBadge" class="font-bold text-emerald-400">0</span></p>
         </div>
-        <div class="flex gap-2">
-          <button onclick="openRemessaModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+        <div class="flex gap-1.5">
+          <button onclick="openRemessaModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
             <i class="fa-solid fa-truck-ramp-box"></i> Entrada
           </button>
-          <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+          <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
             <i class="fa-solid fa-plus"></i> Novo
           </button>
         </div>
@@ -232,19 +234,35 @@
         </button>
       </div>
 
+      <!-- BOTÃO DE ENVIAR PEDIDO AO FORNECEDOR VIA WHATSAPP -->
+      <div id="supplierWhatsAppBox" class="hidden bg-amber-950/40 border border-amber-800/60 rounded-2xl p-3 flex items-center justify-between">
+        <div class="text-xs">
+          <span class="font-bold text-amber-300 block">Itens em Estoque Crítico</span>
+          <span id="lowStockCountText" class="text-[11px] text-slate-400">0 produtos abaixo do mínimo</span>
+        </div>
+        <button onclick="sendLowStockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-md">
+          <i class="fa-brands fa-whatsapp text-sm"></i> Pedir Fornecedor
+        </button>
+      </div>
+
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
         <div id="productList" class="space-y-2.5"></div>
       </section>
     </div>
 
-    <!-- TAB 3: REABASTECIMENTO POR SAÍDAS DE CAIXA -->
+    <!-- TAB 3: REABASTECIMENTO POR SAÍDAS (COM ENVIAR P/ REPOSITOR WHATSAPP) -->
     <div id="tabRestockContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
           <h2 class="text-sm font-bold text-slate-200">Reposição por Saídas</h2>
-          <p class="text-xs text-slate-400">Quantidade exata que saiu no caixa hoje para repor na loja</p>
+          <p class="text-xs text-slate-400">Quantidade que saiu no caixa hoje para repor</p>
         </div>
-        <button onclick="clearRestockList()" class="text-xs text-rose-400 hover:text-rose-300">Zerar Lista</button>
+        <div class="flex items-center gap-2">
+          <button onclick="sendRestockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1">
+            <i class="fa-brands fa-whatsapp"></i> Repositor
+          </button>
+          <button onclick="clearRestockList()" class="text-xs text-rose-400 hover:text-rose-300">Zerar</button>
+        </div>
       </div>
 
       <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
@@ -471,7 +489,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ENTRADA DE REMESSA (BIPAR PARA SOMAR ESTOQUE) -->
+  <!-- MODAL: ENTRADA DE REMESSA (COM FOTO DO PRODUTO E CAMPO CORRIGIDO DE QUANTIDADE) -->
   <div id="remessaModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -493,17 +511,23 @@
           <button type="button" onclick="stopRemessaScanner()" class="mt-2 w-full bg-rose-600 text-white text-xs font-bold py-2 rounded-xl">Fechar Câmara</button>
         </div>
 
-        <div id="remessaProductInfo" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
-          <h3 id="remessaProdName" class="text-xs font-bold text-slate-100">---</h3>
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
-            <div>Estoque Anterior: <span id="remessaOldStock" class="font-bold text-slate-300">0</span> un</div>
-            <div>Custo Atual: R$ <span id="remessaOldCost" class="font-bold text-slate-300">0,00</span></div>
+        <div id="remessaProductInfo" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-3">
+          <div class="flex items-center gap-3">
+            <div id="remessaImgContainer" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+              <i id="remessaIcon" class="fa-solid fa-box text-lg"></i>
+              <img id="remessaImage" src="" class="hidden w-full h-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 id="remessaProdName" class="text-xs font-bold text-slate-100 truncate">---</h3>
+              <p class="text-[11px] text-slate-400">Estoque Atual: <span id="remessaOldStock" class="font-bold text-slate-200">0</span> un</p>
+              <p class="text-[10px] text-slate-500">Custo Atual: R$ <span id="remessaOldCost">0,00</span></p>
+            </div>
           </div>
 
           <div class="pt-2 border-t border-slate-800 space-y-2">
             <div>
               <label class="text-[10px] text-emerald-400 font-bold uppercase block mb-1">Quantidade que Chegou *</label>
-              <input type="number" id="remessaAddQty" placeholder="Ex: 20" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-sm rounded-xl px-3 py-2">
+              <input type="number" id="remessaAddQty" placeholder="Ex: 20" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-sm rounded-xl px-3 py-2 focus:border-emerald-500 focus:outline-none">
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
@@ -552,7 +576,7 @@
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO -->
+  <!-- MODAL: CADASTRO DE PRODUTO (COM CAMPO DE URL DE FOTO) -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -576,7 +600,12 @@
 
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Nome do Produto *</label>
-          <input type="text" id="prodName" required placeholder="Ex: Refrigerante 2L" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+          <input type="text" id="prodName" required placeholder="Ex: Refrigerante Cola 2L" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+        </div>
+
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Link da Foto do Produto (URL Opcional)</label>
+          <input type="url" id="prodImageUrl" placeholder="https://exemplo.com/imagem.jpg" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -610,7 +639,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v3.5) -->
+  <!-- JAVASCRIPT ENGINE (v3.6 - Fotos, WhatsApp Reposição/Fornecedor & Correção de Remessa) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -618,8 +647,8 @@
     const STORAGE_KEY_CASH = 'pdv_cash_v2';
 
     let products = JSON.parse(localStorage.getItem(STORAGE_KEY_PRODUCTS)) || [
-      { id: '1', barcode: '7891000100100', name: 'Arroz Tipo 1 - 5kg', stock: 20, minStock: 5, neededToRestock: 0, cost: 18.00, price: 24.90 },
-      { id: '2', barcode: '7891000200200', name: 'Feijão Carioca - 1kg', stock: 4, minStock: 5, neededToRestock: 3, cost: 5.20, price: 7.50 }
+      { id: '1', barcode: '7891000100100', name: 'Arroz Tipo 1 - 5kg', stock: 20, minStock: 5, neededToRestock: 0, cost: 18.00, price: 24.90, imageUrl: '' },
+      { id: '2', barcode: '7891000200200', name: 'Feijão Carioca - 1kg', stock: 4, minStock: 5, neededToRestock: 3, cost: 5.20, price: 7.50, imageUrl: '' }
     ];
 
     let salesHistory = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
@@ -681,7 +710,6 @@
         if (content) content.style.display = 'none';
       });
 
-      // Reset nav top buttons
       ['pos', 'products', 'restock'].forEach(t => {
         const btn = document.getElementById(`tab${capitalize(t)}Btn`);
         if (btn) btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center";
@@ -785,8 +813,21 @@
 
     function updateLastScannedCard(product) {
       const card = document.getElementById('lastScannedCard');
+      const img = document.getElementById('lastScannedImage');
+      const icon = document.getElementById('lastScannedIcon');
+
       document.getElementById('lastScannedName').textContent = product.name;
       document.getElementById('lastScannedPrice').textContent = `R$ ${product.price.toFixed(2).replace('.', ',')}`;
+
+      if (product.imageUrl) {
+        img.src = product.imageUrl;
+        img.classList.remove('hidden');
+        icon.classList.add('hidden');
+      } else {
+        img.classList.add('hidden');
+        icon.classList.remove('hidden');
+      }
+
       card.classList.remove('hidden');
     }
 
@@ -812,9 +853,14 @@
 
       cartList.innerHTML = cart.map(item => `
         <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-2.5">
-          <div class="min-w-0 flex-1">
-            <h4 class="text-xs font-semibold text-slate-200 truncate">${item.name}</h4>
-            <p class="text-[11px] text-slate-400">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.qty}</p>
+          <div class="min-w-0 flex-1 flex items-center gap-2.5">
+            ${item.imageUrl 
+              ? `<img src="${item.imageUrl}" class="w-8 h-8 rounded-lg object-cover bg-slate-800 shrink-0">` 
+              : `<div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 text-xs shrink-0"><i class="fa-solid fa-box"></i></div>`}
+            <div class="min-w-0 flex-1">
+              <h4 class="text-xs font-semibold text-slate-200 truncate">${item.name}</h4>
+              <p class="text-[11px] text-slate-400">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.qty}</p>
+            </div>
           </div>
           <span class="text-xs font-bold text-emerald-400">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
         </div>
@@ -980,12 +1026,13 @@
       openReceiptModal();
     }
 
-    // ENTRADA DE REMESSA (ESTOQUE)
+    // CORREÇÃO DO MODAL DE REMESSA (EXIBIÇÃO IMEDIATA DOS CAMPOS E FOTO DO PRODUTO)
     function openRemessaModal() {
       document.getElementById('remessaBarcode').value = '';
       document.getElementById('remessaProductInfo').classList.add('hidden');
       document.getElementById('remessaModal').classList.remove('hidden');
     }
+
     function closeRemessaModal() {
       stopRemessaScanner();
       document.getElementById('remessaModal').classList.add('hidden');
@@ -995,16 +1042,30 @@
       const code = document.getElementById('remessaBarcode').value.trim();
       const prod = products.find(p => p.barcode === code);
       const infoBox = document.getElementById('remessaProductInfo');
+      const img = document.getElementById('remessaImage');
+      const icon = document.getElementById('remessaIcon');
+
       if (prod) {
         activeRemessaProduct = prod;
         document.getElementById('remessaProdName').textContent = prod.name;
         document.getElementById('remessaOldStock').textContent = prod.stock;
-        document.getElementById('remessaOldCost0').textContent = (prod.cost || 0).toFixed(2);
+        document.getElementById('remessaOldCost').textContent = (prod.cost || 0).toFixed(2);
+        
+        if (prod.imageUrl) {
+          img.src = prod.imageUrl;
+          img.classList.remove('hidden');
+          icon.classList.add('hidden');
+        } else {
+          img.classList.add('hidden');
+          icon.classList.remove('hidden');
+        }
+
         document.getElementById('remessaAddQty').value = '';
         document.getElementById('remessaNewCost').value = prod.cost || 0;
         document.getElementById('remessaNewPrice').value = prod.price || 0;
         calcRemessaMargin();
         infoBox.classList.remove('hidden');
+        setTimeout(() => document.getElementById('remessaAddQty').focus(), 150);
       } else {
         activeRemessaProduct = null;
         infoBox.classList.add('hidden');
@@ -1019,7 +1080,7 @@
     }
 
     function confirmRemessaEntry() {
-      if (!activeRemessaProduct) return alert('Selecione um produto válido!');
+      if (!activeRemessaProduct) return alert('Bipe ou selecione um produto válido primeiro!');
       const addedQty = parseInt(document.getElementById('remessaAddQty').value) || 0;
       const newCost = parseFloat(document.getElementById('remessaNewCost').value) || activeRemessaProduct.cost;
       const newPrice = parseFloat(document.getElementById('remessaNewPrice').value) || activeRemessaProduct.price;
@@ -1033,7 +1094,7 @@
       saveData();
       closeRemessaModal();
       renderProductList();
-      showToastSuccess(`Remessa registrada! Novo estoque: ${activeRemessaProduct.stock} un`);
+      showToastSuccess(`Remessa salva! Estoque atualizado: ${activeRemessaProduct.stock} un`);
     }
 
     function startRemessaScanner() {
@@ -1086,7 +1147,7 @@
       }
     }
 
-    // REABASTECIMENTO
+    // REABASTECIMENTO & WHATSAPP
     function renderRestockList() {
       const container = document.getElementById('restockList');
       const needRestock = products.filter(p => (p.neededToRestock || 0) > 0);
@@ -1095,17 +1156,46 @@
         return;
       }
       container.innerHTML = needRestock.map(p => `
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center justify-between">
-          <div>
-            <h4 class="text-xs font-bold text-slate-100">${p.name}</h4>
-            <p class="text-[11px] text-amber-400 font-medium">Saiu no caixa hoje: <span class="font-extrabold text-sm">${p.neededToRestock} un</span></p>
-            <p class="text-[10px] text-slate-500">Estoque atual no depósito: ${p.stock} un</p>
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            ${p.imageUrl 
+              ? `<img src="${p.imageUrl}" class="w-10 h-10 rounded-xl object-cover bg-slate-800 shrink-0">` 
+              : `<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 text-xs shrink-0"><i class="fa-solid fa-box"></i></div>`}
+            <div class="min-w-0 flex-1">
+              <h4 class="text-xs font-bold text-slate-100 truncate">${p.name}</h4>
+              <p class="text-[11px] text-amber-400 font-medium">Saiu no caixa: <span class="font-extrabold text-xs">${p.neededToRestock} un</span></p>
+              <p class="text-[10px] text-slate-500">Estoque depósito: ${p.stock} un</p>
+            </div>
           </div>
-          <button onclick="confirmRestockProduct('${p.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl">
-            <i class="fa-solid fa-check mr-1"></i> Abastecido
+          <button onclick="confirmRestockProduct('${p.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl shrink-0">
+            <i class="fa-solid fa-check"></i>
           </button>
         </div>
       `).join('');
+    }
+
+    function sendRestockToWhatsApp() {
+      const needRestock = products.filter(p => (p.neededToRestock || 0) > 0);
+      if (needRestock.length === 0) return alert('Nenhum item pendente de reposição!');
+      
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      let text = `📦 *LISTA DE REPOSIÇÃO - LOJA*\nData: ${nowStr}\n\n`;
+      needRestock.forEach(p => {
+        text += `• *${p.name}* -> Repor *${p.neededToRestock} un* (Depósito: ${p.stock})\n`;
+      });
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function sendLowStockToWhatsApp() {
+      const lowStockProds = products.filter(p => p.stock <= (p.minStock || 5));
+      if (lowStockProds.length === 0) return alert('Nenhum item com estoque baixo!');
+
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      let text = `⚠️ *PEDIDO DE COMPRAS / ESTOQUE BAIXO*\nData: ${nowStr}\n\n`;
+      lowStockProds.forEach(p => {
+        text += `• *${p.name}* (Cód: ${p.barcode})\n   Estoque Atual: ${p.stock} un | Mínimo: ${p.minStock || 5} un\n`;
+      });
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     function confirmRestockProduct(id) {
@@ -1114,7 +1204,7 @@
         prod.neededToRestock = 0;
         saveData();
         renderRestockList();
-        showToastSuccess('Reposição registrada!');
+        showToastSuccess('Item reposto com sucesso!');
       }
     }
 
@@ -1123,7 +1213,7 @@
         products.forEach(p => p.neededToRestock = 0);
         saveData();
         renderRestockList();
-        showToastSuccess('Lista limpa!');
+        showToastSuccess('Lista de reposição zerada!');
       }
     }
 
@@ -1146,6 +1236,15 @@
       }
       document.getElementById('productCounterBadge').textContent = products.length;
 
+      const lowStockProds = products.filter(p => p.stock <= (p.minStock || 5));
+      const whatsappBox = document.getElementById('supplierWhatsAppBox');
+      if (lowStockProds.length > 0) {
+        whatsappBox.classList.remove('hidden');
+        document.getElementById('lowStockCountText').textContent = `${lowStockProds.length} produto(s) com estoque baixo/crítico`;
+      } else {
+        whatsappBox.classList.add('hidden');
+      }
+
       if (filtered.length === 0) {
         listContainer.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum produto encontrado</p></div>`;
         return;
@@ -1154,16 +1253,21 @@
       listContainer.innerHTML = filtered.map(p => {
         const isLow = p.stock <= (p.minStock || 5);
         return `
-          <div class="bg-slate-950 border ${isLow ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <span class="text-[10px] text-slate-500 font-mono">${p.barcode}</span>
-              <h4 class="text-xs font-semibold text-slate-100 flex items-center gap-1.5 truncate">
-                <span>${p.name}</span>
-                ${isLow ? '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.2 rounded font-bold">BAIXO</span>' : ''}
-              </h4>
-              <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | Venda: R$ ${p.price.toFixed(2).replace('.', ',')}</p>
+          <div class="bg-slate-950 border ${isLow ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              ${p.imageUrl 
+                ? `<img src="${p.imageUrl}" class="w-10 h-10 rounded-xl object-cover bg-slate-800 shrink-0">` 
+                : `<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 text-xs shrink-0"><i class="fa-solid fa-box"></i></div>`}
+              <div class="min-w-0 flex-1">
+                <span class="text-[10px] text-slate-500 font-mono">${p.barcode}</span>
+                <h4 class="text-xs font-semibold text-slate-100 flex items-center gap-1.5 truncate">
+                  <span>${p.name}</span>
+                  ${isLow ? '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.2 rounded font-bold">BAIXO</span>' : ''}
+                </h4>
+                <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | Venda: R$ ${p.price.toFixed(2).replace('.', ',')}</p>
+              </div>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 shrink-0">
               <button onclick="openLossModal('${p.id}')" title="Baixa por Avaria/Vencimento" class="bg-amber-950/60 text-amber-400 border border-amber-800/60 p-2 rounded-xl text-xs"><i class="fa-solid fa-triangle-exclamation"></i></button>
               <button onclick="deleteProduct('${p.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -1176,6 +1280,7 @@
       stopModalScanner();
       document.getElementById('prodBarcode').value = barcodePreset;
       document.getElementById('prodName').value = '';
+      document.getElementById('prodImageUrl').value = '';
       document.getElementById('prodStock').value = '';
       document.getElementById('prodMinStock').value = '5';
       document.getElementById('prodCost').value = '';
@@ -1208,6 +1313,7 @@
       e.preventDefault();
       const barcode = document.getElementById('prodBarcode').value.trim();
       const name = document.getElementById('prodName').value.trim();
+      const imageUrl = document.getElementById('prodImageUrl').value.trim();
       const inputStock = parseInt(document.getElementById('prodStock').value) || 0;
       const minStock = parseInt(document.getElementById('prodMinStock').value) || 5;
       const inputCost = parseFloat(document.getElementById('prodCost').value) || 0;
@@ -1215,9 +1321,9 @@
 
       const existingIndex = products.findIndex(p => p.barcode === barcode);
       if (existingIndex !== -1) {
-        products[existingIndex] = { ...products[existingIndex], name, stock: products[existingIndex].stock + inputStock, minStock, cost: inputCost, price: inputPrice };
+        products[existingIndex] = { ...products[existingIndex], name, imageUrl, stock: products[existingIndex].stock + inputStock, minStock, cost: inputCost, price: inputPrice };
       } else {
-        products.push({ id: Date.now().toString(), barcode, name, stock: inputStock, minStock, neededToRestock: 0, cost: inputCost, price: inputPrice });
+        products.push({ id: Date.now().toString(), barcode, name, imageUrl, stock: inputStock, minStock, neededToRestock: 0, cost: inputCost, price: inputPrice });
       }
 
       saveData();
