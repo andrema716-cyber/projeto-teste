@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - Operação & Reposição Inteligente</title>
+  <title>Caixa PDV - Operação, Estoque & Remessas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -21,25 +21,18 @@
       padding-bottom: calc(var(--sab) + 90px);
       touch-action: manipulation;
     }
-    #reader video, #modalReader video {
+    #reader video, #modalReader video, #remessaReader video {
       width: 100% !important;
       height: 180px !important;
       object-fit: cover !important;
       border-radius: 12px;
     }
-    #reader, #modalReader {
+    #reader, #modalReader, #remessaReader {
       border: none !important;
       background: #000;
       border-radius: 12px;
       overflow: hidden;
       position: relative;
-    }
-    .scan-flash {
-      animation: flashAnimation 0.3s ease-out;
-    }
-    @keyframes flashAnimation {
-      0% { border: 4px solid #10b981; }
-      100% { border: 0px solid transparent; }
     }
     .pb-safe-footer {
       padding-bottom: calc(var(--sab) + 95px);
@@ -78,35 +71,47 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.4</span></h1>
-            <p class="text-xs text-slate-400">Gestão & Reposição por Saídas</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.5</span></h1>
+            <p class="text-xs text-slate-400">Operação & Gestão de Estoque</p>
           </div>
         </div>
-        <button onclick="openCashRegisterModal()" class="bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
-          <i class="fa-solid fa-vault text-amber-400"></i>
-          <span>Caixa</span>
-        </button>
+        
+        <div class="flex items-center gap-2">
+          <button onclick="openCashRegisterModal()" class="bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
+            <i class="fa-solid fa-vault text-amber-400"></i>
+            <span>Caixa</span>
+          </button>
+          
+          <!-- MENU TRÊS PONTINHOS (⋮) -->
+          <div class="relative">
+            <button onclick="toggleOptionsMenu()" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center hover:text-white transition">
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
+              <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Histórico de Vendas
+              </button>
+              <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-users text-purple-400"></i> Clientes & Fiado
+              </button>
+              <button onclick="switchTab('settings'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 border-t border-slate-800 pt-3">
+                <i class="fa-solid fa-gear text-slate-400"></i> Configurações & Backup
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- NAV BAR -->
-      <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl overflow-x-auto no-scrollbar gap-1">
-        <button onclick="switchTab('pos')" id="tabPosBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 bg-emerald-600 text-white">
+      <!-- NAV BAR PRINCIPAL (LIMPA) -->
+      <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl gap-1">
+        <button onclick="switchTab('pos')" id="tabPosBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center">
           <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
         </button>
-        <button onclick="switchTab('products')" id="tabProductsBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white">
+        <button onclick="switchTab('products')" id="tabProductsBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
           <i class="fa-solid fa-boxes-stacked mr-1"></i> Produtos
         </button>
-        <button onclick="switchTab('restock')" id="tabRestockBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white">
+        <button onclick="switchTab('restock')" id="tabRestockBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
           <i class="fa-solid fa-rotate mr-1"></i> Reposição
-        </button>
-        <button onclick="switchTab('history')" id="tabHistoryBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white">
-          <i class="fa-solid fa-clock-rotate-left mr-1"></i> Histórico
-        </button>
-        <button onclick="switchTab('customers')" id="tabCustomersBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white">
-          <i class="fa-solid fa-users mr-1"></i> Clientes
-        </button>
-        <button onclick="switchTab('settings')" id="tabSettingsBtn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white">
-          <i class="fa-solid fa-gear mr-1"></i> Config.
         </button>
       </nav>
     </div>
@@ -199,16 +204,21 @@
       </div>
     </div>
 
-    <!-- TAB 2: PRODUTOS (COM CONTADOR E FILTRO DE ESTOQUE BAIXO) -->
+    <!-- TAB 2: PRODUTOS (COM BOTÃO DE CADASTRO, ENTRADA DE REMESSA E BAIXA DE PERDAS) -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-sm font-bold text-slate-200">Catálogo de Produtos</h2>
+          <h2 class="text-sm font-bold text-slate-200">Catálogo & Estoque</h2>
           <p class="text-[11px] text-slate-400">Total cadastrados: <span id="productCounterBadge" class="font-bold text-emerald-400">0</span></p>
         </div>
-        <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
-          <i class="fa-solid fa-plus"></i> Novo Produto
-        </button>
+        <div class="flex gap-2">
+          <button onclick="openRemessaModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+            <i class="fa-solid fa-truck-ramp-box"></i> Entrada
+          </button>
+          <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+            <i class="fa-solid fa-plus"></i> Novo
+          </button>
+        </div>
       </div>
 
       <div class="flex gap-2">
@@ -461,6 +471,87 @@
     </div>
   </div>
 
+  <!-- MODAL: ENTRADA DE REMESSA (BIPAR PARA SOMAR ESTOQUE) -->
+  <div id="remessaModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h2 class="text-base font-bold text-slate-100"><i class="fa-solid fa-truck-ramp-box text-blue-400 mr-1.5"></i> Entrada de Remessa</h2>
+        <button onclick="closeRemessaModal()" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Código de Barras *</label>
+          <div class="flex gap-2">
+            <input type="text" id="remessaBarcode" oninput="lookupRemessaProduct()" placeholder="Bipe ou digite o código..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+            <button type="button" onclick="startRemessaScanner()" class="bg-blue-600 text-white font-bold text-xs px-3 py-2.5 rounded-xl">Bipar</button>
+          </div>
+        </div>
+
+        <div id="remessaScannerContainer" class="hidden relative w-full">
+          <div id="remessaReader" class="w-full"></div>
+          <button type="button" onclick="stopRemessaScanner()" class="mt-2 w-full bg-rose-600 text-white text-xs font-bold py-2 rounded-xl">Fechar Câmara</button>
+        </div>
+
+        <div id="remessaProductInfo" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
+          <h3 id="remessaProdName" class="text-xs font-bold text-slate-100">---</h3>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>Estoque Anterior: <span id="remessaOldStock" class="font-bold text-slate-300">0</span> un</div>
+            <div>Custo Atual: R$ <span id="remessaOldCost" class="font-bold text-slate-300">0,00</span></div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div>
+              <label class="text-[10px] text-emerald-400 font-bold uppercase block mb-1">Quantidade que Chegou *</label>
+              <input type="number" id="remessaAddQty" placeholder="Ex: 20" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-sm rounded-xl px-3 py-2">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-400 uppercase block mb-1">Novo Custo (R$)</label>
+                <input type="number" step="0.01" id="remessaNewCost" oninput="calcRemessaMargin()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl px-3 py-2">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400 uppercase block mb-1">Novo Preço Venda (R$)</label>
+                <input type="number" step="0.01" id="remessaNewPrice" oninput="calcRemessaMargin()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2">
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400">Margem Calculada: <span id="remessaMarginDisplay" class="font-bold text-emerald-400">0%</span></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeRemessaModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Cancelar</button>
+          <button type="button" onclick="confirmRemessaEntry()" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar Entrada</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BAIXA DE ESTOQUE POR PERDAS / VENCIMENTOS -->
+  <div id="lossModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Baixa por Avaria / Vencido</h3>
+        <button onclick="closeLossModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="bg-slate-950 p-3 rounded-2xl space-y-2 text-xs">
+        <h4 id="lossProdName" class="font-bold text-slate-100">---</h4>
+        <p class="text-slate-400">Estoque Atual: <span id="lossCurrentStock" class="font-bold text-slate-200">0</span> un</p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[11px] text-slate-400 block">Quantidade Retirada (Estragado/Vencido):</label>
+        <input type="number" id="lossQtyInput" placeholder="Ex: 2" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2.5">
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeLossModal()" class="flex-1 bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl text-xs">Cancelar</button>
+        <button onclick="confirmLossEntry()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs">Confirmar Baixa</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: CADASTRO DE PRODUTO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
@@ -473,7 +564,7 @@
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Código de Barras *</label>
           <div class="flex gap-2">
-            <input type="text" id="prodBarcode" required oninput="checkBarcodeDuplicate()" placeholder="Bipe ou digite..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
+            <input type="text" id="prodBarcode" required placeholder="Bipe ou digite..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5">
             <button type="button" onclick="startModalScanner()" class="bg-blue-600 text-white font-bold text-xs px-3 py-2.5 rounded-xl">Bipar</button>
           </div>
         </div>
@@ -490,7 +581,7 @@
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-[11px] text-slate-400 block mb-1">Estoque Depósito *</label>
+            <label class="text-[11px] text-slate-400 block mb-1">Estoque Inicial *</label>
             <input type="number" id="prodStock" required placeholder="0" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2.5">
           </div>
           <div>
@@ -502,13 +593,14 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-[11px] text-slate-400 block mb-1">Custo (R$) *</label>
-            <input type="number" step="0.01" id="prodCost" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2.5">
+            <input type="number" step="0.01" id="prodCost" oninput="calcProductModalMargin()" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2.5">
           </div>
           <div>
             <label class="text-[11px] text-slate-400 block mb-1">Venda (R$) *</label>
-            <input type="number" step="0.01" id="prodPrice" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5">
+            <input type="number" step="0.01" id="prodPrice" oninput="calcProductModalMargin()" required placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 font-bold text-xs rounded-xl px-3 py-2.5">
           </div>
         </div>
+        <p class="text-[10px] text-slate-400">Margem de Lucro: <span id="prodModalMargin" class="font-bold text-emerald-400">0%</span></p>
 
         <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
           <button type="button" onclick="closeProductModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Cancelar</button>
@@ -518,7 +610,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v3.4 - Bip Nativo, Trava 1.5s & Seleção de Pagamento) -->
+  <!-- JAVASCRIPT ENGINE (v3.5) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -537,32 +629,29 @@
     let cart = [];
     let html5QrcodeScanner = null;
     let modalHtml5QrcodeScanner = null;
+    let remessaHtml5QrcodeScanner = null;
     let isCameraActive = false;
     let isProcessingScan = false;
     let selectedPaymentMethod = 'DINHEIRO';
     let isFiadoAuthorized = false;
     let filterLowStockOnly = false;
     let lastCompletedSale = null;
+    let activeLossProductId = null;
+    let activeRemessaProduct = null;
 
-    // AUDIO BEEP SINTETIZADO NATIVO (WEB AUDIO API)
     function playBeepSound() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime); // Frequência do Bip
+        oscillator.frequency.setValueAtTime(1800, audioCtx.currentTime);
         gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-
         oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.12); // Duração de 120ms
-      } catch (e) {
-        console.log("Áudio bloqueado pelo navegador até primeira interação.", e);
-      }
+        oscillator.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -580,31 +669,39 @@
       localStorage.setItem(STORAGE_KEY_CASH, JSON.stringify(cashRegister));
     }
 
+    function toggleOptionsMenu() {
+      const dropdown = document.getElementById('optionsDropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
     function switchTab(tab) {
       const tabs = ['pos', 'products', 'restock', 'history', 'customers', 'settings'];
       tabs.forEach(t => {
         const content = document.getElementById(`tab${capitalize(t)}Content`);
-        const btn = document.getElementById(`tab${capitalize(t)}Btn`);
         if (content) content.style.display = 'none';
-        if (btn) btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 text-slate-400 hover:text-white";
+      });
+
+      // Reset nav top buttons
+      ['pos', 'products', 'restock'].forEach(t => {
+        const btn = document.getElementById(`tab${capitalize(t)}Btn`);
+        if (btn) btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center";
       });
 
       const activeContent = document.getElementById(`tab${capitalize(tab)}Content`);
-      const activeBtn = document.getElementById(`tab${capitalize(tab)}Btn`);
-
       if (activeContent) activeContent.style.display = 'flex';
-      if (activeBtn) activeBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 bg-emerald-600 text-white";
+
+      const activeNavBtn = document.getElementById(`tab${capitalize(tab)}Btn`);
+      if (activeNavBtn) {
+        activeNavBtn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center";
+      }
 
       if (tab !== 'pos') stopScanner();
-
       if (tab === 'products') renderProductList();
       if (tab === 'restock') renderRestockList();
       if (tab === 'history') renderHistoryList();
     }
 
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
+    function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
 
     function startNewSale() {
       document.getElementById('standbyScreen').style.display = 'none';
@@ -632,7 +729,6 @@
       if (html5QrcodeScanner) stopScanner();
       html5QrcodeScanner = new Html5Qrcode("reader");
       const config = { fps: 15, qrbox: { width: 250, height: 120 } };
-
       html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
         .then(() => { isCameraActive = true; updateCameraUI(true); })
         .catch(err => console.error(err));
@@ -656,9 +752,7 @@
     function onScanSuccess(decodedText) {
       if (isProcessingScan) return;
       isProcessingScan = true;
-
-      playBeepSound(); // TOCA O BIP AUDÍVEL
-
+      playBeepSound();
       const foundProduct = products.find(p => p.barcode === decodedText);
       if (foundProduct) {
         addToCart(foundProduct);
@@ -669,7 +763,6 @@
           openProductModal(decodedText);
         }
       }
-      // TRAVA DE LEITURA (COOLDOWN) AUMENTADA PARA 1.5 SEGUNDOS
       setTimeout(() => isProcessingScan = false, 1500);
     }
 
@@ -677,8 +770,7 @@
       e.preventDefault();
       const code = document.getElementById('manualBarcodeInput').value.trim();
       if (!code) return;
-      
-      playBeepSound(); // TOCA O BIP AUDÍVEL
+      playBeepSound();
       const foundProduct = products.find(p => p.barcode === code);
       if (foundProduct) addToCart(foundProduct);
       document.getElementById('manualBarcodeInput').value = '';
@@ -707,7 +799,6 @@
       const cartList = document.getElementById('cartList');
       const cartCount = document.getElementById('cartCount');
       const totalDisplay = document.getElementById('cartTotalDisplay');
-
       const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
       const totalValue = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
@@ -748,11 +839,8 @@
       initScanner();
     }
 
-    // LÓGICA DE SELEÇÃO COMPLETA DAS FORMAS DE PAGAMENTO
     function selectPaymentMethod(method) {
       selectedPaymentMethod = method;
-      
-      // Reseta visual dos botões
       document.querySelectorAll('.payment-method-btn').forEach(btn => {
         btn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
       });
@@ -806,7 +894,7 @@
       const select = document.getElementById('customerSelect');
       if (!select) return;
       select.innerHTML = `<option value="">-- Selecione o Cliente --</option>` +
-        customers.map(c => `<option value="${c.id}" data-overdue="${c.overdue}" data-debt="${c.debt}">${c.name} ${c.debt > 0 ? '(⚠️ EM DEBIDO)' : '(Em Dia)'}</option>`).join('');
+        customers.map(c => `<option value="${c.id}" data-overdue="${c.overdue}" data-debt="${c.debt}">${c.name} ${c.debt > 0 ? '(⚠️ EM DÉBITO)' : '(Em Dia)'}</option>`).join('');
     }
 
     function checkCustomerDelinquency() {
@@ -819,7 +907,6 @@
         if (warning) warning.classList.add('hidden');
         return;
       }
-
       const isOverdue = selectedOpt.getAttribute('data-overdue') === 'true';
       const debtAmount = selectedOpt.getAttribute('data-debt');
 
@@ -866,7 +953,6 @@
         }
       }
 
-      // Acumula saídas para reposição na loja
       cart.forEach(item => {
         const prod = products.find(p => p.id === item.id);
         if (prod) {
@@ -894,16 +980,120 @@
       openReceiptModal();
     }
 
-    // REABASTECIMENTO POR SAÍDAS
+    // ENTRADA DE REMESSA (ESTOQUE)
+    function openRemessaModal() {
+      document.getElementById('remessaBarcode').value = '';
+      document.getElementById('remessaProductInfo').classList.add('hidden');
+      document.getElementById('remessaModal').classList.remove('hidden');
+    }
+    function closeRemessaModal() {
+      stopRemessaScanner();
+      document.getElementById('remessaModal').classList.add('hidden');
+    }
+
+    function lookupRemessaProduct() {
+      const code = document.getElementById('remessaBarcode').value.trim();
+      const prod = products.find(p => p.barcode === code);
+      const infoBox = document.getElementById('remessaProductInfo');
+      if (prod) {
+        activeRemessaProduct = prod;
+        document.getElementById('remessaProdName').textContent = prod.name;
+        document.getElementById('remessaOldStock').textContent = prod.stock;
+        document.getElementById('remessaOldCost0').textContent = (prod.cost || 0).toFixed(2);
+        document.getElementById('remessaAddQty').value = '';
+        document.getElementById('remessaNewCost').value = prod.cost || 0;
+        document.getElementById('remessaNewPrice').value = prod.price || 0;
+        calcRemessaMargin();
+        infoBox.classList.remove('hidden');
+      } else {
+        activeRemessaProduct = null;
+        infoBox.classList.add('hidden');
+      }
+    }
+
+    function calcRemessaMargin() {
+      const cost = parseFloat(document.getElementById('remessaNewCost').value) || 0;
+      const price = parseFloat(document.getElementById('remessaNewPrice').value) || 0;
+      const margin = cost > 0 ? ((price - cost) / cost) * 100 : 0;
+      document.getElementById('remessaMarginDisplay').textContent = `${margin.toFixed(1)}%`;
+    }
+
+    function confirmRemessaEntry() {
+      if (!activeRemessaProduct) return alert('Selecione um produto válido!');
+      const addedQty = parseInt(document.getElementById('remessaAddQty').value) || 0;
+      const newCost = parseFloat(document.getElementById('remessaNewCost').value) || activeRemessaProduct.cost;
+      const newPrice = parseFloat(document.getElementById('remessaNewPrice').value) || activeRemessaProduct.price;
+
+      if (addedQty <= 0) return alert('Informe a quantidade que chegou!');
+
+      activeRemessaProduct.stock += addedQty;
+      activeRemessaProduct.cost = newCost;
+      activeRemessaProduct.price = newPrice;
+
+      saveData();
+      closeRemessaModal();
+      renderProductList();
+      showToastSuccess(`Remessa registrada! Novo estoque: ${activeRemessaProduct.stock} un`);
+    }
+
+    function startRemessaScanner() {
+      const container = document.getElementById('remessaScannerContainer');
+      container.classList.remove('hidden');
+      if (remessaHtml5QrcodeScanner) stopRemessaScanner();
+      remessaHtml5QrcodeScanner = new Html5Qrcode("remessaReader");
+      remessaHtml5QrcodeScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 120 } }, (text) => {
+        playBeepSound();
+        document.getElementById('remessaBarcode').value = text;
+        lookupRemessaProduct();
+        stopRemessaScanner();
+      }).catch(() => container.classList.add('hidden'));
+    }
+
+    function stopRemessaScanner() {
+      if (remessaHtml5QrcodeScanner) {
+        remessaHtml5QrcodeScanner.stop().then(() => {
+          remessaHtml5QrcodeScanner = null;
+          document.getElementById('remessaScannerContainer').classList.add('hidden');
+        }).catch(() => document.getElementById('remessaScannerContainer').classList.add('hidden'));
+      } else {
+        document.getElementById('remessaScannerContainer').classList.add('hidden');
+      }
+    }
+
+    // BAIXA POR PERDAS / VENCIDOS
+    function openLossModal(productId) {
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+      activeLossProductId = productId;
+      document.getElementById('lossProdName').textContent = prod.name;
+      document.getElementById('lossCurrentStock').textContent = prod.stock;
+      document.getElementById('lossQtyInput').value = '';
+      document.getElementById('lossModal').classList.remove('hidden');
+    }
+    function closeLossModal() { document.getElementById('lossModal').classList.add('hidden'); }
+
+    function confirmLossEntry() {
+      const qty = parseInt(document.getElementById('lossQtyInput').value) || 0;
+      if (qty <= 0) return alert('Informe uma quantidade válida!');
+      const prod = products.find(p => p.id === activeLossProductId);
+      if (prod) {
+        if (qty > prod.stock) return alert('Quantidade maior que o estoque atual!');
+        prod.stock -= qty;
+        saveData();
+        closeLossModal();
+        renderProductList();
+        showToastSuccess('Baixa por avaria/perda registrada!');
+      }
+    }
+
+    // REABASTECIMENTO
     function renderRestockList() {
       const container = document.getElementById('restockList');
       const needRestock = products.filter(p => (p.neededToRestock || 0) > 0);
-
       if (needRestock.length === 0) {
         container.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum produto pendente de reposição por vendas hoje.</p></div>`;
         return;
       }
-
       container.innerHTML = needRestock.map(p => `
         <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center justify-between">
           <div>
@@ -933,7 +1123,7 @@
         products.forEach(p => p.neededToRestock = 0);
         saveData();
         renderRestockList();
-        showToastSuccess('Lista de reposição limpa!');
+        showToastSuccess('Lista limpa!');
       }
     }
 
@@ -950,12 +1140,10 @@
     function renderProductList() {
       const listContainer = document.getElementById('productList');
       const query = (document.getElementById('productSearchInput')?.value || '').toLowerCase();
-      
       let filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.barcode.includes(query));
       if (filterLowStockOnly) {
         filtered = filtered.filter(p => p.stock <= (p.minStock || 5));
       }
-
       document.getElementById('productCounterBadge').textContent = products.length;
 
       if (filtered.length === 0) {
@@ -967,15 +1155,18 @@
         const isLow = p.stock <= (p.minStock || 5);
         return `
           <div class="bg-slate-950 border ${isLow ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between">
-            <div>
+            <div class="min-w-0 flex-1">
               <span class="text-[10px] text-slate-500 font-mono">${p.barcode}</span>
-              <h4 class="text-xs font-semibold text-slate-100 flex items-center gap-1.5">
+              <h4 class="text-xs font-semibold text-slate-100 flex items-center gap-1.5 truncate">
                 <span>${p.name}</span>
-                ${isLow ? '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.2 rounded font-bold">ESTOQUE BAIXO</span>' : ''}
+                ${isLow ? '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.2 rounded font-bold">BAIXO</span>' : ''}
               </h4>
-              <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | R$ ${p.price.toFixed(2).replace('.', ',')}</p>
+              <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | Venda: R$ ${p.price.toFixed(2).replace('.', ',')}</p>
             </div>
-            <button onclick="deleteProduct('${p.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
+            <div class="flex items-center gap-1">
+              <button onclick="openLossModal('${p.id}')" title="Baixa por Avaria/Vencimento" class="bg-amber-950/60 text-amber-400 border border-amber-800/60 p-2 rounded-xl text-xs"><i class="fa-solid fa-triangle-exclamation"></i></button>
+              <button onclick="deleteProduct('${p.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
+            </div>
           </div>
         `;
       }).join('');
@@ -989,12 +1180,20 @@
       document.getElementById('prodMinStock').value = '5';
       document.getElementById('prodCost').value = '';
       document.getElementById('prodPrice').value = '';
+      document.getElementById('prodModalMargin').textContent = '0%';
       document.getElementById('productModal').classList.remove('hidden');
     }
 
     function closeProductModal() {
       stopModalScanner();
       document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function calcProductModalMargin() {
+      const cost = parseFloat(document.getElementById('prodCost').value) || 0;
+      const price = parseFloat(document.getElementById('prodPrice').value) || 0;
+      const margin = cost > 0 ? ((price - cost) / cost) * 100 : 0;
+      document.getElementById('prodModalMargin').textContent = `${margin.toFixed(1)}%`;
     }
 
     function deleteProduct(id) {
@@ -1015,29 +1214,10 @@
       const inputPrice = parseFloat(document.getElementById('prodPrice').value) || 0;
 
       const existingIndex = products.findIndex(p => p.barcode === barcode);
-
       if (existingIndex !== -1) {
-        const currentProd = products[existingIndex];
-        const totalStock = currentProd.stock + inputStock;
-        products[existingIndex] = {
-          ...currentProd,
-          name,
-          stock: totalStock,
-          minStock,
-          cost: inputCost,
-          price: inputPrice
-        };
+        products[existingIndex] = { ...products[existingIndex], name, stock: products[existingIndex].stock + inputStock, minStock, cost: inputCost, price: inputPrice };
       } else {
-        products.push({
-          id: Date.now().toString(),
-          barcode,
-          name,
-          stock: inputStock,
-          minStock,
-          neededToRestock: 0,
-          cost: inputCost,
-          price: inputPrice
-        });
+        products.push({ id: Date.now().toString(), barcode, name, stock: inputStock, minStock, neededToRestock: 0, cost: inputCost, price: inputPrice });
       }
 
       saveData();
@@ -1051,13 +1231,11 @@
       container.classList.remove('hidden');
       if (modalHtml5QrcodeScanner) stopModalScanner();
       modalHtml5QrcodeScanner = new Html5Qrcode("modalReader");
-      const config = { fps: 15, qrbox: { width: 250, height: 120 } };
-
-      modalHtml5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
+      modalHtml5QrcodeScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 120 } }, (text) => {
         playBeepSound();
-        document.getElementById('prodBarcode').value = decodedText;
+        document.getElementById('prodBarcode').value = text;
         stopModalScanner();
-      }).catch(err => container.classList.add('hidden'));
+      }).catch(() => container.classList.add('hidden'));
     }
 
     function stopModalScanner() {
@@ -1071,7 +1249,7 @@
       }
     }
 
-    // MODAL RECIBO E WHATSAPP
+    // RECIBOS E CAIXA
     function openReceiptModal() {
       if (!lastCompletedSale) return;
       document.getElementById('receiptDate').textContent = lastCompletedSale.date;
@@ -1080,7 +1258,6 @@
       document.getElementById('receiptItems').innerHTML = lastCompletedSale.items.map(i => `<div class="flex justify-between"><span>${i.name} (x${i.qty})</span><span>R$ ${(i.price * i.qty).toFixed(2).replace('.', ',')}</span></div>`).join('');
       document.getElementById('receiptModal').classList.remove('hidden');
     }
-
     function closeReceiptModal() { document.getElementById('receiptModal').classList.add('hidden'); }
     function printReceipt() { window.print(); }
 
@@ -1092,7 +1269,6 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
-    // CAIXA DIÁRIO
     function openCashRegisterModal() {
       document.getElementById('cashFundo').textContent = `R$ ${cashRegister.fundo.toFixed(2).replace('.', ',')}`;
       document.getElementById('cashDinheiro').textContent = `R$ ${cashRegister.dinheiroEntradas.toFixed(2).replace('.', ',')}`;
@@ -1101,7 +1277,6 @@
       document.getElementById('cashTotalGaveta').textContent = `R$ ${totalGaveta.toFixed(2).replace('.', ',')}`;
       document.getElementById('cashRegisterModal').classList.remove('hidden');
     }
-
     function closeCashRegisterModal() { document.getElementById('cashRegisterModal').classList.add('hidden'); }
 
     function registerSangria() {
@@ -1114,12 +1289,10 @@
       showToastSuccess('Sangria registrada!');
     }
 
-    // HISTÓRICO
     function renderHistoryList() {
       const historyList = document.getElementById('historyList');
       const totalSalesEl = document.getElementById('historyTotalSales');
       const countEl = document.getElementById('historyCount');
-
       const totalVal = salesHistory.reduce((sum, s) => sum + s.total, 0);
       if (totalSalesEl) totalSalesEl.textContent = `R$ ${totalVal.toFixed(2).replace('.', ',')}`;
       if (countEl) countEl.textContent = salesHistory.length;
@@ -1128,7 +1301,6 @@
         historyList.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhuma venda registrada ainda</p></div>`;
         return;
       }
-
       historyList.innerHTML = salesHistory.map(s => `
         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
           <div class="flex items-center justify-between pb-2 border-b border-slate-800">
