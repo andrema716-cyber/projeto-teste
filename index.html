@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - Operação, Estoque & Fotos</title>
+  <title>Caixa PDV - Operação, Estoque & Fiado Avançado</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -71,8 +71,8 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.6</span></h1>
-            <p class="text-xs text-slate-400">Operação, Estoque & WhatsApp</p>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v3.9</span></h1>
+            <p class="text-xs text-slate-400">Operação & Gestão Comercial</p>
           </div>
         </div>
         
@@ -161,18 +161,25 @@
             </div>
           </div>
 
-          <form onsubmit="handleManualBarcodeSubmit(event)" class="mt-3 flex gap-2">
-            <div class="relative flex-1">
-              <i class="fa-solid fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-              <input type="text" id="manualBarcodeInput" placeholder="Digite o código de barras..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
+          <!-- CAMPO DE QUANTIDADE PARA FARDOS E ENTRADA MANUAL -->
+          <div class="mt-3 flex gap-2">
+            <div class="w-20 shrink-0">
+              <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Qtd Fardo</label>
+              <input type="number" id="multiplierQtyInput" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 text-center text-emerald-400 font-bold text-xs rounded-xl py-2.5">
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 rounded-xl transition flex items-center gap-1.5">
-              <span>Add</span>
-            </button>
-          </form>
+            <form onsubmit="handleManualBarcodeSubmit(event)" class="flex gap-2 flex-1">
+              <div class="relative flex-1">
+                <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Código de Barras</label>
+                <input type="text" id="manualBarcodeInput" placeholder="Digite o código..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
+              </div>
+              <div class="flex flex-col justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition">Add</button>
+              </div>
+            </form>
+          </div>
         </section>
 
-        <!-- CARD DE ÚLTIMO ITEM LIDO COM FOTO DO PRODUTO -->
+        <!-- CARD DE ÚLTIMO ITEM LIDO -->
         <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
           <div id="lastScannedImgContainer" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
             <i id="lastScannedIcon" class="fa-solid fa-box text-lg"></i>
@@ -185,6 +192,7 @@
           </div>
         </section>
 
+        <!-- CARRINHO COM OPÇÃO DE EXCLUIR E ALTERAR ITENS -->
         <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <div class="flex items-center gap-2">
@@ -206,11 +214,11 @@
       </div>
     </div>
 
-    <!-- TAB 2: PRODUTOS (COM ENVIAR PEDIDO POR WHATSAPP) -->
+    <!-- TAB 2: PRODUTOS (COM EDIÇÃO DE PREÇOS E MARGENS) -->
     <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-sm font-bold text-slate-200">Catálogo & Estoque</h2>
+          <h2 class="text-sm font-bold text-slate-200">Catálogo & Preços</h2>
           <p class="text-[11px] text-slate-400">Total cadastrados: <span id="productCounterBadge" class="font-bold text-emerald-400">0</span></p>
         </div>
         <div class="flex gap-1.5">
@@ -250,7 +258,7 @@
       </section>
     </div>
 
-    <!-- TAB 3: REABASTECIMENTO POR SAÍDAS (COM ENVIAR P/ REPOSITOR WHATSAPP) -->
+    <!-- TAB 3: REABASTECIMENTO POR SAÍDAS -->
     <div id="tabRestockContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <div>
@@ -293,7 +301,7 @@
       </section>
     </div>
 
-    <!-- TAB 5: CLIENTES -->
+    <!-- TAB 5: CLIENTES & FIADO DETALHADO -->
     <div id="tabCustomersContent" style="display: none;" class="flex-col gap-4 flex-1">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-sm font-bold text-slate-200">Gestão de Clientes & Fiado</h2>
@@ -489,7 +497,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ENTRADA DE REMESSA (COM FOTO DO PRODUTO E CAMPO CORRIGIDO DE QUANTIDADE) -->
+  <!-- MODAL: ENTRADA DE REMESSA -->
   <div id="remessaModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -576,7 +584,7 @@
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO DE PRODUTO (COM CAMPO DE URL DE FOTO) -->
+  <!-- MODAL: CADASTRO DE PRODUTO -->
   <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -639,7 +647,88 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v3.6 - Fotos, WhatsApp Reposição/Fornecedor & Correção de Remessa) -->
+  <!-- MODAL: EDIÇÃO RÁPIDA DE PREÇO (PRODUTO) -->
+  <div id="editPriceModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-tag text-emerald-400 mr-1"></i> Editar Preço / Margem</h3>
+        <button onclick="closeEditPriceModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="bg-slate-950 p-3 rounded-2xl space-y-1 text-xs">
+        <h4 id="editPriceProdName" class="font-bold text-slate-100">---</h4>
+        <p class="text-[10px] text-slate-500 font-mono" id="editPriceProdBarcode">---</p>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] text-slate-400 uppercase block mb-1">Custo (R$)</label>
+            <input type="number" step="0.01" id="editCostInput" oninput="calcEditModalMargin()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="text-[10px] text-emerald-400 uppercase font-bold block mb-1">Venda (R$)</label>
+            <input type="number" step="0.01" id="editPriceInput" oninput="calcEditModalMargin()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-bold">
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400">Nova Margem de Lucro: <span id="editMarginDisplay" class="font-bold text-emerald-400">0%</span></p>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeEditPriceModal()" class="flex-1 bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl text-xs">Cancelar</button>
+        <button onclick="saveEditedPrice()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs">Salvar Preço</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRO DE CLIENTE -->
+  <div id="customerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100">Cadastrar Novo Cliente</h3>
+        <button onclick="closeCustomerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleCustomerFormSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-400 block mb-1">Nome do Cliente *</label>
+          <input type="text" id="custName" required placeholder="Ex: João da Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200">
+        </div>
+        <div>
+          <label class="text-slate-400 block mb-1">Telefone / WhatsApp *</label>
+          <input type="text" id="custPhone" required placeholder="(47) 99999-9999" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeCustomerModal()" class="flex-1 bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl">Cancelar</button>
+          <button type="submit" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EXTRATO DETALHADO DE FIADO DO CLIENTE -->
+  <div id="customerDetailModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="detailCustName" class="text-sm font-bold text-slate-100">Cliente</h3>
+          <p class="text-[11px] text-rose-400 font-bold">Dívida Total: <span id="detailCustDebt">R$ 0,00</span></p>
+        </div>
+        <button onclick="closeCustomerDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 pr-1" id="customerDebtsList">
+        <!-- Itens detalhados das compras fiadas -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex gap-2">
+        <button onclick="payCustomerDebt()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg">
+          <i class="fa-solid fa-check"></i> Registrar Pagamento & Enviar WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE (v3.9 - Carrinho Granular, Multiplicador Fardos, Edição de Preços & Extrato Fiado WhatsApp) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -652,7 +741,9 @@
     ];
 
     let salesHistory = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
-    let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [];
+    let customers = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOMERS)) || [
+      { id: 'c1', name: 'Maria Souza', phone: '47999999999', debt: 45.00, overdue: true, purchases: [{ id: 'p1', date: '19/10/2026 14:30', total: 45.00, items: [{ name: 'Arroz Tipo 1 - 5kg', qty: 1, price: 24.90 }, { name: 'Feijão Carioca - 1kg', qty: 2, price: 10.05 }] }] }
+    ];
     let cashRegister = JSON.parse(localStorage.getItem(STORAGE_KEY_CASH)) || { fundo: 50.00, sangrias: 0.00, dinheiroEntradas: 0.00 };
 
     let cart = [];
@@ -667,6 +758,8 @@
     let lastCompletedSale = null;
     let activeLossProductId = null;
     let activeRemessaProduct = null;
+    let activeEditProductId = null;
+    let activeDetailCustomerId = null;
 
     function playBeepSound() {
       try {
@@ -689,6 +782,7 @@
       renderProductList();
       renderRestockList();
       renderHistoryList();
+      renderCustomerList();
     });
 
     function saveData() {
@@ -727,6 +821,7 @@
       if (tab === 'products') renderProductList();
       if (tab === 'restock') renderRestockList();
       if (tab === 'history') renderHistoryList();
+      if (tab === 'customers') renderCustomerList();
     }
 
     function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
@@ -783,7 +878,7 @@
       playBeepSound();
       const foundProduct = products.find(p => p.barcode === decodedText);
       if (foundProduct) {
-        addToCart(foundProduct);
+        addScannedToCart(foundProduct);
       } else {
         if (confirm(`Produto (${decodedText}) não cadastrado! Cadastrar agora?`)) {
           stopScanner();
@@ -800,14 +895,37 @@
       if (!code) return;
       playBeepSound();
       const foundProduct = products.find(p => p.barcode === code);
-      if (foundProduct) addToCart(foundProduct);
+      if (foundProduct) {
+        addScannedToCart(foundProduct);
+      } else {
+        alert('Produto não encontrado!');
+      }
       document.getElementById('manualBarcodeInput').value = '';
     }
 
-    function addToCart(product) {
+    function addScannedToCart(product) {
+      const qtyToAdd = parseInt(document.getElementById('multiplierQtyInput').value) || 1;
       const existing = cart.find(item => item.id === product.id);
-      if (existing) { existing.qty += 1; } else { cart.push({ ...product, qty: 1 }); }
+      if (existing) { existing.qty += qtyToAdd; } else { cart.push({ ...product, qty: qtyToAdd }); }
+      document.getElementById('multiplierQtyInput').value = '1';
       updateLastScannedCard(product);
+      renderCart();
+    }
+
+    // CONTROLES GRANULARES NO CARRINHO (AUMENTAR, DIMINUIR E EXCLUIR)
+    function changeCartItemQty(productId, delta) {
+      const item = cart.find(i => i.id === productId);
+      if (item) {
+        item.qty += delta;
+        if (item.qty <= 0) {
+          cart = cart.filter(i => i.id !== productId);
+        }
+        renderCart();
+      }
+    }
+
+    function removeCartItemCompletely(productId) {
+      cart = cart.filter(i => i.id !== productId);
       renderCart();
     }
 
@@ -827,7 +945,6 @@
         img.classList.add('hidden');
         icon.classList.remove('hidden');
       }
-
       card.classList.remove('hidden');
     }
 
@@ -852,17 +969,22 @@
       }
 
       cartList.innerHTML = cart.map(item => `
-        <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-2.5">
-          <div class="min-w-0 flex-1 flex items-center gap-2.5">
+        <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-2.5 gap-2">
+          <div class="min-w-0 flex-1 flex items-center gap-2">
             ${item.imageUrl 
               ? `<img src="${item.imageUrl}" class="w-8 h-8 rounded-lg object-cover bg-slate-800 shrink-0">` 
               : `<div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 text-xs shrink-0"><i class="fa-solid fa-box"></i></div>`}
             <div class="min-w-0 flex-1">
               <h4 class="text-xs font-semibold text-slate-200 truncate">${item.name}</h4>
-              <p class="text-[11px] text-slate-400">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.qty}</p>
+              <p class="text-[11px] text-emerald-400 font-bold">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')} <span class="text-[10px] text-slate-400 font-normal">(R$ ${item.price.toFixed(2)} un)</span></p>
             </div>
           </div>
-          <span class="text-xs font-bold text-emerald-400">R$ ${(item.price * item.qty).toFixed(2).replace('.', ',')}</span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="changeCartItemQty('${item.id}', -1)" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
+            <span class="text-xs font-bold text-slate-100 w-5 text-center">${item.qty}</span>
+            <button onclick="changeCartItemQty('${item.id}', 1)" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="removeCartItemCompletely('${item.id}')" title="Excluir item" class="w-7 h-7 bg-rose-950/80 hover:bg-rose-900 text-rose-300 rounded-lg text-xs flex items-center justify-center ml-1"><i class="fa-solid fa-trash"></i></button>
+          </div>
         </div>
       `).join('');
     }
@@ -996,6 +1118,13 @@
         if (cust) {
           cust.debt += total;
           cust.overdue = true;
+          if (!cust.purchases) cust.purchases = [];
+          cust.purchases.push({
+            id: Date.now().toString(),
+            date: nowStr,
+            total: total,
+            items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price }))
+          });
         }
       }
 
@@ -1026,13 +1155,146 @@
       openReceiptModal();
     }
 
-    // CORREÇÃO DO MODAL DE REMESSA (EXIBIÇÃO IMEDIATA DOS CAMPOS E FOTO DO PRODUTO)
+    // CLIENTES & EXTRATO FIADO DETALHADO
+    function renderCustomerList() {
+      const container = document.getElementById('customerList');
+      if (customers.length === 0) {
+        container.innerHTML = `<div class="py-8 text-center text-slate-500"><p class="text-xs">Nenhum cliente cadastrado</p></div>`;
+        return;
+      }
+
+      container.innerHTML = customers.map(c => `
+        <div class="bg-slate-950 border ${c.debt > 0 ? 'border-rose-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            <h4 class="text-xs font-semibold text-slate-100 truncate">${c.name}</h4>
+            <p class="text-[11px] text-slate-400">Tel: ${c.phone}</p>
+            <p class="text-[11px] ${c.debt > 0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}">Dívida Fiado: R$ ${c.debt.toFixed(2).replace('.', ',')}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${c.debt > 0 ? `<button onclick="openCustomerDetail('${c.id}')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] px-2.5 py-2 rounded-xl">Extrato</button>` : ''}
+            <button onclick="deleteCustomer('${c.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openCustomerModal() {
+      document.getElementById('custName').value = '';
+      document.getElementById('custPhone').value = '';
+      document.getElementById('customerModal').classList.remove('hidden');
+    }
+    function closeCustomerModal() { document.getElementById('customerModal').classList.add('hidden'); }
+
+    function handleCustomerFormSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      customers.push({ id: Date.now().toString(), name, phone, debt: 0, overdue: false, purchases: [] });
+      saveData();
+      closeCustomerModal();
+      renderCustomerList();
+      showToastSuccess('Cliente cadastrado!');
+    }
+
+    function deleteCustomer(id) {
+      if (confirm('Deseja excluir este cliente?')) {
+        customers = customers.filter(c => c.id !== id);
+        saveData();
+        renderCustomerList();
+      }
+    }
+
+    function openCustomerDetail(customerId) {
+      const cust = customers.find(c => c.id === customerId);
+      if (!cust) return;
+      activeDetailCustomerId = customerId;
+      document.getElementById('detailCustName').textContent = cust.name;
+      document.getElementById('detailCustDebt').textContent = `R$ ${cust.debt.toFixed(2).replace('.', ',')}`;
+      
+      const listContainer = document.getElementById('customerDebtsList');
+      if (!cust.purchases || cust.purchases.length === 0) {
+        listContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum detalhe de compra pendente.</p>`;
+      } else {
+        listContainer.innerHTML = cust.purchases.map(p => `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1.5">
+            <div class="flex justify-between text-[11px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+              <span>Data: ${p.date}</span>
+              <span class="text-emerald-400">R$ ${p.total.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div class="text-[10px] text-slate-400 space-y-0.5">
+              ${p.items.map(i => `<div class="flex justify-between"><span>• ${i.name} (x${i.qty})</span><span>R$ ${(i.price * i.qty).toFixed(2).replace('.', ',')}</span></div>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+      document.getElementById('customerDetailModal').classList.remove('hidden');
+    }
+
+    function closeCustomerDetailModal() {
+      document.getElementById('customerDetailModal').classList.add('hidden');
+    }
+
+    function payCustomerDebt() {
+      const cust = customers.find(c => c.id === activeDetailCustomerId);
+      if (!cust) return;
+
+      const paidAmount = cust.debt;
+      cust.debt = 0;
+      cust.overdue = false;
+      const historyPurchases = [...(cust.purchases || [])];
+      cust.purchases = [];
+      saveData();
+      closeCustomerDetailModal();
+      renderCustomerList();
+      showToastSuccess('Baixa de fiado registrada com sucesso!');
+
+      // Enviar Comprovante de Pagamento via WhatsApp
+      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      let text = `🧾 *COMPROVANTE DE PAGAMENTO DE FIADO*\n*Cliente:* ${cust.name}\n*Data da Quitação:* ${nowStr}\n\n`;
+      text += `*Valor Pago / Quitado:* R$ ${paidAmount.toFixed(2)}\n`;
+      text += `*Novo Saldo Devedor:* R$ 0,00 (Conta em Dia ✅)\n\nObrigado pela preferência!`;
+      window.open(`https://api.whatsapp.com/send?phone=${cust.phone.replace(/\D/g,'')}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // EDIÇÃO DE PREÇOS (PRODUTOS)
+    function openEditPriceModal(productId) {
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+      activeEditProductId = productId;
+      document.getElementById('editPriceProdName').textContent = prod.name;
+      document.getElementById('editPriceProdBarcode').textContent = prod.barcode;
+      document.getElementById('editCostInput').value = prod.cost || 0;
+      document.getElementById('editPriceInput').value = prod.price || 0;
+      calcEditModalMargin();
+      document.getElementById('editPriceModal').classList.remove('hidden');
+    }
+    function closeEditPriceModal() { document.getElementById('editPriceModal').classList.add('hidden'); }
+
+    function calcEditModalMargin() {
+      const cost = parseFloat(document.getElementById('editCostInput').value) || 0;
+      const price = parseFloat(document.getElementById('editPriceInput').value) || 0;
+      const margin = cost > 0 ? ((price - cost) / cost) * 100 : 0;
+      document.getElementById('editMarginDisplay').textContent = `${margin.toFixed(1)}%`;
+    }
+
+    function saveEditedPrice() {
+      const prod = products.find(p => p.id === activeEditProductId);
+      if (prod) {
+        prod.cost = parseFloat(document.getElementById('editCostInput').value) || prod.cost;
+        prod.price = parseFloat(document.getElementById('editPriceInput').value) || prod.price;
+        saveData();
+        closeEditPriceModal();
+        renderProductList();
+        showToastSuccess('Preço atualizado com sucesso!');
+      }
+    }
+
+    // ENTRADA DE REMESSA & ESTOQUE
     function openRemessaModal() {
       document.getElementById('remessaBarcode').value = '';
       document.getElementById('remessaProductInfo').classList.add('hidden');
       document.getElementById('remessaModal').classList.remove('hidden');
     }
-
     function closeRemessaModal() {
       stopRemessaScanner();
       document.getElementById('remessaModal').classList.add('hidden');
@@ -1080,7 +1342,7 @@
     }
 
     function confirmRemessaEntry() {
-      if (!activeRemessaProduct) return alert('Bipe ou selecione um produto válido primeiro!');
+      if (!activeRemessaProduct) return alert('Selecione um produto válido primeiro!');
       const addedQty = parseInt(document.getElementById('remessaAddQty').value) || 0;
       const newCost = parseFloat(document.getElementById('remessaNewCost').value) || activeRemessaProduct.cost;
       const newPrice = parseFloat(document.getElementById('remessaNewPrice').value) || activeRemessaProduct.price;
@@ -1094,7 +1356,7 @@
       saveData();
       closeRemessaModal();
       renderProductList();
-      showToastSuccess(`Remessa salva! Estoque atualizado: ${activeRemessaProduct.stock} un`);
+      showToastSuccess(`Remessa salva! Novo estoque: ${activeRemessaProduct.stock} un`);
     }
 
     function startRemessaScanner() {
@@ -1121,7 +1383,6 @@
       }
     }
 
-    // BAIXA POR PERDAS / VENCIDOS
     function openLossModal(productId) {
       const prod = products.find(p => p.id === productId);
       if (!prod) return;
@@ -1177,24 +1438,18 @@
     function sendRestockToWhatsApp() {
       const needRestock = products.filter(p => (p.neededToRestock || 0) > 0);
       if (needRestock.length === 0) return alert('Nenhum item pendente de reposição!');
-      
       const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       let text = `📦 *LISTA DE REPOSIÇÃO - LOJA*\nData: ${nowStr}\n\n`;
-      needRestock.forEach(p => {
-        text += `• *${p.name}* -> Repor *${p.neededToRestock} un* (Depósito: ${p.stock})\n`;
-      });
+      needRestock.forEach(p => { text += `• *${p.name}* -> Repor *${p.neededToRestock} un* (Depósito: ${p.stock})\n`; });
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     function sendLowStockToWhatsApp() {
       const lowStockProds = products.filter(p => p.stock <= (p.minStock || 5));
       if (lowStockProds.length === 0) return alert('Nenhum item com estoque baixo!');
-
       const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       let text = `⚠️ *PEDIDO DE COMPRAS / ESTOQUE BAIXO*\nData: ${nowStr}\n\n`;
-      lowStockProds.forEach(p => {
-        text += `• *${p.name}* (Cód: ${p.barcode})\n   Estoque Atual: ${p.stock} un | Mínimo: ${p.minStock || 5} un\n`;
-      });
+      lowStockProds.forEach(p => { text += `• *${p.name}* (Cód: ${p.barcode})\n   Estoque Atual: ${p.stock} un | Mínimo: ${p.minStock || 5} un\n`; });
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
@@ -1252,6 +1507,7 @@
 
       listContainer.innerHTML = filtered.map(p => {
         const isLow = p.stock <= (p.minStock || 5);
+        const margin = p.cost > 0 ? (((p.price - p.cost) / p.cost) * 100).toFixed(1) : '0';
         return `
           <div class="bg-slate-950 border ${isLow ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1264,10 +1520,11 @@
                   <span>${p.name}</span>
                   ${isLow ? '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.2 rounded font-bold">BAIXO</span>' : ''}
                 </h4>
-                <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | Venda: R$ ${p.price.toFixed(2).replace('.', ',')}</p>
+                <p class="text-[11px] text-slate-400">Estoque: ${p.stock} un | Venda: <b class="text-emerald-400">R$ ${p.price.toFixed(2).replace('.', ',')}</b> <span class="text-[10px] text-slate-500">(Mg: ${margin}%)</span></p>
               </div>
             </div>
             <div class="flex items-center gap-1 shrink-0">
+              <button onclick="openEditPriceModal('${p.id}')" title="Editar Preço" class="bg-blue-950/60 text-blue-400 border border-blue-800/60 p-2 rounded-xl text-xs"><i class="fa-solid fa-tag"></i></button>
               <button onclick="openLossModal('${p.id}')" title="Baixa por Avaria/Vencimento" class="bg-amber-950/60 text-amber-400 border border-amber-800/60 p-2 rounded-xl text-xs"><i class="fa-solid fa-triangle-exclamation"></i></button>
               <button onclick="deleteProduct('${p.id}')" class="text-rose-400 p-2"><i class="fa-solid fa-trash"></i></button>
             </div>
