@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - v4.4.1</title>
+  <title>Caixa PDV - v4.5</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -59,7 +59,7 @@
             <i class="fa-solid fa-cash-register text-lg"></i>
           </div>
           <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.4.1</span></h1>
+            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.5</span></h1>
             <p class="text-xs text-slate-400">Controle de Caixa & Sangrias</p>
           </div>
         </div>
@@ -92,7 +92,7 @@
 
       <!-- NAV BAR PRINCIPAL -->
       <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl gap-1">
-        <button onclick="switchTab('pos')" id="tabPosBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center">
+        <button onclick="switchTab('pos')" id="tabPosBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
           <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
         </button>
         <button onclick="switchTab('products')" id="tabProductsBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
@@ -763,7 +763,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v4.4.1) -->
+  <!-- JAVASCRIPT ENGINE (v4.5) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -818,7 +818,7 @@
       }));
 
       saveData();
-      returnToStandby();
+      switchTab('pos');
       renderProductList();
       renderRestockList();
       renderHistoryList();
@@ -857,7 +857,20 @@
         activeNavBtn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center";
       }
 
-      if (tab !== 'pos') stopScanner();
+      if (tab !== 'pos') {
+        stopScanner();
+      } else {
+        if (cart.length === 0) {
+          document.getElementById('standbyScreen').style.display = 'flex';
+          document.getElementById('activeSaleScreen').style.display = 'none';
+          document.getElementById('bottomActionBar').style.display = 'none';
+        } else {
+          document.getElementById('standbyScreen').style.display = 'none';
+          document.getElementById('activeSaleScreen').style.display = 'flex';
+          document.getElementById('bottomActionBar').style.display = 'block';
+        }
+      }
+
       if (tab === 'products') renderProductList();
       if (tab === 'restock') renderRestockList();
       if (tab === 'history') renderHistoryList();
