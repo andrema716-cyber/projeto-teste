@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV - v4.5</title>
+  <title>Caixa PDV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
@@ -50,58 +50,58 @@
     <span id="toastMessage">Operação realizada com sucesso!</span>
   </div>
 
-  <!-- HEADER -->
+  <!-- HEADER ULTRA-CLEAN -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-md">
-    <div class="max-w-md mx-auto flex flex-col gap-2">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-            <i class="fa-solid fa-cash-register text-lg"></i>
-          </div>
-          <div>
-            <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV <span class="text-xs font-normal text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">v4.5</span></h1>
-            <p class="text-xs text-slate-400">Controle de Caixa & Sangrias</p>
-          </div>
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <i class="fa-solid fa-cash-register text-base"></i>
         </div>
-        
-        <div class="flex items-center gap-2">
-          <button onclick="openCashRegisterModal()" class="bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
-            <i class="fa-solid fa-vault text-amber-400"></i>
-            <span>Caixa</span>
-          </button>
-          
-          <!-- MENU TRÊS PONTINHOS (⋮) -->
-          <div class="relative">
-            <button onclick="toggleOptionsMenu()" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center hover:text-white transition">
-              <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
-            <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
-              <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-blue-400"></i> Relatório & Lucro
-              </button>
-              <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-users text-purple-400"></i> Clientes & Fiado
-              </button>
-              <button onclick="switchTab('settings'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 border-t border-slate-800 pt-3">
-                <i class="fa-solid fa-gear text-slate-400"></i> Configurações & Backup
-              </button>
-            </div>
-          </div>
-        </div>
+        <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV</h1>
       </div>
 
-      <!-- NAV BAR PRINCIPAL -->
-      <nav class="flex bg-slate-950 border border-slate-800 p-1 rounded-xl gap-1">
-        <button onclick="switchTab('pos')" id="tabPosBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
-          <i class="fa-solid fa-cart-shopping mr-1"></i> Caixa
+      <!-- MENU TRÊS PONTINHOS (⋮) COM TODAS AS OPÇÕES -->
+      <div class="relative">
+        <button onclick="toggleOptionsMenu()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center hover:text-white transition">
+          <i class="fa-solid fa-ellipsis-vertical text-base"></i>
         </button>
-        <button onclick="switchTab('products')" id="tabProductsBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
-          <i class="fa-solid fa-boxes-stacked mr-1"></i> Produtos
-        </button>
-        <button onclick="switchTab('restock')" id="tabRestockBtn" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center">
-          <i class="fa-solid fa-rotate mr-1"></i> Reposição
-        </button>
-      </nav>
+        <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800/60">
+          
+          <div class="py-1">
+            <button onclick="openCashRegisterModal(); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-amber-400 font-bold hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-vault text-sm"></i> Controle de Caixa / Sangrias
+            </button>
+          </div>
+
+          <div class="py-1">
+            <button onclick="switchTab('pos'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-cart-shopping text-emerald-400 text-sm"></i> Caixa (PDV)
+            </button>
+            <button onclick="switchTab('products'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-boxes-stacked text-blue-400 text-sm"></i> Produtos & Estoque
+            </button>
+            <button onclick="switchTab('restock'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-rotate text-teal-400 text-sm"></i> Reposição por Saídas
+            </button>
+          </div>
+
+          <div class="py-1">
+            <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-chart-line text-indigo-400 text-sm"></i> Relatório & Lucro
+            </button>
+            <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-users text-purple-400 text-sm"></i> Clientes & Fiado
+            </button>
+          </div>
+
+          <div class="pt-1">
+            <button onclick="switchTab('settings'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-400 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-gear text-slate-400 text-sm"></i> Configurações & Backup
+            </button>
+          </div>
+
+        </div>
+      </div>
     </div>
   </header>
 
@@ -191,7 +191,7 @@
             </button>
           </div>
 
-          <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[220px] pr-1">
+          <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[260px] pr-1">
             <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
               <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
               <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
@@ -239,7 +239,7 @@
         </button>
       </div>
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
         <div id="productList" class="space-y-2.5"></div>
       </section>
     </div>
@@ -259,7 +259,7 @@
         </div>
       </div>
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
         <div id="restockList" class="space-y-3"></div>
       </section>
     </div>
@@ -294,7 +294,7 @@
         <span class="text-xs font-bold text-slate-300 uppercase">Vendas Registradas (<span id="historyCount">0</span>)</span>
       </div>
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[380px]">
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[420px]">
         <div id="historyList" class="space-y-3"></div>
       </section>
     </div>
@@ -311,7 +311,7 @@
         </button>
       </div>
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[450px]">
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
         <div id="customerList" class="space-y-2.5"></div>
       </section>
     </div>
@@ -763,7 +763,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT ENGINE (v4.5) -->
+  <!-- JAVASCRIPT ENGINE (v4.6) -->
   <script>
     const STORAGE_KEY_PRODUCTS = 'pdv_products_v2';
     const STORAGE_KEY_HISTORY = 'pdv_history_v2';
@@ -844,18 +844,8 @@
         if (content) content.style.display = 'none';
       });
 
-      ['pos', 'products', 'restock'].forEach(t => {
-        const btn = document.getElementById(`tab${capitalize(t)}Btn`);
-        if (btn) btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white text-center";
-      });
-
       const activeContent = document.getElementById(`tab${capitalize(tab)}Content`);
       if (activeContent) activeContent.style.display = 'flex';
-
-      const activeNavBtn = document.getElementById(`tab${capitalize(tab)}Btn`);
-      if (activeNavBtn) {
-        activeNavBtn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white text-center";
-      }
 
       if (tab !== 'pos') {
         stopScanner();
