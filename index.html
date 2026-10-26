@@ -18,7 +18,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
 
     /* Header & Menu */
     header {
@@ -62,10 +62,10 @@
     .dropdown-item:last-child { border-bottom: none; }
 
     /* Layout Principal */
-    main { display: flex; flex: 1; overflow: hidden; }
+    main { display: flex; flex: 1; flex-wrap: wrap; overflow: auto; }
     
     /* Painel Esquerdo: Busca e Itens */
-    .left-panel { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; border-right: 1px solid var(--border); }
+    .left-panel { flex: 1; min-width: 300px; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; border-right: 1px solid var(--border); }
     .search-box { display: flex; gap: 0.5rem; }
     .search-box input {
       flex: 1;
@@ -77,7 +77,7 @@
     }
     .search-box input:focus { border-color: var(--primary); }
 
-    .cart-table-wrapper { flex: 1; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 0.5rem; }
+    .cart-table-wrapper { flex: 1; min-height: 250px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 0.5rem; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
     th { background: #f8fafc; font-weight: 600; position: sticky; top: 0; }
@@ -85,7 +85,552 @@
     .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-weight: bold; }
 
     /* Painel Direito: Resumo e Pagamento */
-    .right-panel { width: 360px; background: var(--card); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .right-panel { width: 360px; min-width: 300px; background: var(--card); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; }
     .totals { display: flex; flex-direction: column; gap: 0.75rem; }
     .total-row { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 600; }
-    .total-grand { font-size: 1.8rem; color: var(--primary); border-
+    .total-grand { font-size: 1.8rem; color: var(--primary); border-top: 2px dashed var(--border); padding-top: 0.75rem; margin-top: 0.5rem; }
+
+    .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem; }
+    .pay-btn {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .pay-btn.selected { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+    .pay-btn.fiado { border-color: var(--warning); color: var(--warning); }
+    .pay-btn.fiado.selected { background: #fffbe0; }
+
+    .btn-finish {
+      width: 100%;
+      padding: 1rem;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .btn-finish:hover { background: #15803d; }
+
+    /* Modais */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--card);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.2rem; font-weight: 700; }
+    .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      font-size: 0.95rem;
+    }
+
+    .alert { padding: 0.75rem; border-radius: 0.375rem; font-size: 0.85rem; margin-bottom: 1rem; }
+    .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .btn-secondary { background: #e2e8f0; color: var(--text); border: none; padding: 0.6rem 1rem; border-radius: 0.375rem; cursor: pointer; }
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.375rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header>
+    <div class="logo">
+      🛒 PDV Caixa <span class="status-badge">v5.0 Pro</span>
+    </div>
+    <div class="menu-container">
+      <button class="menu-btn" onclick="toggleMenu()">⋮</button>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item" onclick="openModal('modalProdutos')">📦 Cadastrar / Estoque</div>
+        <div class="dropdown-item" onclick="openModal('modalClientes')">👥 Clientes & Fiado</div>
+        <div class="dropdown-item" onclick="openModal('modalValidades')">📅 Alertas de Validade</div>
+        <div class="dropdown-item" onclick="exportData()">💾 Backup dos Dados (JSON)</div>
+        <div class="dropdown-item" onclick="importDataTrigger()">📂 Importar Backup</div>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main>
+    <!-- Esquerda: Leitura e Carrinho -->
+    <section class="left-panel">
+      <div class="search-box">
+        <input type="text" id="barcodeInput" placeholder="Bipe o código de barras ou digite o nome..." autofocus onkeydown="handleSearch(event)">
+      </div>
+
+      <div class="cart-table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qtd</th>
+              <th>Unit.</th>
+              <th>Total</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="cartItems">
+            <!-- Vazio -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Direita: Totais e Pagamento -->
+    <section class="right-panel">
+      <div>
+        <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Resumo da Venda</h2>
+        <div class="totals">
+          <div class="total-row"><span>Itens:</span><span id="txtTotalItems">0</span></div>
+          <div class="total-row total-grand"><span>TOTAL:</span><span id="txtGrandTotal">R$ 0,00</span></div>
+        </div>
+
+        <h3 style="font-size: 0.9rem; margin-top: 1.5rem; margin-bottom: 0.5rem;">Forma de Pagamento</h3>
+        <div class="pay-methods">
+          <div class="pay-btn selected" onclick="selectPayMethod('Dinheiro', this)">💵 Dinheiro</div>
+          <div class="pay-btn" onclick="selectPayMethod('PIX', this)">📱 PIX</div>
+          <div class="pay-btn" onclick="selectPayMethod('Cartão', this)">💳 Cartão</div>
+          <div class="pay-btn fiado" onclick="selectPayMethod('Fiado', this)">📌 A Prazo</div>
+        </div>
+
+        <!-- Seção Dinâmica para Fiado -->
+        <div id="fiadoCustomerBox" style="display: none; margin-top: 1rem;">
+          <div class="form-group">
+            <label>Selecione o Cliente (Obrigatório):</label>
+            <select id="selectFiadoCustomer" onchange="updateCustomerLimitInfo()">
+              <option value="">-- Selecione --</option>
+            </select>
+          </div>
+          <div id="customerLimitInfo" class="alert alert-warning" style="display:none;"></div>
+        </div>
+      </div>
+
+      <button class="btn-finish" onclick="processCheckout()">FINALIZAR VENDA (F2)</button>
+    </section>
+  </main>
+
+  <!-- MODAL: Confirmação Blindada de Fiado -->
+  <div class="modal" id="modalConfirmFiado">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">⚠️ Confirmar Venda A Prazo</span>
+        <button class="close-modal" onclick="closeModal('modalConfirmFiado')">&times;</button>
+      </div>
+      <div id="fiadoModalBody"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+        <button class="btn-secondary" onclick="closeModal('modalConfirmFiado')">Cancelar</button>
+        <button class="btn-primary" style="background: var(--warning);" onclick="confirmFiadoCheckout()">Confirmar e Gravar Débito</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Clientes & Fiado -->
+  <div class="modal" id="modalClientes">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">👥 Gestão de Clientes & Limites</span>
+        <button class="close-modal" onclick="closeModal('modalClientes')">&times;</button>
+      </div>
+      <form onsubmit="saveCustomer(event)">
+        <div class="form-group"><label>Nome do Cliente</label><input type="text" id="custName" required></div>
+        <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="custPhone"></div>
+        <div class="form-group"><label>Limite de Crédito (R$)</label><input type="number" step="0.01" id="custLimit" value="200.00" required></div>
+        <button type="submit" class="btn-primary" style="width:100%">Cadastrar Cliente</button>
+      </form>
+
+      <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+      
+      <h3>Clientes Cadastrados</h3>
+      <div id="customerList" style="margin-top: 0.5rem; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Validades e Lotes -->
+  <div class="modal" id="modalValidades">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">📅 Alertas de Validade</span>
+        <button class="close-modal" onclick="closeModal('modalValidades')">&times;</button>
+      </div>
+      <div id="validityAlertsList"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Cadastro de Produtos -->
+  <div class="modal" id="modalProdutos">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">📦 Cadastrar Produto</span>
+        <button class="close-modal" onclick="closeModal('modalProdutos')">&times;</button>
+      </div>
+      <form onsubmit="saveProduct(event)">
+        <div class="form-group"><label>Código de Barras</label><input type="text" id="prodCode" required></div>
+        <div class="form-group"><label>Nome do Produto</label><input type="text" id="prodName" required></div>
+        <div class="form-group"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodPrice" required></div>
+        <div class="form-group"><label>Estoque Inicial</label><input type="number" id="prodStock" value="10" required></div>
+        <div class="form-group"><label>Data de Validade (Opcional)</label><input type="date" id="prodExpiry"></div>
+        <button type="submit" class="btn-primary" style="width:100%">Salvar Produto</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ESTADO DA APLICAÇÃO COM TRATAMENTO DE ERROS
+    let db = { products: [], customers: [], sales: [] };
+
+    try {
+      db.products = JSON.parse(localStorage.getItem('pdv_products')) || [
+        { code: '789100000001', name: 'Arroz 5kg', price: 24.90, stock: 20, expiry: '2026-11-15' },
+        { code: '789100000002', name: 'Feijão 1kg', price: 7.50, stock: 15, expiry: '2026-10-30' }
+      ];
+      db.customers = JSON.parse(localStorage.getItem('pdv_customers')) || [];
+      db.sales = JSON.parse(localStorage.getItem('pdv_sales')) || [];
+    } catch(e) {
+      console.error('Erro ao ler localStorage', e);
+    }
+
+    let cart = [];
+    let selectedPayMethod = 'Dinheiro';
+    let lastScanTime = 0;
+
+    // INICIALIZAÇÃO
+    window.onload = () => {
+      saveDB();
+      renderCart();
+      updateCustomerDropdown();
+      renderCustomerList();
+      checkValidades();
+    };
+
+    function saveDB() {
+      localStorage.setItem('pdv_products', JSON.stringify(db.products));
+      localStorage.setItem('pdv_customers', JSON.stringify(db.customers));
+      localStorage.setItem('pdv_sales', JSON.stringify(db.sales));
+    }
+
+    // MENU SUSPENSO
+    function toggleMenu() {
+      document.getElementById('dropdownMenu').classList.toggle('active');
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu-container')) {
+        document.getElementById('dropdownMenu').classList.remove('active');
+      }
+    });
+
+    // BUSCA E SCANNER (1.5s Debounce)
+    function handleSearch(e) {
+      if (e.key === 'Enter') {
+        const now = Date.now();
+        if (now - lastScanTime < 1500) return; // Trava de duplicidade
+        lastScanTime = now;
+
+        const val = e.target.value.trim();
+        if (!val) return;
+
+        const prod = db.products.find(p => p.code === val || p.name.toLowerCase().includes(val.toLowerCase()));
+        if (prod) {
+          addToCart(prod);
+          e.target.value = '';
+        } else {
+          alert('Produto não encontrado!');
+        }
+      }
+    }
+
+    // GESTÃO DO CARRINHO
+    function addToCart(product) {
+      const item = cart.find(i => i.code === product.code);
+      if (item) {
+        item.qty++;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function changeQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty <= 0) cart.splice(index, 1);
+      renderCart();
+    }
+
+    function renderCart() {
+      const tbody = document.getElementById('cartItems');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      let total = 0;
+      let totalQty = 0;
+
+      cart.forEach((item, index) => {
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+        totalQty += item.qty;
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>
+              <button class="btn-qty" onclick="changeQty(${index}, -1)">-</button>
+              ${item.qty}
+              <button class="btn-qty" onclick="changeQty(${index}, 1)">+</button>
+            </td>
+            <td>R$ ${item.price.toFixed(2)}</td>
+            <td>R$ ${itemTotal.toFixed(2)}</td>
+            <td><button class="btn-del" onclick="changeQty(${index}, -${item.qty})">&times;</button></td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('txtTotalItems').innerText = totalQty;
+      document.getElementById('txtGrandTotal').innerText = `R$ ${total.toFixed(2)}`;
+    }
+
+    // PAGAMENTO E MÓDULO FIADO BLINDADO
+    function selectPayMethod(method, el) {
+      selectedPayMethod = method;
+      document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const box = document.getElementById('fiadoCustomerBox');
+      box.style.display = method === 'Fiado' ? 'block' : 'none';
+    }
+
+    function updateCustomerDropdown() {
+      const sel = document.getElementById('selectFiadoCustomer');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Selecione --</option>';
+      db.customers.forEach((c, idx) => {
+        sel.innerHTML += `<option value="${idx}">${c.name} (Saldo: R$ ${(c.balance || 0).toFixed(2)} / Limite: R$ ${(c.limit || 0).toFixed(2)})</option>`;
+      });
+    }
+
+    function updateCustomerLimitInfo() {
+      const idx = document.getElementById('selectFiadoCustomer').value;
+      const info = document.getElementById('customerLimitInfo');
+      if (idx === "") { info.style.display = 'none'; return; }
+
+      const cust = db.customers[idx];
+      const totalVenda = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const novoSaldo = (cust.balance || 0) + totalVenda;
+
+      info.style.display = 'block';
+      if (novoSaldo > cust.limit) {
+        info.className = 'alert alert-danger';
+        info.innerHTML = `⚠️ <b>Atenção:</b> Esta venda ultrapassa o limite! <br>Limite: R$ ${cust.limit.toFixed(2)} | Novo Saldo: R$ ${novoSaldo.toFixed(2)}`;
+      } else {
+        info.className = 'alert alert-warning';
+        info.innerHTML = `Saldo Atual: R$ ${(cust.balance || 0).toFixed(2)} ➔ Novo Saldo: <b>R$ ${novoSaldo.toFixed(2)}</b>`;
+      }
+    }
+
+    function processCheckout() {
+      if (cart.length === 0) return alert('Carrinho vazio!');
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+
+      if (selectedPayMethod === 'Fiado') {
+        const custIdx = document.getElementById('selectFiadoCustomer').value;
+        if (custIdx === "") return alert('Por favor, selecione um cliente para venda A Prazo!');
+
+        const cust = db.customers[custIdx];
+        const novoSaldo = (cust.balance || 0) + total;
+
+        if (novoSaldo > cust.limit) {
+          return alert(`Venda bloqueada! O limite de crédito do cliente (${cust.name}) foi excedido.`);
+        }
+
+        // Modal Duplo de Confirmação
+        document.getElementById('fiadoModalBody').innerHTML = `
+          <p>Confirmar débito A PRAZO para: <b>${cust.name}</b>?</p>
+          <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border);">
+          <p>Valor da Venda: <b>R$ ${total.toFixed(2)}</b></p>
+          <p>Saldo Devedor Atual: R$ ${(cust.balance || 0).toFixed(2)}</p>
+          <p style="color: var(--warning); font-weight: bold; margin-top: 0.5rem;">Novo Saldo Total: R$ ${novoSaldo.toFixed(2)}</p>
+        `;
+        openModal('modalConfirmFiado');
+        return;
+      }
+
+      finishSale(selectedPayMethod, null);
+    }
+
+    function confirmFiadoCheckout() {
+      const custIdx = document.getElementById('selectFiadoCustomer').value;
+      const cust = db.customers[custIdx];
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+
+      cust.balance = (cust.balance || 0) + total;
+      cust.history = cust.history || [];
+      cust.history.push({
+        date: new Date().toLocaleString('pt-BR'),
+        type: 'COMPRA_FIADO',
+        amount: total,
+        balanceAfter: cust.balance
+      });
+
+      closeModal('modalConfirmFiado');
+      finishSale('Fiado', cust.name);
+    }
+
+    function finishSale(method, customerName) {
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+
+      // Baixa no Estoque
+      cart.forEach(item => {
+        const p = db.products.find(x => x.code === item.code);
+        if (p) p.stock -= item.qty;
+      });
+
+      db.sales.push({
+        id: Date.now(),
+        date: new Date().toLocaleString('pt-BR'),
+        items: [...cart],
+        total: total,
+        method: method,
+        customer: customerName || null
+      });
+
+      saveDB();
+      alert('Venda realizada com sucesso!');
+      cart = [];
+      renderCart();
+      updateCustomerDropdown();
+      renderCustomerList();
+    }
+
+    // CADASTROS & AUXILIARES
+    function saveCustomer(e) {
+      e.preventDefault();
+      db.customers.push({
+        name: document.getElementById('custName').value,
+        phone: document.getElementById('custPhone').value,
+        limit: parseFloat(document.getElementById('custLimit').value),
+        balance: 0,
+        history: []
+      });
+      saveDB();
+      updateCustomerDropdown();
+      renderCustomerList();
+      closeModal('modalClientes');
+      alert('Cliente cadastrado!');
+    }
+
+    function renderCustomerList() {
+      const list = document.getElementById('customerList');
+      if (!list) return;
+      list.innerHTML = '';
+      if (db.customers.length === 0) {
+        list.innerHTML = '<p style="font-size:0.85rem; color:#64748b;">Nenhum cliente cadastrado.</p>';
+        return;
+      }
+      db.customers.forEach(c => {
+        list.innerHTML += `
+          <div style="padding: 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.85rem;">
+            <b>${c.name}</b> (${c.phone || 'Sem Tel'}) <br>
+            <span style="color: var(--danger);">Devendo: R$ ${(c.balance || 0).toFixed(2)}</span> | Limite: R$ ${(c.limit || 0).toFixed(2)}
+          </div>
+        `;
+      });
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      db.products.push({
+        code: document.getElementById('prodCode').value,
+        name: document.getElementById('prodName').value,
+        price: parseFloat(document.getElementById('prodPrice').value),
+        stock: parseInt(document.getElementById('prodStock').value),
+        expiry: document.getElementById('prodExpiry').value || null
+      });
+      saveDB();
+      closeModal('modalProdutos');
+      alert('Produto cadastrado!');
+    }
+
+    function checkValidades() {
+      const list = document.getElementById('validityAlertsList');
+      if (!list) return;
+      list.innerHTML = '';
+      const today = new Date();
+
+      db.products.filter(p => p.expiry).forEach(p => {
+        const exp = new Date(p.expiry);
+        const diffDays = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 30) {
+          const badgeClass = diffDays <= 7 ? 'alert-danger' : 'alert-warning';
+          list.innerHTML += `
+            <div class="alert ${badgeClass}">
+              <b>${p.name}</b> - Vence em ${diffDays} dias (${p.expiry})
+            </div>
+          `;
+        }
+      });
+
+      if (!list.innerHTML) list.innerHTML = '<p>Nenhum produto próximo do vencimento.</p>';
+    }
+
+    // MODAIS HELPERS
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    // BACKUP E RESTAURAÇÃO JSON
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+      const anchor = document.createElement('a');
+      anchor.setAttribute("href", dataStr);
+      anchor.setAttribute("download", `backup_pdv_${Date.now()}.json`);
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+
+    function importDataTrigger() { document.getElementById('importFile').click(); }
+    function importData(event) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          db = JSON.parse(e.target.result);
+          saveDB();
+          alert('Dados importados com sucesso!');
+          location.reload();
+        } catch (err) {
+          alert('Arquivo de backup inválido!');
+        }
+      };
+      reader.readAsText(event.target.files[0]);
+    }
+  </script>
+</body>
+</html>
