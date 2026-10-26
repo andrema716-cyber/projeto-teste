@@ -18,7 +18,7 @@
       color: #f8fafc;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding-top: var(--sat);
-      padding-bottom: calc(var(--sab) + 90px);
+      padding-bottom: calc(var(--sab) + 110px);
       touch-action: manipulation;
     }
     #reader video, #modalReader video, #remessaReader video {
@@ -35,7 +35,7 @@
       position: relative;
     }
     .pb-safe-footer {
-      padding-bottom: calc(var(--sab) + 95px);
+      padding-bottom: calc(var(--sab) + 115px);
     }
     .modal-safe-padding {
       padding-bottom: calc(var(--sab) + 40px);
@@ -334,7 +334,7 @@
         <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
         <span id="cartTotalDisplay" class="text-2xl font-black text-emerald-400">R$ 0,00</span>
       </div>
-      <button onclick="openPaymentModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
+      <button onclick="openPaymentModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg z-50 cursor-pointer">
         <span>Forma de Pagamento</span>
         <i class="fa-solid fa-arrow-right text-sm"></i>
       </button>
@@ -342,7 +342,7 @@
   </div>
 
   <!-- MODAL: PAGAMENTO -->
-  <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div>
@@ -974,7 +974,6 @@
         const prod = db.products.find(p => p.id === item.id);
         if (prod) {
           prod.stock -= item.qty;
-          // Adiciona na lista de reposição por saídas
           const restockItem = db.restockToday.find(r => r.productId === prod.id);
           if (restockItem) {
             restockItem.qty += item.qty;
@@ -1068,7 +1067,6 @@
       db.history.forEach(h => {
         if (h.method === 'DINHEIRO') totalDinheiro += h.total;
         if (h.method === 'MISTO') {
-          // Simplificação: assume 50% ou pode registrar parte
           totalDinheiro += h.total * 0.5;
         }
       });
@@ -1200,7 +1198,7 @@
     function calcSuggestedPrice() {
       const cost = parseFloat(document.getElementById('prodCost').value) || 0;
       if (cost > 0) {
-        document.getElementById('prodPrice').value = (cost * 1.4).toFixed(2); // Margem padrão de 40%
+        document.getElementById('prodPrice').value = (cost * 1.4).toFixed(2);
       }
     }
 
