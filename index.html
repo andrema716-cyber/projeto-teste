@@ -1,1374 +1,495 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Caixa PDV v5.4 Pro</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <style>
-    :root {
-      --sat: env(safe-area-inset-top, 0px);
-      --sab: env(safe-area-inset-bottom, 0px);
-    }
-    body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding-top: var(--sat);
-      padding-bottom: calc(var(--sab) + 90px);
-      touch-action: manipulation;
-    }
-    #reader video, #modalReader video, #remessaReader video {
-      width: 100% !important;
-      height: 180px !important;
-      object-fit: cover !important;
-      border-radius: 12px;
-    }
-    #reader, #modalReader, #remessaReader {
-      border: none !important;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-    }
-    .pb-safe-footer {
-      padding-bottom: calc(var(--sab) + 95px);
-    }
-    .modal-safe-padding {
-      padding-bottom: calc(var(--sab) + 40px);
-    }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between antialiased">
 
-  <!-- TOAST NOTIFICAÇÃO -->
-  <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30">
-    <i class="fa-solid fa-circle-check text-base"></i>
-    <span id="toastMessage">Operação realizada com sucesso!</span>
-  </div>
+Entrar
+Você disse:
 
-  <!-- HEADER -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-md">
-    <div class="max-w-md mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-          <i class="fa-solid fa-cash-register text-base"></i>
-        </div>
-        <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV</h1>
-      </div>
+O ChatGPT disse:
+Analisei a estrutura do seu Caixa PDV v5.4 Pro. Seu projeto já tem uma boa base para um aplicativo de vendas de pequeno comércio: interface adaptada para celular, leitor de código de barras, cadastro de produtos, estoque, controle de fiado, formas de pagamento, relatórios e backup.
 
-      <!-- MENU TRÊS PONTINHOS (⋮) -->
-      <div class="relative">
-        <button onclick="toggleOptionsMenu()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center hover:text-white transition">
-          <i class="fa-solid fa-ellipsis-vertical text-base"></i>
-        </button>
-        <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800/60">
-          
-          <div class="py-1">
-            <button onclick="openCashRegisterModal(); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-amber-400 font-bold hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-vault text-sm"></i> Controle de Caixa / Sangrias
-            </button>
-          </div>
+Mas há alguns problemas importantes no código JavaScript que precisam ser corrigidos antes de você utilizar o aplicativo em uma loja de verdade, principalmente para evitar erros no caixa, perda de dados e inconsistências no estoque.
 
-          <div class="py-1">
-            <button onclick="switchTab('pos'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-cart-shopping text-emerald-400 text-sm"></i> Caixa (PDV)
-            </button>
-            <button onclick="switchTab('products'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-boxes-stacked text-blue-400 text-sm"></i> Produtos & Estoque
-            </button>
-            <button onclick="switchTab('restock'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-rotate text-teal-400 text-sm"></i> Reposição por Saídas
-            </button>
-          </div>
+1. Os principais problemas que encontrei
+1. Segurança do cadastro e dos dados
 
-          <div class="py-1">
-            <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-chart-line text-indigo-400 text-sm"></i> Relatório & Lucro
-            </button>
-            <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-users text-purple-400 text-sm"></i> Clientes & Fiado
-            </button>
-          </div>
+O código insere nomes de produtos e clientes diretamente em HTML usando innerHTML. Isso pode permitir a execução de conteúdo malicioso caso algum campo contenha HTML ou JavaScript. Também é necessário validar os arquivos de backup antes de substituir os dados.
 
-          <div class="pt-1">
-            <button onclick="switchTab('settings'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-400 hover:bg-slate-800 flex items-center gap-2.5">
-              <i class="fa-solid fa-gear text-slate-400 text-sm"></i> Configurações & Backup
-            </button>
-          </div>
+2. Cálculos financeiros
 
-        </div>
-      </div>
-    </div>
-  </header>
+O código utiliza números decimais diretamente para calcular valores em reais. Isso pode causar pequenas diferenças de arredondamento. Além disso, o sistema permite finalizar uma venda em dinheiro mesmo que o valor recebido seja insuficiente.
 
-  <!-- ÁREA PRINCIPAL -->
-  <main class="max-w-md mx-auto w-full px-4 pt-4 pb-safe-footer flex-1 flex flex-col gap-4">
+3. Controle de estoque
 
-    <!-- TAB 1: CAIXA (PDV) -->
-    <div id="tabPosContent" class="flex flex-col gap-4 flex-1">
-      <section id="standbyScreen" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center shadow-xl flex flex-col items-center justify-center gap-5 my-auto py-12">
-        <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
-          <i class="fa-solid fa-cart-plus text-4xl"></i>
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-slate-100">Pronto para Atendimento</h2>
-          <p class="text-xs text-slate-400 mt-1">Clique abaixo para ativar o leitor e registrar os produtos do cliente.</p>
-        </div>
-        <button onclick="startNewSale()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-base py-4 px-6 rounded-2xl transition flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/40">
-          <i class="fa-solid fa-play text-sm"></i>
-          <span>Iniciar Nova Venda</span>
-        </button>
-      </section>
+É possível vender mais unidades do que existem no estoque, deixando quantidades negativas. A reposição também não é separada por dia, apesar de a tela indicar que mostra as saídas de hoje.
 
-      <div id="activeSaleScreen" style="display: none;" class="flex-col gap-4 flex-1">
-        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <span id="cameraDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
-            </div>
-            <button onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
-              <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
-              <span id="toggleCameraBtnText">Pausar Leitor</span>
-            </button>
-          </div>
+4. Leitor de código de barras
 
-          <div id="readerBox" class="relative rounded-xl overflow-hidden">
-            <div id="reader" class="w-full"></div>
-            <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10 rounded-xl">
-              <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
-              <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
-              <button onclick="toggleCameraState()" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
-                <i class="fa-solid fa-play"></i>
-                <span>Reativar Leitor</span>
-              </button>
-            </div>
-          </div>
+A câmera pode falhar ao iniciar, ser iniciada mais de uma vez ou permanecer em processo de encerramento. Os leitores dos modais também precisam de um controle mais seguro de inicialização e parada.
 
-          <div class="mt-3 flex gap-2">
-            <div class="w-20 shrink-0">
-              <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Qtd</label>
-              <input type="number" id="multiplierQtyInput" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 text-center text-emerald-400 font-bold text-xs rounded-xl py-2.5">
-            </div>
-            <form onsubmit="handleManualBarcodeSubmit(event)" class="flex gap-2 flex-1">
-              <div class="relative flex-1">
-                <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Código de Barras</label>
-                <input type="text" id="manualBarcodeInput" placeholder="Digite o código..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
-              </div>
-              <div class="flex flex-col justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition">Add</button>
-              </div>
-            </form>
-          </div>
-        </section>
+5. Armazenamento e backup
 
-        <!-- CARD DE ÚLTIMO ITEM LIDO -->
-        <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-          <div id="lastScannedImgContainer" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
-            <i id="lastScannedIcon" class="fa-solid fa-box text-lg"></i>
-            <img id="lastScannedImage" src="" class="hidden w-full h-full object-cover">
-          </div>
-          <div class="flex-1 min-w-0">
-            <span class="text-[10px] font-bold text-blue-400 uppercase bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
-            <h3 id="lastScannedName" class="text-sm font-semibold text-slate-100 truncate mt-0.5">---</h3>
-            <p id="lastScannedPrice" class="text-xs font-bold text-emerald-400">R$ 0,00</p>
-          </div>
-        </section>
+O localStorage guarda os dados apenas naquele navegador e dispositivo. Limpar os dados do navegador pode apagar o banco do aplicativo. Também não existe sincronização automática entre celulares ou computadores.
 
-        <!-- CARRINHO -->
-        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-cart-shopping text-blue-400 text-sm"></i>
-              <h2 class="text-xs font-bold uppercase text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
-            </div>
-            <button onclick="cancelSale()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
-              <i class="fa-solid fa-xmark"></i> Cancelar Venda
-            </button>
-          </div>
+6. Fiado e controle de caixa
 
-          <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[260px] pr-1">
-            <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
-              <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
-              <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
+Os pagamentos parciais de clientes não são limitados ao saldo devedor. As sangrias não ficam registradas em um histórico próprio, e zerar o caixa apaga a referência ao dinheiro disponível sem gerar um fechamento diário.
 
-    <!-- TAB 2: PRODUTOS -->
-    <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
-      <div class="flex items-center justify-between gap-2">
-        <div>
-          <h2 class="text-sm font-bold text-slate-200">Catálogo & Validade</h2>
-          <p class="text-[11px] text-slate-400">Total cadastrados: <span id="productCounterBadge" class="font-bold text-emerald-400">0</span></p>
-        </div>
-        <div class="flex gap-1.5">
-          <button onclick="openRemessaModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
-            <i class="fa-solid fa-truck-ramp-box"></i> Entrada
-          </button>
-          <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
-            <i class="fa-solid fa-plus"></i> Novo
-          </button>
-        </div>
-      </div>
+Há ainda dois detalhes: os valores aparecem com ponto decimal em algumas telas, como R$ 24.90, em vez do padrão brasileiro R$ 24,90; e o botão de impressão está descrito na tela, mas o código não implementa efetivamente a impressão do comprovante.
 
-      <div class="flex gap-2">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" id="productSearchInput" oninput="renderProductList()" placeholder="Buscar por nome ou código..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5">
-        </div>
-        <button onclick="toggleLowStockFilter()" id="lowStockFilterBtn" class="bg-slate-900 border border-slate-800 text-amber-400 hover:bg-amber-950/40 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>Estoque</span>
-        </button>
-      </div>
+2. Como recomendo melhorar o aplicativo
+Minha recomendação é preservar seu visual atual, feito com Tailwind CSS, e corrigir primeiro as funcionalidades centrais, sem reconstruir tudo do zero.
 
-      <div id="supplierWhatsAppBox" class="hidden bg-amber-950/40 border border-amber-800/60 rounded-2xl p-3 flex items-center justify-between">
-        <div class="text-xs">
-          <span class="font-bold text-amber-300 block">Itens em Estoque Crítico</span>
-          <span id="lowStockCountText" class="text-[11px] text-slate-400">0 produtos abaixo do mínimo</span>
-        </div>
-        <button onclick="sendLowStockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-md">
-          <i class="fa-brands fa-whatsapp text-sm"></i> Pedir Fornecedor
-        </button>
-      </div>
+PDV: validar quantidades, estoque disponível, pagamentos e troco antes de concluir a venda.
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
-        <div id="productList" class="space-y-2.5"></div>
-      </section>
-    </div>
+Financeiro: utilizar centavos inteiros nos cálculos e formatar os valores com Intl.NumberFormat.
 
-    <!-- TAB 3: REABASTECIMENTO -->
-    <div id="tabRestockContent" style="display: none;" class="flex-col gap-4 flex-1">
-      <div class="flex items-center justify-between gap-2">
-        <div>
-          <h2 class="text-sm font-bold text-slate-200">Reposição por Saídas</h2>
-          <p class="text-xs text-slate-400">Quantidade que saiu no caixa hoje para repor</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="sendRestockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1">
-            <i class="fa-brands fa-whatsapp"></i> Repositor
-          </button>
-          <button onclick="clearRestockList()" class="text-xs text-rose-400 hover:text-rose-300">Zerar</button>
-        </div>
-      </div>
+Estoque: impedir quantidades negativas por venda e registrar entradas e saídas.
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
-        <div id="restockList" class="space-y-3"></div>
-      </section>
-    </div>
+Fiado: validar o limite de crédito e o valor dos pagamentos parciais.
 
-    <!-- TAB 4: HISTÓRICO & LUCRO -->
-    <div id="tabHistoryContent" style="display: none;" class="flex-col gap-4 flex-1">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-bold text-slate-200"><i class="fa-solid fa-chart-pie text-emerald-400 mr-1"></i> Desempenho Financeiro</h2>
-        <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300">Limpar Histórico</button>
-      </div>
+Câmera: garantir que cada leitor tenha um único ciclo de inicialização e encerramento.
 
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-          <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Vendido</span>
-          <span id="historyTotalSales" class="text-lg font-black text-slate-100">R$ 0,00</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-          <span class="text-[10px] text-slate-400 block uppercase font-bold">Investimento (Custo)</span>
-          <span id="historyTotalCost" class="text-lg font-black text-amber-400">R$ 0,00</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-          <span class="text-[10px] text-slate-400 block uppercase font-bold">Lucro Líquido (R$)</span>
-          <span id="historyTotalProfit" class="text-lg font-black text-emerald-400">R$ 0,00</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-          <span class="text-[10px] text-slate-400 block uppercase font-bold">Margem Lucro (%)</span>
-          <span id="historyTotalMargin" class="text-lg font-black text-blue-400">0.0%</span>
-        </div>
-      </div>
+Persistência: tratar falhas de armazenamento, validar importações e criar backups confiáveis.
 
-      <div class="flex items-center justify-between px-1">
-        <span class="text-xs font-bold text-slate-300 uppercase">Vendas Registradas (<span id="historyCount">0</span>)</span>
-      </div>
+Interface: manter o design escuro, melhorar a acessibilidade e corrigir a exibição em telas pequenas.
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[420px]">
-        <div id="historyList" class="space-y-3"></div>
-      </section>
-    </div>
+Segurança: evitar injeção de HTML e não permitir que dados importados substituam o banco sem validação.
 
-    <!-- TAB 5: CLIENTES & FIADO -->
-    <div id="tabCustomersContent" style="display: none;" class="flex-col gap-4 flex-1">
-      <div class="flex items-center justify-between gap-2">
-        <div>
-          <h2 class="text-sm font-bold text-slate-200">Gestão de Clientes & Fiado</h2>
-          <p class="text-[11px] text-slate-400">Total em Aberto: <span id="totalDebtsBadge" class="font-bold text-rose-400">R$ 0,00</span></p>
-        </div>
-        <button onclick="openCustomerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
-          <i class="fa-solid fa-user-plus"></i> Novo Cliente
-        </button>
-      </div>
+Um ponto essencial: o aplicativo atual pode funcionar como protótipo ou sistema local, mas não é seguro tratá-lo como um caixa comercial confiável sem essas correções e testes. O GitHub Pages, por exemplo, hospeda os arquivos do aplicativo, mas não fornece por si só um banco de dados compartilhado nem sincronização entre dispositivos.
 
-      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
-        <div id="customerList" class="space-y-2.5"></div>
-      </section>
-    </div>
+3. Correções de código que você pode aplicar agora
+Estes são ajustes concretos para o seu arquivo index.html. Eles não exigem mudar a estrutura visual do aplicativo.
 
-    <!-- TAB 6: CONFIGURAÇÕES -->
-    <div id="tabSettingsContent" style="display: none;" class="flex-col gap-4 flex-1">
-      <h2 class="text-sm font-bold text-slate-200">Configurações & Backup</h2>
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div>
-          <h3 class="text-xs font-bold text-slate-300 mb-1">Dados & Armazenamento</h3>
-          <div class="flex gap-2 mt-2">
-            <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">Exportar JSON</button>
-            <button onclick="importDataTrigger()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">Importar JSON</button>
-            <input type="file" id="importFile" class="hidden" onchange="importDataFile(event)">
-          </div>
-        </div>
-        <div class="pt-3 border-t border-slate-800">
-          <button onclick="resetAllSystemData()" class="w-full bg-rose-950/60 border border-rose-800/80 text-rose-300 font-bold text-xs py-2.5 rounded-xl">Zerar Banco de Dados</button>
-        </div>
-      </section>
-    </div>
+Correção 1 — Padronizar os valores em reais
+Adicione estas funções no início do seu <script>, logo depois das declarações das variáveis globais:
 
-  </main>
 
-  <!-- BARRA INFERIOR DA COMPRA -->
-  <div id="bottomActionBar" style="display: none;" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
-    <div class="max-w-md mx-auto flex items-center justify-between gap-3 mb-2">
-      <div>
-        <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
-        <span id="cartGrandTotal" class="text-xl font-black text-emerald-400">R$ 0,00</span>
-      </div>
-      <button onclick="openPaymentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm px-6 py-3 rounded-2xl shadow-lg shadow-emerald-900/40 transition flex items-center gap-2">
-        <span>Concluir Venda</span>
-        <i class="fa-solid fa-arrow-right text-xs"></i>
-      </button>
-    </div>
-  </div>
+javascript
+// Formatação monetária brasileira
+const moedaBR = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL'
+});
 
-  <!-- MODAL DE PAGAMENTO -->
-  <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md shadow-2xl modal-safe-padding">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="font-bold text-sm text-slate-200">Escolha a Forma de Pagamento</h3>
-        <button onclick="closePaymentModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
+// Converte reais em centavos inteiros
+function paraCentavos(valor) {
+  return Math.round((Number(valor) || 0) * 100);
+}
 
-      <div class="grid grid-cols-2 gap-2.5 mb-4">
-        <button onclick="selectPaymentMethod('Dinheiro')" class="pay-method-btn bg-slate-800 border-2 border-emerald-500/50 text-emerald-400 font-bold py-3.5 px-4 rounded-2xl text-xs flex flex-col items-center gap-1.5 transition">
-          <i class="fa-solid fa-money-bill-wave text-lg"></i> Dinheiro
-        </button>
-        <button onclick="selectPaymentMethod('PIX')" class="pay-method-btn bg-slate-800 border-2 border-slate-700 text-slate-300 font-bold py-3.5 px-4 rounded-2xl text-xs flex flex-col items-center gap-1.5 transition">
-          <i class="fa-solid fa-qrcode text-lg"></i> PIX
-        </button>
-        <button onclick="selectPaymentMethod('Cartão')" class="pay-method-btn bg-slate-800 border-2 border-slate-700 text-slate-300 font-bold py-3.5 px-4 rounded-2xl text-xs flex flex-col items-center gap-1.5 transition">
-          <i class="fa-solid fa-credit-card text-lg"></i> Cartão
-        </button>
-        <button onclick="selectPaymentMethod('Fiado')" class="pay-method-btn bg-slate-800 border-2 border-slate-700 text-slate-300 font-bold py-3.5 px-4 rounded-2xl text-xs flex flex-col items-center gap-1.5 transition">
-          <i class="fa-solid fa-book text-lg"></i> A Prazo (Fiado)
-        </button>
-      </div>
+// Formata um valor em reais
+function formatarMoeda(valor) {
+  return moedaBR.format(Number(valor) || 0);
+}
+Depois, você poderá substituir expressões como:
 
-      <div id="cashPaymentSection" class="mb-4">
-        <label class="text-xs text-slate-400 block mb-1">Valor Recebido (Dinheiro)</label>
-        <input type="number" step="0.01" id="cashReceivedInput" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-950 border border-slate-800 text-slate-100 font-bold text-sm rounded-xl px-3 py-3">
-        <div class="flex justify-between items-center mt-2 px-1 text-xs">
-          <span class="text-slate-400">Troco:</span>
-          <span id="changeOutput" class="font-bold text-emerald-400 text-sm">R$ 0,00</span>
-        </div>
-      </div>
 
-      <div id="fiadoCustomerSection" class="hidden mb-4">
-        <label class="text-xs text-slate-400 block mb-1">Selecionar Cliente</label>
-        <select id="checkoutCustomerSelect" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-3"></select>
-      </div>
+javascript
+`R$ ${total.toFixed(2)}`
+por:
 
-      <button onclick="confirmCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm py-4 rounded-2xl shadow-xl shadow-emerald-900/40 transition">
-        Concluir e Imprimir / Finalizar
-      </button>
-    </div>
-  </div>
 
-  <!-- MODAL DE CADASTRO DE PRODUTO -->
-  <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md shadow-2xl modal-safe-padding max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 id="productModalTitle" class="font-bold text-sm text-slate-200">Cadastrar Novo Produto</h3>
-        <button onclick="closeProductModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleProductFormSubmit(event)" class="space-y-3">
-        <input type="hidden" id="editingProductCode">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Código de Barras</label>
-          <div class="flex gap-2">
-            <input type="text" id="formProdCode" required class="flex-1 bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-            <button type="button" onclick="startModalScanner()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2.5 rounded-xl text-xs"><i class="fa-solid fa-camera"></i></button>
-          </div>
-        </div>
-        <div id="modalScannerBox" class="hidden">
-          <div id="modalReader" class="w-full"></div>
-          <button type="button" onclick="stopModalScanner()" class="mt-1 text-[10px] text-rose-400">Fechar Câmera</button>
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Nome do Produto</label>
-          <input type="text" id="formProdName" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Preço Custo (R$)</label>
-            <input type="number" step="0.01" id="formProdCost" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Preço Venda (R$)</label>
-            <input type="number" step="0.01" id="formProdPrice" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Estoque Inicial</label>
-            <input type="number" id="formProdStock" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Estoque Mínimo</label>
-            <input type="number" id="formProdMinStock" value="3" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Validade (Opcional)</label>
-          <input type="date" id="formProdExpiry" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-xl transition mt-2">Salvar Produto</button>
-      </form>
-    </div>
-  </div>
+javascript
+formatarMoeda(total)
+Isso padroniza a exibição, por exemplo, para R$ 1.234,56. Para os cálculos financeiros, use centavos inteiros sempre que possível, em vez de depender diretamente de operações com números decimais.
 
-  <!-- MODAL DE ENTRADA DE REMESSA / NOTA -->
-  <div id="remessaModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md shadow-2xl modal-safe-padding max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="font-bold text-sm text-slate-200">Entrada Rápida de Remessa</h3>
-        <button onclick="closeRemessaModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3">
-        <div id="remessaReaderBox">
-          <div id="remessaReader" class="w-full"></div>
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Código Lido ou Digite</label>
-          <input type="text" id="remessaCodeInput" placeholder="Bipe o código..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Qtd Entrando</label>
-            <input type="number" id="remessaQtyInput" value="10" min="1" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Nova Validade</label>
-            <input type="date" id="remessaExpiryInput" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-          </div>
-        </div>
-        <button onclick="confirmRemessaAddition()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-xl transition">Adicionar ao Estoque</button>
-      </div>
-    </div>
-  </div>
+Correção 2 — Impedir vendas com estoque insuficiente
+No seu código, localize a função confirmCheckout() e substitua-a pela versão abaixo. Ela verifica o estoque antes de finalizar, impede pagamento em dinheiro insuficiente, valida o cliente do fiado e arredonda os valores financeiros.
 
-  <!-- MODAL DE CADASTRO DE CLIENTE -->
-  <div id="customerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md shadow-2xl modal-safe-padding">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="font-bold text-sm text-slate-200">Cadastrar Novo Cliente</h3>
-        <button onclick="closeCustomerModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleCustomerFormSubmit(event)" class="space-y-3">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Nome Completo</label>
-          <input type="text" id="formCustName" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">WhatsApp / Telefone</label>
-          <input type="text" id="formCustPhone" placeholder="(47) 99999-9999" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Limite de Crédito Fiado (R$)</label>
-          <input type="number" step="0.01" id="formCustLimit" value="200.00" required class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-        </div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-xl transition mt-2">Salvar Cliente</button>
-      </form>
-    </div>
-  </div>
 
-  <!-- MODAL DE CONTROLE DE CAIXA / SANGRIA -->
-  <div id="cashRegisterModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md shadow-2xl modal-safe-padding">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="font-bold text-sm text-slate-200">Controle de Caixa & Sangrias</h3>
-        <button onclick="closeCashRegisterModal()" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-4">
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-          <span class="text-[10px] text-slate-400 uppercase font-bold block">Faturamento em Dinheiro no Caixa</span>
-          <span id="cashInDrawerDisplay" class="text-2xl font-black text-emerald-400">R$ 0,00</span>
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Realizar Sangria (Retirada de Dinheiro)</label>
-          <div class="flex gap-2">
-            <input type="number" step="0.01" id="sangriaValueInput" placeholder="Valor (R$)" class="flex-1 bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2.5">
-            <button onclick="performSangria()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Retirar</button>
-          </div>
-        </div>
-        <div class="pt-2 border-t border-slate-800">
-          <button onclick="resetDailyCash()" class="w-full bg-slate-800 hover:bg-slate-700 text-rose-400 font-bold text-xs py-2.5 rounded-xl transition">Zerar Caixa do Dia</button>
-        </div>
-      </div>
-    </div>
-  </div>
+javascript
 
-  <!-- SCRIPT DE FUNCIONALIDADES -->
-  <script>
-    // ESTADO GLOBAL DO SISTEMA
-    let db = {
-      products: JSON.parse(localStorage.getItem('pdv_products')) || [
-        { code: '789100000001', name: 'Arroz 5kg', cost: 18.00, price: 24.90, stock: 20, minStock: 5, expiry: '2026-11-15' },
-        { code: '789100000002', name: 'Feijão 1kg', cost: 4.50, price: 7.50, stock: 15, minStock: 4, expiry: '2026-10-30' }
-      ],
-      customers: JSON.parse(localStorage.getItem('pdv_customers')) || [],
-      sales: JSON.parse(localStorage.getItem('pdv_sales')) || [],
-      restock: JSON.parse(localStorage.getItem('pdv_restock')) || [],
-      cashDrawer: parseFloat(localStorage.getItem('pdv_cash')) || 0
-    };
+function confirmCheckout() {
+  if (!cart.length) {
+    showToast('O carrinho está vazio!');
+    return;
+  }
 
-    let cart = [];
-    let activeTab = 'pos';
-    let isCameraRunning = false;
-    let html5QrCode = null;
-    let modalQrCode = null;
-    let remessaQrCode = null;
-    let currentPaymentMethod = 'Dinheiro';
-    let lowStockFilterActive = false;
+  // Confere o estoque antes de alterar qualquer dado
+  for (const item of cart) {
+    const produto = db.products.find(
+      p => p.code === item.code
+    );
 
-    function saveDB() {
-      localStorage.setItem('pdv_products', JSON.stringify(db.products));
-      localStorage.setItem('pdv_customers', JSON.stringify(db.customers));
-      localStorage.setItem('pdv_sales', JSON.stringify(db.sales));
-      localStorage.setItem('pdv_restock', JSON.stringify(db.restock));
-      localStorage.setItem('pdv_cash', db.cashDrawer);
+    if (!produto) {
+      showToast(`Produto não encontrado: ${item.name}`);
+      return;
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById('toastSuccess');
-      document.getElementById('toastMessage').innerText = msg;
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3000);
+    if (!Number.isInteger(item.qty) || item.qty <= 0) {
+      showToast('Quantidade inválida no carrinho!');
+      return;
     }
 
-    function toggleOptionsMenu() {
-      document.getElementById('optionsDropdown').classList.toggle('hidden');
+    if (produto.stock < item.qty) {
+      showToast(
+        `Estoque insuficiente para ${produto.name}. ` +
+        `Disponível: ${produto.stock}`
+      );
+      return;
+    }
+  }
+
+  // Cálculos em centavos
+  const totalCentavos = cart.reduce(
+    (soma, item) =>
+      soma + paraCentavos(item.price) * item.qty,
+    0
+  );
+
+  const custoCentavos = cart.reduce(
+    (soma, item) =>
+      soma + paraCentavos(item.cost) * item.qty,
+    0
+  );
+
+  const total = totalCentavos / 100;
+  const custo = custoCentavos / 100;
+  const lucro = (totalCentavos - custoCentavos) / 100;
+
+  let cliente = null;
+
+  // Validação do pagamento em dinheiro
+  if (currentPaymentMethod === 'Dinheiro') {
+    const recebido = Number(
+      document.getElementById('cashReceivedInput').value
+    );
+
+    const recebidoCentavos = Number.isFinite(recebido)
+      ? Math.round(recebido * 100)
+      : 0;
+
+    if (recebidoCentavos < totalCentavos) {
+      showToast('O valor recebido é insuficiente!');
+      return;
+    }
+  }
+
+  // Validação do fiado
+  if (currentPaymentMethod === 'Fiado') {
+    const idx = document.getElementById(
+      'checkoutCustomerSelect'
+    ).value;
+
+    cliente = db.customers[Number(idx)];
+
+    if (idx === '' || !cliente) {
+      showToast('Selecione um cliente válido!');
+      return;
     }
 
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.relative')) {
-        document.getElementById('optionsDropdown').classList.add('hidden');
-      }
+    const saldoAtual = paraCentavos(cliente.balance || 0);
+    const limite = paraCentavos(cliente.limit);
+    const novoSaldo = saldoAtual + totalCentavos;
+
+    if (novoSaldo > limite) {
+      showToast('Limite de crédito excedido!');
+      return;
+    }
+  }
+
+  // Atualiza o estoque e a lista de reposição
+  for (const item of cart) {
+    const produto = db.products.find(
+      p => p.code === item.code
+    );
+
+    produto.stock -= item.qty;
+
+    let reposicao = db.restock.find(
+      r => r.code === produto.code
+    );
+
+    if (reposicao) {
+      reposicao.qty += item.qty;
+      reposicao.name = produto.name;
+    } else {
+      db.restock.push({
+        code: produto.code,
+        name: produto.name,
+        qty: item.qty
+      });
+    }
+  }
+
+  // Registra a dívida do cliente
+  if (cliente) {
+    cliente.balance = (
+      paraCentavos(cliente.balance || 0) +
+      totalCentavos
+    ) / 100;
+
+    cliente.history = cliente.history || [];
+    cliente.history.push({
+      date: new Date().toISOString(),
+      type: 'compra_fiado',
+      amount: total,
+      balanceAfter: cliente.balance
     });
+  }
+
+  // Só o dinheiro em espécie entra neste saldo
+  if (currentPaymentMethod === 'Dinheiro') {
+    const recebidoCentavos = Math.round(
+      Number(
+        document.getElementById('cashReceivedInput').value
+      ) * 100
+    );
+
+    const trocoCentavos = recebidoCentavos - totalCentavos;
+
+    db.cashDrawer = (
+      paraCentavos(db.cashDrawer) +
+      totalCentavos
+    ) / 100;
+
+    // O troco entregue não permanece no caixa
+    db.cashDrawer = (
+      paraCentavos(db.cashDrawer) - trocoCentavos
+    ) / 100;
+  }
+
+  // Registra a venda
+  db.sales.push({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    items: cart.map(item => ({ ...item })),
+    total,
+    cost: custo,
+    profit: lucro,
+    method: currentPaymentMethod,
+    customer: cliente ? cliente.name : null
+  });
+
+  saveDB();
+
+  closePaymentModal();
+  showToast('Venda concluída com sucesso!');
+  cancelSale();
+
+  // Atualiza as telas que dependem dos dados
+  renderProductList();
+  renderRestockList();
+  renderHistory();
+  renderCustomerList();
+}
+Importante: essa substituição corrige validações centrais, mas não transforma o aplicativo em um sistema transacional. O uso de localStorage não garante integridade diante de falhas ou alterações simultâneas, e a lista de reposição ainda precisa de uma regra de período para representar apenas as saídas do dia.
+
+Correção 3 — Validar a quantidade adicionada ao carrinho
+Sua função atual aceita valores digitados no campo de quantidade e pode permitir quantidades negativas ou inválidas em outros fluxos. Dentro de addProductToCartByCode(), substitua a leitura atual da variável mult por este trecho:
+
+
+javascript
+const qtyInput = document.getElementById('multiplierQtyInput');
+const mult = Number(qtyInput.value);
+
+if (!Number.isSafeInteger(mult) || mult < 1) {
+  showToast('Informe uma quantidade inteira maior que zero!');
+  qtyInput.value = '1';
+  return;
+}
+Isso valida a quantidade antes de acrescentar itens ao carrinho. A verificação de estoque no fechamento continua necessária, porque o estoque pode mudar durante a venda.
+
+Correção 4 — Evitar valores negativos no pagamento do fiado
+Substitua a função payCustomerDebt() por esta versão. Ela impede registrar um pagamento superior à dívida e atualiza o saldo do caixa em espécie somente após validar o valor:
 
-    // NAVEGAÇÃO DE ABAS
-    function switchTab(tab) {
-      activeTab = tab;
-      ['Pos', 'Products', 'Restock', 'History', 'Customers', 'Settings'].forEach(t => {
-        const el = document.getElementById('tab' + t + 'Content');
-        if (el) el.style.display = 'none';
-      });
-
-      if (tab === 'pos') {
-        document.getElementById('tabPosContent').style.display = 'flex';
-      } else if (tab === 'products') {
-        document.getElementById('tabProductsContent').style.display = 'flex';
-        renderProductList();
-      } else if (tab === 'restock') {
-        document.getElementById('tabRestockContent').style.display = 'flex';
-        renderRestockList();
-      } else if (tab === 'history') {
-        document.getElementById('tabHistoryContent').style.display = 'flex';
-        renderHistory();
-      } else if (tab === 'customers') {
-        document.getElementById('tabCustomersContent').style.display = 'flex';
-        renderCustomerList();
-      } else if (tab === 'settings') {
-        document.getElementById('tabSettingsContent').style.display = 'flex';
-      }
-      
-      // Parar câmera se sair da aba POS
-      if (tab !== 'pos' && isCameraRunning) {
-        stopCamera();
-      }
-    }
-
-    // CONTROLE DO CAIXA E PDV
-    function startNewSale() {
-      document.getElementById('standbyScreen').style.display = 'none';
-      document.getElementById('activeSaleScreen').style.display = 'flex';
-      document.getElementById('bottomActionBar').style.display = 'block';
-      startCamera();
-    }
-
-    function cancelSale() {
-      if (cart.length > 0 && !confirm('Deseja cancelar a venda atual?')) return;
-      cart = [];
-      renderCart();
-      document.getElementById('activeSaleScreen').style.display = 'none';
-      document.getElementById('bottomActionBar').style.display = 'none';
-      document.getElementById('standbyScreen').style.display = 'flex';
-      stopCamera();
-    }
-
-    // LEITOR DE CÓDIGO DE BARRAS (CÂMERA)
-    function startCamera() {
-      if (isCameraRunning) return;
-      html5QrCode = new Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-        .then(() => { isCameraRunning = true; })
-        .catch(err => { console.error("Erro ao iniciar câmera", err); });
-    }
-
-    function stopCamera() {
-      if (html5QrCode && isCameraRunning) {
-        html5QrCode.stop().then(() => {
-          isCameraRunning = false;
-        }).catch(err => { console.error(err); });
-      }
-    }
-
-    function toggleCameraState() {
-      const overlay = document.getElementById('cameraPausedOverlay');
-      const icon = document.getElementById('toggleCameraIcon');
-      const text = document.getElementById('toggleCameraBtnText');
-      const dot = document.getElementById('cameraDot');
-      const statusText = document.getElementById('cameraStatusText');
-
-      if (isCameraRunning) {
-        stopCamera();
-        overlay.classList.remove('hidden');
-        icon.className = "fa-solid fa-play mr-1";
-        text.innerText = "Reativar Leitor";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-        statusText.innerText = "Leitor Pausado";
-        statusText.className = "text-xs font-semibold text-amber-400 uppercase tracking-wider";
-      } else {
-        overlay.classList.add('hidden');
-        startCamera();
-        icon.className = "fa-solid fa-pause mr-1";
-        text.innerText = "Pausar Leitor";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        statusText.innerText = "Leitor Ativo";
-        statusText.className = "text-xs font-semibold text-emerald-400 uppercase tracking-wider";
-      }
-    }
-
-    let lastScannedCode = '';
-    let lastScanTimestamp = 0;
-
-    function onScanSuccess(decodedText) {
-      const now = Date.now();
-      if (decodedText === lastScannedCode && (now - lastScanTimestamp < 2000)) return;
-      lastScannedCode = decodedText;
-      lastScanTimestamp = now;
-
-      playBeep();
-      addProductToCartByCode(decodedText);
-    }
-
-    function playBeep() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 900;
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-      } catch (e) {}
-    }
-
-    function handleManualBarcodeSubmit(e) {
-      e.preventDefault();
-      const input = document.getElementById('manualBarcodeInput');
-      const val = input.value.trim();
-      if (!val) return;
-      addProductToCartByCode(val);
-      input.value = '';
-    }
-
-    function addProductToCartByCode(codeOrName) {
-      const query = codeOrName.toLowerCase();
-      const product = db.products.find(p => p.code.toLowerCase() === query || p.name.toLowerCase().includes(query));
-      
-      if (!product) {
-        showToast('Produto não cadastrado!');
-        return;
-      }
-
-      const mult = parseInt(document.getElementById('multiplierQtyInput').value) || 1;
-      const existing = cart.find(item => item.code === product.code);
-
-      if (existing) {
-        existing.qty += mult;
-      } else {
-        cart.push({
-          code: product.code,
-          name: product.name,
-          price: product.price,
-          cost: product.cost || 0,
-          qty: mult
-        });
-      }
-
-      document.getElementById('multiplierQtyInput').value = '1';
-      renderCart();
-      updateLastScannedCard(product);
-    }
-
-    function updateLastScannedCard(prod) {
-      const card = document.getElementById('lastScannedCard');
-      card.classList.remove('hidden');
-      document.getElementById('lastScannedName').innerText = prod.name;
-      document.getElementById('lastScannedPrice').innerText = `R$ ${prod.price.toFixed(2)}`;
-    }
-
-    function renderCart() {
-      const list = document.getElementById('cartList');
-      const countBadge = document.getElementById('cartCount');
-      const grandTotalEl = document.getElementById('cartGrandTotal');
-      const emptyState = document.getElementById('emptyCartState');
-
-      countBadge.innerText = cart.reduce((acc, i) => acc + i.qty, 0);
-
-      if (cart.length === 0) {
-        list.innerHTML = '';
-        list.appendChild(emptyState);
-        emptyState.classList.remove('hidden');
-        grandTotalEl.innerText = 'R$ 0,00';
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      list.innerHTML = '';
-
-      let total = 0;
-      cart.forEach((item, index) => {
-        const sub = item.price * item.qty;
-        total += sub;
-
-        list.innerHTML += `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
-            <div class="min-w-0 flex-1">
-              <h4 class="text-xs font-bold text-slate-100 truncate">${item.name}</h4>
-              <p class="text-[10px] text-slate-400">R$ ${item.price.toFixed(2)} un</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
-                <button onclick="changeCartQty(${index}, -1)" class="px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">-</button>
-                <span class="px-2 text-xs font-bold text-emerald-400">${item.qty}</span>
-                <button onclick="changeCartQty(${index}, 1)" class="px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">+</button>
-              </div>
-              <span class="text-xs font-extrabold text-slate-100 w-16 text-right">R$ ${sub.toFixed(2)}</span>
-              <button onclick="removeFromCart(${index})" class="text-rose-400 hover:text-rose-300 px-1"><i class="fa-solid fa-trash text-xs"></i></button>
-            </div>
-          </div>
-        `;
-      });
-
-      grandTotalEl.innerText = `R$ ${total.toFixed(2)}`;
-    }
-
-    function changeCartQty(index, delta) {
-      cart[index].qty += delta;
-      if (cart[index].qty <= 0) {
-        cart.splice(index, 1);
-      }
-      renderCart();
-    }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      renderCart();
-    }
-
-    // PAGAMENTO E CHECKOUT
-    function openPaymentModal() {
-      if (cart.length === 0) {
-        showToast('Carrinho vazio!');
-        return;
-      }
-      document.getElementById('paymentModal').classList.remove('hidden');
-      selectPaymentMethod('Dinheiro');
-      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-      document.getElementById('cashReceivedInput').value = total.toFixed(2);
-      calculateChange();
-      populateCheckoutCustomers();
-    }
-
-    function closePaymentModal() {
-      document.getElementById('paymentModal').classList.add('hidden');
-    }
-
-    function selectPaymentMethod(method) {
-      currentPaymentMethod = method;
-      document.querySelectorAll('.pay-method-btn').forEach(btn => {
-        btn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
-        btn.classList.add('border-slate-700');
-        if (btn.innerText.includes(method) || (method === 'Fiado' && btn.innerText.includes('Fiado'))) {
-          btn.classList.remove('border-slate-700');
-          btn.classList.add('border-emerald-500', 'bg-emerald-950/40');
-        }
-      });
-
-      const cashSec = document.getElementById('cashPaymentSection');
-      const fiadoSec = document.getElementById('fiadoCustomerSection');
-
-      if (method === 'Dinheiro') {
-        cashSec.classList.remove('hidden');
-        fiadoSec.classList.add('hidden');
-      } else if (method === 'Fiado') {
-        cashSec.classList.add('hidden');
-        fiadoSec.classList.remove('hidden');
-      } else {
-        cashSec.classList.add('hidden');
-        fiadoSec.classList.add('hidden');
-      }
-    }
-
-    function calculateChange() {
-      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-      const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
-      const change = received - total;
-      document.getElementById('changeOutput').innerText = change >= 0 ? `R$ ${change.toFixed(2)}` : 'Valor insuficiente';
-    }
-
-    function populateCheckoutCustomers() {
-      const sel = document.getElementById('checkoutCustomerSelect');
-      sel.innerHTML = '';
-      if (db.customers.length === 0) {
-        sel.innerHTML = '<option value="">Nenhum cliente cadastrado</option>';
-        return;
-      }
-      db.customers.forEach((c, idx) => {
-        sel.innerHTML += `<option value="${idx}">${c.name} (Devendo: R$ ${(c.balance || 0).toFixed(2)})</option>`;
-      });
-    }
-
-    function confirmCheckout() {
-      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-      let customerName = null;
-
-      if (currentPaymentMethod === 'Fiado') {
-        const idx = document.getElementById('checkoutCustomerSelect').value;
-        if (idx === "" || !db.customers[idx]) {
-          showToast('Selecione um cliente válido para o Fiado!');
-          return;
-        }
-        const cust = db.customers[idx];
-        const newBalance = (cust.balance || 0) + total;
-        if (newBalance > cust.limit) {
-          showToast('Limite de crédito do cliente excedido!');
-          return;
-        }
-        cust.balance = newBalance;
-        cust.history = cust.history || [];
-        cust.history.push({ date: new Date().toLocaleString('pt-BR'), amount: total, balanceAfter: cust.balance });
-        customerName = cust.name;
-      }
-
-      if (currentPaymentMethod === 'Dinheiro') {
-        db.cashDrawer = (db.cashDrawer || 0) + total;
-      }
-
-      // Atualizar Estoque e Reposição
-      cart.forEach(item => {
-        const prod = db.products.find(p => p.code === item.code);
-        if (prod) {
-          prod.stock -= item.qty;
-          // Adicionar à lista de reposição por saídas
-          let rest = db.restock.find(r => r.code === prod.code);
-          if (rest) {
-            rest.qty += item.qty;
-          } else {
-            db.restock.push({ code: prod.code, name: prod.name, qty: item.qty });
-          }
-        }
-      });
-
-      // Registrar Venda no Histórico
-      const totalCost = cart.reduce((acc, i) => acc + ((i.cost || 0) * i.qty), 0);
-      db.sales.push({
-        id: Date.now(),
-        date: new Date().toLocaleString('pt-BR'),
-        items: [...cart],
-        total: total,
-        cost: totalCost,
-        profit: total - totalCost,
-        method: currentPaymentMethod,
-        customer: customerName
-      });
-
-      saveDB();
-      closePaymentModal();
-      showToast('Venda concluída com sucesso!');
-      cancelSale();
-    }
-
-    // PRODUTOS & ESTOQUE
-    function renderProductList() {
-      const list = document.getElementById('productList');
-      const search = document.getElementById('productSearchInput').value.toLowerCase();
-      list.innerHTML = '';
-
-      let filtered = db.products.filter(p => p.code.toLowerCase().includes(search) || p.name.toLowerCase().includes(search));
-      if (lowStockFilterActive) {
-        filtered = filtered.filter(p => p.stock <= (p.minStock || 3));
-      }
-
-      document.getElementById('productCounterBadge').innerText = db.products.length;
-
-      // Verificar estoque crítico para WhatsApp
-      const criticalItems = db.products.filter(p => p.stock <= (p.minStock || 3));
-      const waBox = document.getElementById('supplierWhatsAppBox');
-      if (criticalItems.length > 0) {
-        waBox.classList.remove('hidden');
-        document.getElementById('lowStockCountText').innerText = `${criticalItems.length} produtos abaixo do mínimo`;
-      } else {
-        waBox.classList.add('hidden');
-      }
-
-      if (filtered.length === 0) {
-        list.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum produto encontrado.</p>';
-        return;
-      }
-
-      filtered.forEach(p => {
-        const isCritical = p.stock <= (p.minStock || 3);
-        list.innerHTML += `
-          <div class="bg-slate-950 border ${isCritical ? 'border-amber-500/50' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <h4 class="text-xs font-bold text-slate-100 truncate">${p.name}</h4>
-                ${isCritical ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Baixo</span>' : ''}
-              </div>
-              <p class="text-[10px] text-slate-400">Cód: ${p.code} | Val: ${p.expiry || 'N/A'}</p>
-              <div class="flex gap-3 mt-1 text-xs">
-                <span class="text-slate-400">Custo: R$ ${(p.cost || 0).toFixed(2)}</span>
-                <span class="text-emerald-400 font-bold">Venda: R$ ${p.price.toFixed(2)}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="text-right">
-                <span class="text-sm font-black ${isCritical ? 'text-amber-400' : 'text-slate-200'}">${p.stock} un</span>
-                <span class="block text-[9px] text-slate-500">Mín: ${p.minStock || 3}</span>
-              </div>
-              <button onclick="editProduct('${p.code}')" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function toggleLowStockFilter() {
-      lowStockFilterActive = !lowStockFilterActive;
-      const btn = document.getElementById('lowStockFilterBtn');
-      if (lowStockFilterActive) {
-        btn.classList.add('bg-amber-950', 'border-amber-700');
-      } else {
-        btn.classList.remove('bg-amber-950', 'border-amber-700');
-      }
-      renderProductList();
-    }
-
-    function openProductModal() {
-      document.getElementById('productModalTitle').innerText = "Cadastrar Novo Produto";
-      document.getElementById('editingProductCode').value = "";
-      document.getElementById('formProdCode').value = "";
-      document.getElementById('formProdName').value = "";
-      document.getElementById('formProdCost').value = "";
-      document.getElementById('formProdPrice').value = "";
-      document.getElementById('formProdStock').value = "10";
-      document.getElementById('formProdMinStock').value = "3";
-      document.getElementById('formProdExpiry').value = "";
-      document.getElementById('productModal').classList.remove('hidden');
-    }
-
-    function closeProductModal() {
-      document.getElementById('productModal').classList.add('hidden');
-      stopModalScanner();
-    }
-
-    function editProduct(code) {
-      const p = db.products.find(x => x.code === code);
-      if (!p) return;
-      document.getElementById('productModalTitle').innerText = "Editar Produto";
-      document.getElementById('editingProductCode').value = p.code;
-      document.getElementById('formProdCode').value = p.code;
-      document.getElementById('formProdName').value = p.name;
-      document.getElementById('formProdCost').value = p.cost || 0;
-      document.getElementById('formProdPrice').value = p.price;
-      document.getElementById('formProdStock').value = p.stock;
-      document.getElementById('formProdMinStock').value = p.minStock || 3;
-      document.getElementById('formProdExpiry').value = p.expiry || '';
-      document.getElementById('productModal').classList.remove('hidden');
-    }
-
-    function handleProductFormSubmit(e) {
-      e.preventDefault();
-      const editingCode = document.getElementById('editingProductCode').value;
-      const code = document.getElementById('formProdCode').value.trim();
-      const name = document.getElementById('formProdName').value.trim();
-      const cost = parseFloat(document.getElementById('formProdCost').value) || 0;
-      const price = parseFloat(document.getElementById('formProdPrice').value) || 0;
-      const stock = parseInt(document.getElementById('formProdStock').value) || 0;
-      const minStock = parseInt(document.getElementById('formProdMinStock').value) || 3;
-      const expiry = document.getElementById('formProdExpiry').value || null;
-
-      if (editingCode) {
-        const idx = db.products.findIndex(x => x.code === editingCode);
-        if (idx !== -1) {
-          db.products[idx] = { code, name, cost, price, stock, minStock, expiry };
-        }
-      } else {
-        if (db.products.some(x => x.code === code)) {
-          showToast('Já existe um produto com este código!');
-          return;
-        }
-        db.products.push({ code, name, cost, price, stock, minStock, expiry });
-      }
-
-      saveDB();
-      closeProductModal();
-      renderProductList();
-      showToast('Produto salvo com sucesso!');
-    }
-
-    // SCANNER NO MODAL DE PRODUTO
-    function startModalScanner() {
-      document.getElementById('modalScannerBox').classList.remove('hidden');
-      modalQrCode = new Html5Qrcode("modalReader");
-      modalQrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 200, height: 120 } }, (text) => {
-        document.getElementById('formProdCode').value = text;
-        stopModalScanner();
-        playBeep();
-      }).catch(err => console.error(err));
-    }
-
-    function stopModalScanner() {
-      if (modalQrCode) {
-        modalQrCode.stop().then(() => {
-          document.getElementById('modalScannerBox').classList.add('hidden');
-        }).catch(err => console.error(err));
-      } else {
-        document.getElementById('modalScannerBox').classList.add('hidden');
-      }
-    }
-
-    // ENTRADA DE REMESSA
-    function openRemessaModal() {
-      document.getElementById('remessaModal').classList.remove('hidden');
-      remessaQrCode = new Html5Qrcode("remessaReader");
-      remessaQrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 200, height: 120 } }, (text) => {
-        document.getElementById('remessaCodeInput').value = text;
-        playBeep();
-      }).catch(err => console.error(err));
-    }
-
-    function closeRemessaModal() {
-      document.getElementById('remessaModal').classList.add('hidden');
-      if (remessaQrCode) {
-        remessaQrCode.stop().catch(e => {});
-      }
-    }
-
-    function confirmRemessaAddition() {
-      const code = document.getElementById('remessaCodeInput').value.trim();
-      const qty = parseInt(document.getElementById('remessaQtyInput').value) || 0;
-      const expiry = document.getElementById('remessaExpiryInput').value || null;
-
-      const p = db.products.find(x => x.code === code);
-      if (!p) {
-        showToast('Produto não encontrado no catálogo!');
-        return;
-      }
-
-      p.stock += qty;
-      if (expiry) p.expiry = expiry;
-      saveDB();
-      closeRemessaModal();
-      renderProductList();
-      showToast(`Adicionado +${qty} unidades ao estoque de ${p.name}`);
-    }
-
-    function sendLowStockToWhatsApp() {
-      const critical = db.products.filter(p => p.stock <= (p.minStock || 3));
-      if (critical.length === 0) return;
-      let msg = "Olá! Gostaria de fazer um pedido de reposição para os seguintes itens em estoque crítico:\n\n";
-      critical.forEach(p => {
-        msg += `▪️ *${p.name}* (Atual: ${p.stock} un | Mín: ${p.minStock || 3})\n`;
-      });
-      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-    }
-
-    // REABASTECIMENTO
-    function renderRestockList() {
-      const list = document.getElementById('restockList');
-      list.innerHTML = '';
-      if (db.restock.length === 0) {
-        list.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum item pendente de reposição.</p>';
-        return;
-      }
-      db.restock.forEach(r => {
-        list.innerHTML += `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <h4 class="text-xs font-bold text-slate-100">${r.name}</h4>
-              <p class="text-[10px] text-slate-400">Código: ${r.code}</p>
-            </div>
-            <span class="text-xs font-extrabold text-teal-400 bg-teal-950/40 px-2.5 py-1 rounded-lg border border-teal-800/40">Saída: ${r.qty} un</span>
-          </div>
-        `;
-      });
-    }
-
-    function sendRestockToWhatsApp() {
-      if (db.restock.length === 0) return;
-      let msg = "Olá, segue a lista de reposição de mercadorias que saíram da prateleira hoje:\n\n";
-      db.restock.forEach(r => {
-        msg += `▪️ *${r.name}* (${r.qty} unidades)\n`;
-      });
-      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-    }
-
-    function clearRestockList() {
-      db.restock = [];
-      saveDB();
-      renderRestockList();
-      showToast('Lista de reposição zerada.');
-    }
-
-    // HISTÓRICO & RELATÓRIO DE LUCRO
-    function renderHistory() {
-      const list = document.getElementById('historyList');
-      list.innerHTML = '';
-      
-      let totalSales = 0;
-      let totalCost = 0;
-      let totalProfit = 0;
-
-      db.sales.forEach(s => {
-        totalSales += s.total;
-        totalCost += (s.cost || 0);
-        totalProfit += (s.profit || (s.total - (s.cost || 0)));
-      });
-
-      const margin = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
-
-      document.getElementById('historyTotalSales').innerText = `R$ ${totalSales.toFixed(2)}`;
-      document.getElementById('historyTotalCost').innerText = `R$ ${totalCost.toFixed(2)}`;
-      document.getElementById('historyTotalProfit').innerText = `R$ ${totalProfit.toFixed(2)}`;
-      document.getElementById('historyTotalMargin').innerText = `${margin.toFixed(1)}%`;
-      document.getElementById('historyCount').innerText = db.sales.length;
-
-      if (db.sales.length === 0) {
-        list.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhuma venda registrada.</p>';
-        return;
-      }
-
-      db.sales.slice().reverse().forEach(s => {
-        const itemsText = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-        list.innerHTML += `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-            <div class="flex justify-between items-start mb-1">
-              <span class="text-[10px] text-slate-400">${s.date}</span>
-              <span class="text-xs font-bold text-emerald-400">R$ ${s.total.toFixed(2)}</span>
-            </div>
-            <p class="text-xs text-slate-200 truncate">${itemsText}</p>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-900 text-[10px]">
-              <span class="text-slate-400">Forma: <b class="text-slate-300">${s.method}</b> ${s.customer ? '('+s.customer+')' : ''}</span>
-              <span class="text-emerald-500 font-bold">Lucro: R$ ${(s.profit || (s.total - (s.cost || 0))).toFixed(2)}</span>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function clearHistory() {
-      if (!confirm('Deseja limpar todo o histórico de vendas?')) return;
-      db.sales = [];
-      saveDB();
-      renderHistory();
-      showToast('Histórico limpo.');
-    }
-
-    // CLIENTES & FIADO
-    function renderCustomerList() {
-      const list = document.getElementById('customerList');
-      list.innerHTML = '';
-      
-      let totalDebts = db.customers.reduce((acc, c) => acc + (c.balance || 0), 0);
-      document.getElementById('totalDebtsBadge').innerText = `R$ ${totalDebts.toFixed(2)}`;
-
-      if (db.customers.length === 0) {
-        list.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum cliente cadastrado.</p>';
-        return;
-      }
-
-      db.customers.forEach((c, idx) => {
-        list.innerHTML += `
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <h4 class="text-xs font-bold text-slate-100">${c.name}</h4>
-              <p class="text-[10px] text-slate-400">Tel: ${c.phone || 'Não inf.'} | Limite: R$ ${c.limit.toFixed(2)}</p>
-              <p class="text-xs font-extrabold text-rose-400 mt-0.5">Devendo: R$ ${(c.balance || 0).toFixed(2)}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              ${c.balance > 0 ? `<button onclick="payCustomerDebt(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-2 rounded-xl">Quitar</button>` : ''}
-              <button onclick="sendCustomerWhatsApp(${idx})" class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center"><i class="fa-brands fa-whatsapp text-sm"></i></button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function openCustomerModal() {
-      document.getElementById('formCustName').value = '';
-      document.getElementById('formCustPhone').value = '';
-      document.getElementById('formCustLimit').value = '200.00';
-      document.getElementById('customerModal').classList.remove('hidden');
-    }
-
-    function closeCustomerModal() {
-      document.getElementById('customerModal').classList.add('hidden');
-    }
-
-    function handleCustomerFormSubmit(e) {
-      e.preventDefault();
-      const name = document.getElementById('formCustName').value.trim();
-      const phone = document.getElementById('formCustPhone').value.trim();
-      const limit = parseFloat(document.getElementById('formCustLimit').value) || 0;
-
-      db.customers.push({ name, phone, limit, balance: 0, history: [] });
-      saveDB();
-      closeCustomerModal();
-      renderCustomerList();
-      showToast('Cliente cadastrado com sucesso!');
-    }
-
-    function payCustomerDebt(idx) {
-      const c = db.customers[idx];
-      const amount = prompt(`Quanto o cliente ${c.name} está pagando? (Saldo devedor: R$ ${c.balance.toFixed(2)})`, c.balance);
-      if (!amount) return;
-      const val = parseFloat(amount) || 0;
-      if (val <= 0) return;
-
-      c.balance = Math.max(0, c.balance - val);
-      db.cashDrawer = (db.cashDrawer || 0) + val; // Dinheiro entra no caixa
-      saveDB();
-      renderCustomerList();
-      showToast('Pagamento registrado no caixa!');
-    }
-
-    function sendCustomerWhatsApp(idx) {
-      const c = db.customers[idx];
-      const msg = `Olá ${c.name}, passando para lembrar que seu saldo em aberto na nossa loja é de R$ ${(c.balance || 0).toFixed(2)}. Chave PIX para pagamento: [Sua Chave]`;
-      const url = `https://api.whatsapp.com/send?phone=${c.phone}&text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-    }
-
-    // CONTROLE DE CAIXA E SANGRIA
-    function openCashRegisterModal() {
-      document.getElementById('cashInDrawerDisplay').innerText = `R$ ${(db.cashDrawer || 0).toFixed(2)}`;
-      document.getElementById('cashRegisterModal').classList.remove('hidden');
-    }
-
-    function closeCashRegisterModal() {
-      document.getElementById('cashRegisterModal').classList.add('hidden');
-    }
-
-    function performSangria() {
-      const val = parseFloat(document.getElementById('sangriaValueInput').value) || 0;
-      if (val <= 0) {
-        showToast('Digite um valor válido para sangria');
-        return;
-      }
-      if (val > db.cashDrawer) {
-        showToast('Valor da sangria maior do que o dinheiro em caixa!');
-        return;
-      }
-      db.cashDrawer -= val;
-      saveDB();
-      document.getElementById('cashInDrawerDisplay').innerText = `R$ ${db.cashDrawer.toFixed(2)}`;
-      document.getElementById('sangriaValueInput').value = '';
-      showToast(`Sangria de R$ ${val.toFixed(2)} realizada com sucesso!`);
-    }
-
-    function resetDailyCash() {
-      if (!confirm('Deseja zerar o dinheiro em caixa do dia?')) return;
-      db.cashDrawer = 0;
-      saveDB();
-      document.getElementById('cashInDrawerDisplay').innerText = `R$ 0.00`;
-      showToast('Caixa zerado.');
-    }
-
-    // CONFIGURAÇÕES & BACKUP
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-      const anchor = document.createElement('a');
-      anchor.setAttribute("href", dataStr);
-      anchor.setAttribute("download", `backup_pdv_${Date.now()}.json`);
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-    }
-
-    function importDataTrigger() {
-      document.getElementById('importFile').click();
-    }
-
-    function importDataFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const imported = JSON.parse(evt.target.result);
-          if (imported && imported.products) {
-            db = imported;
-            saveDB();
-            showToast('Dados importados com sucesso!');
-            setTimeout(() => location.reload(), 1000);
-          } else {
-            showToast('Arquivo de backup inválido.');
-          }
-        } catch (err) {
-          showToast('Erro ao ler arquivo JSON.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function resetAllSystemData() {
-      if (!confirm('ATENÇÃO: Isso apagará TODOS os produtos, clientes e histórico permanentemente. Deseja continuar?')) return;
-      localStorage.clear();
-      location.reload();
-    }
-
-    window.onload = () => {
-      saveDB();
-    };
-  </script>
-</body>
-</html>
+
+javascript
+
+function payCustomerDebt(idx) {
+  const cliente = db.customers[idx];
+  if (!cliente) return;
+
+  const saldoCentavos = paraCentavos(cliente.balance || 0);
+
+  if (saldoCentavos <= 0) {
+    showToast('Este cliente não possui dívida em aberto.');
+    return;
+  }
+
+  const resposta = prompt(
+    `Pagamento de ${cliente.name}\n` +
+    `Saldo: ${formatarMoeda(saldoCentavos / 100)}\n` +
+    'Valor recebido em dinheiro:'
+  );
+
+  if (resposta === null || !resposta.trim()) return;
+
+  // Aceita 10,50 ou 10.50
+  const texto = resposta.trim().replace(',', '.');
+  const valor = Number(texto);
+
+  if (!Number.isFinite(valor) || valor <= 0) {
+    showToast('Informe um valor válido.');
+    return;
+  }
+
+  const pagamentoCentavos = Math.round(valor * 100);
+
+  if (pagamentoCentavos > saldoCentavos) {
+    showToast('O pagamento não pode superar a dívida.');
+    return;
+  }
+
+  cliente.balance =
+    (saldoCentavos - pagamentoCentavos) / 100;
+
+  cliente.history = cliente.history || [];
+  cliente.history.push({
+    date: new Date().toISOString(),
+    type: 'pagamento',
+    amount: pagamentoCentavos / 100,
+    balanceAfter: cliente.balance
+  });
+
+  // Considera este recebimento como dinheiro em espécie.
+  db.cashDrawer = (
+    paraCentavos(db.cashDrawer) + pagamentoCentavos
+  ) / 100;
+
+  saveDB();
+  renderCustomerList();
+
+  showToast('Pagamento registrado com sucesso!');
+}
+Esta versão considera que o cliente pagou em dinheiro. Se você também quiser registrar recebimentos por PIX ou cartão, será necessário selecionar a forma de pagamento e ajustar a movimentação do caixa.
+
+Correção 5 — Proteger os nomes de produtos e clientes
+Como você utiliza innerHTML para montar as listas, um nome cadastrado com caracteres especiais pode ser interpretado como HTML.
+
+Adicione esta função ao script:
+
+
+javascript
+function escapeHTML(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[caractere]);
+}
+Em seguida, nas funções que montam HTML, aplique escapeHTML() aos valores provenientes dos cadastros, por exemplo:
+
+
+javascript
+// Antes
+`<h4>${item.name}</h4>`
+
+// Depois
+`<h4>${escapeHTML(item.name)}</h4>`
+Faça isso também nos nomes dos clientes, códigos de produtos, telefones e demais campos inseridos em templates HTML. Para atributos usados em onclick, a solução mais segura é criar os elementos com document.createElement() e associar eventos com addEventListener(), em vez de inserir dados dentro de código JavaScript.
+
+Correção 6 — Evitar problemas com a câmera
+Seu aplicativo utiliza a biblioteca html5-qrcode. Há três melhorias importantes:
+
+Solicitar acesso à câmera somente quando o usuário iniciar o leitor.
+
+Impedir que um segundo leitor seja iniciado enquanto o anterior estiver inicializando ou encerrando.
+
+Parar todas as câmeras ao fechar os respectivos modais, inclusive se o leitor ainda estiver inicializando.
+
+O GitHub Pages oferece HTTPS, o que permite utilizar a câmera em navegadores compatíveis, desde que o usuário conceda a permissão. Se você abrir o HTML diretamente como arquivo local, o comportamento pode variar.
+
+Correção 7 — Melhorar o backup e a limpeza dos dados
+No seu código atual, localStorage.clear() apaga todos os dados armazenados na origem do site, não apenas os do PDV. Prefira remover exclusivamente as chaves do aplicativo:
+
+
+javascript
+function resetAllSystemData() {
+  const confirmou = confirm(
+    'Isso apagará os dados locais do PDV. ' +
+    'Faça um backup antes de continuar. Deseja prosseguir?'
+  );
+
+  if (!confirmou) return;
+
+  [
+    'pdv_products',
+    'pdv_customers',
+    'pdv_sales',
+    'pdv_restock',
+    'pdv_cash'
+  ].forEach(chave => localStorage.removeItem(chave));
+
+  location.reload();
+}
+Também recomendo validar o formato completo do JSON importado, verificar os tipos de cada campo e manter uma cópia dos dados atuais antes de substituir o banco. Um arquivo que contém apenas a propriedade products não é necessariamente um backup válido.
+
+4. O que falta para ficar pronto para uso comercial?
+Lista de verificação do PDV
+Progresso da revisão
+
+0/13
+Venda
+
+
+Bloquear venda sem estoque suficiente
+
+Validar pagamento e calcular troco
+
+Implementar impressão de comprovante
+
+Testar cancelamento de venda
+Estoque
+
+
+Registrar entradas e saídas com data
+
+Criar histórico de sangrias e ajustes
+
+Implementar filtro de validade e vencimentos
+Dados
+
+
+Validar importação e exportação de backups
+
+Testar recuperação após recarregar a página
+
+Definir sincronização e cópias de segurança
+Testes finais
+
+
+Testar em celular e computador
+
+Testar leitor de código de barras real
+
+Conferir fechamento diário e relatórios
+5. Como organizar o projeto no GitHub
+Para a primeira versão corrigida, você pode continuar usando um único arquivo index.html. Isso facilita a publicação e os testes iniciais.
+
+Quando o projeto crescer, recomendo esta estrutura:
+
+
+text
+caixa-pdv/
+├── index.html
+├── css/
+│   └── styles.css
+├── js/
+│   ├── app.js
+│   ├── vendas.js
+│   ├── produtos.js
+│   ├── clientes.js
+│   ├── financeiro.js
+│   └── armazenamento.js
+└── README.md
+O GitHub Pages pode publicar essa aplicação estática. Entretanto, se você precisar acessar o mesmo estoque de diferentes celulares, ter vários operadores ou manter um histórico confiável de transações, será necessário adicionar um backend com banco de dados e autenticação.
+
+Minha recomendação: antes de adicionar novas funções, vamos consolidar a versão atual, corrigindo os cálculos, o estoque, o fiado, a segurança dos dados e o funcionamento do leitor.
+
+Posso seguir de duas maneiras:
+
+Versão 1 — Correção do HTML atual: manter o visual e as funções que você já criou, corrigindo os erros diretamente no código existente.
+
+Versão 2 — PDV Pro completo: reorganizar o projeto para uso comercial, com controle de caixa, fechamento diário, histórico de movimentações, backup validado e uma arquitetura preparada para sincronização futura.
+
+Eu começaria pela Versão 1, para preservar o que já funciona e reduzir o risco de perder funcionalidades do seu projeto.
+
+
+ChatGPT é uma IA e pode cometer erros.
+
+
+
+Nenhum arquivo escolhidoNenhum arquivo escolhidoNenhum arquivo escolhido
+Chat com o ChatGPT
+Pergunte ao ChatGPT
+
