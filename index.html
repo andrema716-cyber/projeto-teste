@@ -1,175 +1,1520 @@
-
-function confirmCheckout() {
-  if (!cart.length) {
-    showToast('O carrinho está vazio!');
-    return;
-  }
-
-  // Confere o estoque antes de alterar qualquer dado
-  for (const item of cart) {
-    const produto = db.products.find(
-      p => p.code === item.code
-    );
-
-    if (!produto) {
-      showToast(`Produto não encontrado: ${item.name}`);
-      return;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Caixa PDV - Mercado</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- BIBLIOTECA DE LEITURA DE CÓDIGO DE BARRAS -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
     }
-
-    if (!Number.isInteger(item.qty) || item.qty <= 0) {
-      showToast('Quantidade inválida no carrinho!');
-      return;
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding-top: var(--sat);
+      padding-bottom: calc(var(--sab) + 90px);
+      touch-action: manipulation;
     }
-
-    if (produto.stock < item.qty) {
-      showToast(
-        `Estoque insuficiente para ${produto.name}. ` +
-        `Disponível: ${produto.stock}`
-      );
-      return;
+    #reader video, #modalReader video, #remessaReader video {
+      width: 100% !important;
+      height: 180px !important;
+      object-fit: cover !important;
+      border-radius: 12px;
     }
-  }
-
-  // Cálculos em centavos
-  const totalCentavos = cart.reduce(
-    (soma, item) =>
-      soma + paraCentavos(item.price) * item.qty,
-    0
-  );
-
-  const custoCentavos = cart.reduce(
-    (soma, item) =>
-      soma + paraCentavos(item.cost) * item.qty,
-    0
-  );
-
-  const total = totalCentavos / 100;
-  const custo = custoCentavos / 100;
-  const lucro = (totalCentavos - custoCentavos) / 100;
-
-  let cliente = null;
-
-  // Validação do pagamento em dinheiro
-  if (currentPaymentMethod === 'Dinheiro') {
-    const recebido = Number(
-      document.getElementById('cashReceivedInput').value
-    );
-
-    const recebidoCentavos = Number.isFinite(recebido)
-      ? Math.round(recebido * 100)
-      : 0;
-
-    if (recebidoCentavos < totalCentavos) {
-      showToast('O valor recebido é insuficiente!');
-      return;
+    #reader, #modalReader, #remessaReader {
+      border: none !important;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
     }
-  }
-
-  // Validação do fiado
-  if (currentPaymentMethod === 'Fiado') {
-    const idx = document.getElementById(
-      'checkoutCustomerSelect'
-    ).value;
-
-    cliente = db.customers[Number(idx)];
-
-    if (idx === '' || !cliente) {
-      showToast('Selecione um cliente válido!');
-      return;
+    .pb-safe-footer {
+      padding-bottom: calc(var(--sab) + 95px);
     }
-
-    const saldoAtual = paraCentavos(cliente.balance || 0);
-    const limite = paraCentavos(cliente.limit);
-    const novoSaldo = saldoAtual + totalCentavos;
-
-    if (novoSaldo > limite) {
-      showToast('Limite de crédito excedido!');
-      return;
+    .modal-safe-padding {
+      padding-bottom: calc(var(--sab) + 40px);
     }
-  }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
 
-  // Atualiza o estoque e a lista de reposição
-  for (const item of cart) {
-    const produto = db.products.find(
-      p => p.code === item.code
-    );
+  <!-- TOAST NOTIFICAÇÃO -->
+  <div id="toastSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-emerald-400/30">
+    <i class="fa-solid fa-circle-check text-base"></i>
+    <span id="toastMessage">Operação realizada com sucesso!</span>
+  </div>
 
-    produto.stock -= item.qty;
+  <!-- HEADER ULTRA-CLEAN -->
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-md">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <i class="fa-solid fa-cash-register text-base"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base text-slate-100 leading-tight">Caixa PDV</h1>
+          <span id="onlineStatusBadge" class="text-[10px] text-emerald-400 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> Sistema Online</span>
+        </div>
+      </div>
 
-    let reposicao = db.restock.find(
-      r => r.code === produto.code
-    );
+      <!-- MENU TRÊS PONTINHOS (⋮) -->
+      <div class="relative">
+        <button onclick="toggleOptionsMenu()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center hover:text-white transition">
+          <i class="fa-solid fa-ellipsis-vertical text-base"></i>
+        </button>
+        <div id="optionsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800/60">
+          <div class="py-1">
+            <button onclick="openCashRegisterModal(); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-amber-400 font-bold hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-vault text-sm"></i> Controle de Caixa / Sangrias
+            </button>
+          </div>
+          <div class="py-1">
+            <button onclick="switchTab('pos'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-cart-shopping text-emerald-400 text-sm"></i> Caixa (PDV)
+            </button>
+            <button onclick="switchTab('products'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-boxes-stacked text-blue-400 text-sm"></i> Produtos & Estoque
+            </button>
+            <button onclick="switchTab('restock'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-rotate text-teal-400 text-sm"></i> Reposição por Saídas
+            </button>
+          </div>
+          <div class="py-1">
+            <button onclick="switchTab('history'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-chart-line text-indigo-400 text-sm"></i> Relatório & Lucro
+            </button>
+            <button onclick="switchTab('customers'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-users text-purple-400 text-sm"></i> Clientes & Fiado
+            </button>
+          </div>
+          <div class="pt-1">
+            <button onclick="switchTab('settings'); toggleOptionsMenu();" class="w-full text-left px-4 py-2.5 text-xs text-slate-400 hover:bg-slate-800 flex items-center gap-2.5">
+              <i class="fa-solid fa-gear text-slate-400 text-sm"></i> Configurações & Backup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-    if (reposicao) {
-      reposicao.qty += item.qty;
-      reposicao.name = produto.name;
-    } else {
-      db.restock.push({
-        code: produto.code,
-        name: produto.name,
-        qty: item.qty
-      });
-    }
-  }
+  <!-- ÁREA PRINCIPAL -->
+  <main class="max-w-md mx-auto w-full px-4 pt-4 pb-safe-footer flex-1 flex flex-col gap-4">
 
-  // Registra a dívida do cliente
-  if (cliente) {
-    cliente.balance = (
-      paraCentavos(cliente.balance || 0) +
-      totalCentavos
-    ) / 100;
+    <!-- TAB 1: CAIXA (PDV) -->
+    <div id="tabPosContent" class="flex flex-col gap-4 flex-1">
+      <section id="standbyScreen" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center shadow-xl flex flex-col items-center justify-center gap-5 my-auto py-12">
+        <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
+          <i class="fa-solid fa-cart-plus text-4xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Pronto para Atendimento</h2>
+          <p class="text-xs text-slate-400 mt-1">Clique abaixo para ativar o leitor e registrar os produtos do cliente.</p>
+        </div>
+        <button onclick="startNewSale()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-base py-4 px-6 rounded-2xl transition flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/40">
+          <i class="fa-solid fa-play text-sm"></i>
+          <span>Iniciar Nova Venda</span>
+        </button>
+      </section>
 
-    cliente.history = cliente.history || [];
-    cliente.history.push({
-      date: new Date().toISOString(),
-      type: 'compra_fiado',
-      amount: total,
-      balanceAfter: cliente.balance
+      <div id="activeSaleScreen" style="display: none;" class="flex-col gap-4 flex-1">
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg relative">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span id="cameraDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="cameraStatusText" class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Leitor Ativo</span>
+            </div>
+            <button onclick="toggleCameraState()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+              <i id="toggleCameraIcon" class="fa-solid fa-pause mr-1"></i>
+              <span id="toggleCameraBtnText">Pausar Leitor</span>
+            </button>
+          </div>
+
+          <div id="readerBox" class="relative rounded-xl overflow-hidden">
+            <div id="reader" class="w-full"></div>
+            <div id="cameraPausedOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-center p-4 z-10 rounded-xl">
+              <i class="fa-solid fa-barcode text-3xl text-slate-500"></i>
+              <p class="text-xs text-slate-400 font-medium">Leitor pausado temporariamente</p>
+              <button onclick="toggleCameraState()" class="mt-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-900/40">
+                <i class="fa-solid fa-play"></i>
+                <span>Reativar Leitor</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 flex gap-2">
+            <div class="w-20 shrink-0">
+              <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Qtd Fardo</label>
+              <input type="number" id="multiplierQtyInput" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 text-center text-emerald-400 font-bold text-xs rounded-xl py-2.5">
+            </div>
+            <form onsubmit="handleManualBarcodeSubmit(event)" class="flex gap-2 flex-1">
+              <div class="relative flex-1">
+                <label class="text-[9px] text-slate-400 uppercase font-bold block mb-1">Código de Barras / Nome</label>
+                <input type="text" id="manualBarcodeInput" placeholder="Digite código ou nome..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
+              </div>
+              <div class="flex flex-col justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition">Add</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- CARD DE ÚLTIMO ITEM LIDO -->
+        <section id="lastScannedCard" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+          <div id="lastScannedImgContainer" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+            <i id="lastScannedIcon" class="fa-solid fa-box text-lg"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-[10px] font-bold text-blue-400 uppercase bg-blue-950/80 border border-blue-800/40 px-1.5 py-0.5 rounded">Último Item Lido</span>
+            <h3 id="lastScannedName" class="text-sm font-semibold text-slate-100 truncate mt-0.5">---</h3>
+            <p id="lastScannedPrice" class="text-xs font-bold text-emerald-400">R$ 0,00</p>
+          </div>
+        </section>
+
+        <!-- CARRINHO -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-cart-shopping text-blue-400 text-sm"></i>
+              <h2 class="text-xs font-bold uppercase text-slate-300">Itens no Carrinho (<span id="cartCount">0</span>)</h2>
+            </div>
+            <button onclick="cancelSale()" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center gap-1">
+              <i class="fa-solid fa-xmark"></i> Cancelar Venda
+            </button>
+          </div>
+          <div id="cartList" class="flex-1 overflow-y-auto space-y-2 max-h-[260px] pr-1">
+            <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
+              <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
+              <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: PRODUTOS & ESTOQUE -->
+    <div id="tabProductsContent" style="display: none;" class="flex-col gap-4 flex-1">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-200">Catálogo, Estoque & Validade</h2>
+          <p class="text-[11px] text-slate-400">Total cadastrados: <span id="productCounterBadge" class="font-bold text-emerald-400">0</span></p>
+        </div>
+        <div class="flex gap-1.5">
+          <button onclick="openRemessaModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+            <i class="fa-solid fa-truck-ramp-box"></i> Entrada
+          </button>
+          <button onclick="openProductModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-2 rounded-xl transition flex items-center gap-1 shadow-lg">
+            <i class="fa-solid fa-plus"></i> Novo
+          </button>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input type="text" id="productSearchInput" oninput="renderProductList()" placeholder="Buscar por nome ou código..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-3 py-2.5">
+        </div>
+        <button onclick="toggleLowStockFilter()" id="lowStockFilterBtn" class="bg-slate-900 border border-slate-800 text-amber-400 hover:bg-amber-950/40 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Estoque</span>
+        </button>
+      </div>
+
+      <div id="supplierWhatsAppBox" class="hidden bg-amber-950/40 border border-amber-800/60 rounded-2xl p-3 flex items-center justify-between">
+        <div class="text-xs">
+          <span class="font-bold text-amber-300 block">Itens em Estoque Crítico</span>
+          <span id="lowStockCountText" class="text-[11px] text-slate-400">0 produtos abaixo do mínimo</span>
+        </div>
+        <button onclick="sendLowStockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-md">
+          <i class="fa-brands fa-whatsapp text-sm"></i> Pedir Fornecedor
+        </button>
+      </div>
+
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
+        <div id="productList" class="space-y-2.5"></div>
+      </section>
+    </div>
+
+    <!-- TAB 3: REABASTECIMENTO -->
+    <div id="tabRestockContent" style="display: none;" class="flex-col gap-4 flex-1">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-200">Reposição por Saídas</h2>
+          <p class="text-xs text-slate-400">Quantidade que saiu no caixa hoje para repor</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="sendRestockToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1">
+            <i class="fa-brands fa-whatsapp"></i> Repositor
+          </button>
+          <button onclick="clearRestockList()" class="text-xs text-rose-400 hover:text-rose-300">Zerar</button>
+        </div>
+      </div>
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
+        <div id="restockList" class="space-y-3"></div>
+      </section>
+    </div>
+
+    <!-- TAB 4: HISTÓRICO & LUCRATIVIDADE -->
+    <div id="tabHistoryContent" style="display: none;" class="flex-col gap-4 flex-1">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-sm font-bold text-slate-200"><i class="fa-solid fa-chart-pie text-emerald-400 mr-1"></i> Desempenho & DRE</h2>
+        <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300">Limpar Histórico</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Vendido</span>
+          <span id="historyTotalSales" class="text-lg font-black text-slate-100">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Custo Mercadoria (CMV)</span>
+          <span id="historyTotalCost" class="text-lg font-black text-amber-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Lucro Líquido (R$)</span>
+          <span id="historyTotalProfit" class="text-lg font-black text-emerald-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+          <span class="text-[10px] text-slate-400 block uppercase font-bold">Margem Lucro (%)</span>
+          <span id="historyTotalMargin" class="text-lg font-black text-blue-400">0.0%</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs font-bold text-slate-300 uppercase">Vendas Registradas (<span id="historyCount">0</span>)</span>
+      </div>
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[420px]">
+        <div id="historyList" class="space-y-3"></div>
+      </section>
+    </div>
+
+    <!-- TAB 5: CLIENTES & FIADO -->
+    <div id="tabCustomersContent" style="display: none;" class="flex-col gap-4 flex-1">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-slate-200">Gestão de Clientes & Fiado</h2>
+          <p class="text-[11px] text-slate-400">Total em Aberto: <span id="totalDebtsBadge" class="font-bold text-rose-400">R$ 0,00</span></p>
+        </div>
+        <button onclick="openCustomerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg">
+          <i class="fa-solid fa-user-plus"></i> Novo Cliente
+        </button>
+      </div>
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex-1 overflow-y-auto max-h-[480px]">
+        <div id="customerList" class="space-y-2.5"></div>
+      </section>
+    </div>
+
+    <!-- TAB 6: CONFIGURAÇÕES -->
+    <div id="tabSettingsContent" style="display: none;" class="flex-col gap-4 flex-1">
+      <h2 class="text-sm font-bold text-slate-200">Configurações & Backup</h2>
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <div>
+          <h3 class="text-xs font-bold text-slate-300 mb-1">Dados & Armazenamento</h3>
+          <p class="text-[11px] text-slate-400 mb-3">Exporte seus dados em JSON para garantir backup seguro no seu dispositivo.</p>
+          <div class="flex gap-2">
+            <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">Exportar JSON</button>
+            <button onclick="importData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl border border-slate-700">Importar JSON</button>
+            <input type="file" id="importFile" accept=".json" onchange="processImportFile(event)" class="hidden">
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-800">
+          <button onclick="resetAllSystemData()" class="w-full bg-rose-950/60 border border-rose-800/80 text-rose-300 font-bold text-xs py-2.5 rounded-xl">Zerar Banco de Dados</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- BARRA INFERIOR DA COMPRA -->
+  <div id="bottomActionBar" style="display: none;" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl">
+    <div class="max-w-md mx-auto flex items-center justify-between gap-3 mb-2">
+      <div>
+        <span class="text-[11px] text-slate-400 uppercase tracking-wider block">Total da Compra</span>
+        <span id="cartTotalDisplay" class="text-2xl font-black text-emerald-400">R$ 0,00</span>
+      </div>
+      <button onclick="openPaymentModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
+        <span>Forma de Pagamento</span>
+        <i class="fa-solid fa-arrow-right text-sm"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: PAGAMENTO -->
+  <div id="paymentModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto modal-safe-padding">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-100">Forma de Pagamento</h2>
+          <p class="text-xs text-slate-400">Selecione como o cliente vai pagar</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 uppercase block">Total</span>
+          <span id="modalCartTotalDisplay" class="text-lg font-black text-emerald-400">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <button type="button" onclick="selectPaymentMethod('DINHEIRO')" id="btnMethodDinheiro" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center flex flex-col items-center gap-1.5">
+          <i class="fa-solid fa-money-bill-wave text-emerald-400 text-lg"></i>
+          <span class="text-xs font-semibold">Dinheiro</span>
+        </button>
+        <button type="button" onclick="selectPaymentMethod('PIX')" id="btnMethodPix" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center flex flex-col items-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400 text-lg"></i>
+          <span class="text-xs font-semibold">Pix</span>
+        </button>
+        <button type="button" onclick="selectPaymentMethod('CARTAO')" id="btnMethodCartao" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center flex flex-col items-center gap-1.5">
+          <i class="fa-solid fa-credit-card text-blue-400 text-lg"></i>
+          <span class="text-xs font-semibold">Cartão</span>
+        </button>
+        <button type="button" onclick="selectPaymentMethod('FIADO')" id="btnMethodFiado" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center flex flex-col items-center gap-1.5">
+          <i class="fa-solid fa-user-clock text-purple-400 text-lg"></i>
+          <span class="text-xs font-semibold">Fiado</span>
+        </button>
+        <button type="button" onclick="selectPaymentMethod('MISTO')" id="btnMethodMisto" class="payment-method-btn border border-slate-800 bg-slate-950/60 text-slate-300 p-3 rounded-xl text-center flex flex-col items-center gap-1.5 col-span-2">
+          <i class="fa-solid fa-sliders text-pink-400 text-lg"></i>
+          <span class="text-xs font-semibold">Misto / Dividido</span>
+        </button>
+      </div>
+
+      <div id="paymentDetailsPanel" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-5">
+        <div id="panelDinheiro" class="payment-subpanel hidden space-y-3">
+          <label class="text-xs text-slate-400 font-medium block">Valor Recebido:</label>
+          <input type="number" step="0.01" id="cashReceivedInput" oninput="calculateChange()" placeholder="0,00" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-lg rounded-xl px-3 py-2">
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+            <span class="text-xs text-slate-400">Troco:</span>
+            <span id="changeDisplay" class="text-base font-extrabold text-emerald-400">R$ 0,00</span>
+          </div>
+        </div>
+        <div id="panelSimple" class="payment-subpanel hidden text-center py-3">
+          <i id="simpleMethodIcon" class="text-3xl mb-2 text-slate-500"></i>
+          <p id="simpleMethodText" class="text-xs text-slate-300 font-medium">Aguardando confirmação do pagamento...</p>
+        </div>
+        <div id="panelFiado" class="payment-subpanel hidden space-y-3">
+          <label class="text-xs text-slate-400 font-medium block">Selecione o Cliente:</label>
+          <select id="customerSelect" onchange="checkCustomerDelinquency()" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5"></select>
+          <div id="overdueWarning" class="hidden bg-rose-950/60 border border-rose-800/80 rounded-xl p-3 text-xs text-rose-300 space-y-2">
+            <p class="font-bold text-rose-200">Cliente possui débitos em atraso ou atingiu o limite!</p>
+            <p class="text-[11px]">Dívida atual: <span id="overdueAmount" class="font-bold">R$ 0,00</span></p>
+            <div class="flex items-center justify-between pt-1">
+              <span>Autorizar venda?</span>
+              <div class="flex gap-2">
+                <button type="button" onclick="overrideDelinquency(true)" class="bg-rose-600 text-white text-[10px] px-2 py-1 rounded">Sim</button>
+                <button type="button" onclick="overrideDelinquency(false)" class="bg-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded">Não</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="panelMisto" class="payment-subpanel hidden space-y-3">
+          <p class="text-xs text-slate-400">Divida o valor total entre Dinheiro e Cartão/Pix:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Parte Dinheiro:</span>
+              <input type="number" step="0.01" id="mistoPart1" oninput="calculateMistoSplit()" placeholder="R$ 0,00" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-xl p-2">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Restante (Outros):</span>
+              <input type="number" step="0.01" id="mistoPart2" readonly placeholder="R$ 0,00" class="w-full bg-slate-800 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl p-2">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 mt-auto pt-2 border-t border-slate-800">
+        <button type="button" onclick="closePaymentModal()" class="w-1/3 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl text-xs">Voltar</button>
+        <button type="button" onclick="finalizeSale()" id="confirmSaleBtn" class="w-2/3 bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs">Confirmar & Finalizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RECIBO DE VENDA -->
+  <div id="receiptModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+      <div id="printableReceipt" class="bg-white text-slate-900 p-4 rounded-2xl text-xs font-mono space-y-2">
+        <div class="text-center border-b border-slate-300 pb-2">
+          <h3 class="font-bold text-sm">COMPROVANTE DE VENDA</h3>
+          <p class="text-[10px] text-slate-600" id="receiptDate">00/00/0000 00:00</p>
+        </div>
+        <div id="receiptItems" class="space-y-1 border-b border-slate-300 pb-2"></div>
+        <div class="flex justify-between font-bold text-sm pt-1">
+          <span>TOTAL:</span>
+          <span id="receiptTotal">R$ 0,00</span>
+        </div>
+        <div class="text-[10px] text-slate-600 text-center pt-2">
+          Pagamento: <span id="receiptMethod" class="font-bold">---</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="printReceipt()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-print"></i> Imprimir
+        </button>
+        <button onclick="shareWhatsAppReceipt()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
+      </div>
+      <button onclick="closeReceiptModal()" class="w-full bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl text-xs">Concluir</button>
+    </div>
+  </div>
+
+  <!-- MODAL: CAIXA DIÁRIO & SANGRIA -->
+  <div id="cashRegisterModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-vault text-amber-400 mr-1.5"></i> Controle de Caixa Diário</h3>
+        <button onclick="closeCashRegisterModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="bg-slate-950 p-3.5 rounded-2xl space-y-1.5 text-xs border border-slate-800">
+        <div class="flex justify-between items-center text-slate-400">
+          <span class="flex items-center gap-1">
+            Fundo Troco Inicial:
+            <button onclick="editFundoTroco()" title="Alterar troco inicial" class="text-blue-400 text-[10px] hover:underline"><i class="fa-solid fa-pen"></i></button>
+          </span>
+          <span id="cashFundo" class="font-semibold text-slate-200">R$ 50,00</span>
+        </div>
+        <div class="flex justify-between text-emerald-400"><span>Vendas em Dinheiro:</span><span id="cashDinheiro" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between text-rose-400"><span>Sangrias (Retiradas):</span><span id="cashSangrias" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-extrabold text-slate-100 text-sm pt-2 border-t border-slate-800">
+          <span>Esperado na Gaveta:</span><span id="cashTotalGaveta" class="text-emerald-400 text-base">R$ 50,00</span>
+        </div>
+      </div>
+      <div class="space-y-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
+        <label class="text-[11px] font-bold text-rose-400 uppercase block">Registrar Sangria (Retirada de Dinheiro):</label>
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" step="0.01" id="sangriaInput" placeholder="Valor R$" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl px-3 py-2.5 font-bold">
+          <input type="text" id="sangriaReasonInput" placeholder="Motivo (Ex: Fornecedor)" class="col-span-2 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2.5">
+        </div>
+        <button onclick="registerSangria()" class="w-full bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
+          <i class="fa-solid fa-minus-circle"></i> Confirmar Retirada
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto space-y-1.5 max-h-[160px]" id="sangriaList"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRAR/EDITAR PRODUTO -->
+  <div id="productModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="productModalTitle" class="text-sm font-bold text-slate-100">Novo Produto</h3>
+        <button onclick="closeProductModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="saveProduct(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="editProductId">
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">Código de Barras</label>
+          <div class="flex gap-2">
+            <input type="text" id="prodBarcode" required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+            <button type="button" onclick="openBarcodeScannerModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-xl"><i class="fa-solid fa-barcode"></i></button>
+          </div>
+        </div>
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">Nome do Produto</label>
+          <input type="text" id="prodName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-slate-400 font-bold block mb-1">Preço Custo (R$)</label>
+            <input type="number" step="0.01" id="prodCost" required oninput="calcSuggestedPrice()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+          </div>
+          <div>
+            <label class="text-slate-400 font-bold block mb-1">Preço Venda (R$)</label>
+            <input type="number" step="0.01" id="prodPrice" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-emerald-400 font-bold">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-slate-400 font-bold block mb-1">Estoque Atual</label>
+            <input type="number" id="prodStock" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+          </div>
+          <div>
+            <label class="text-slate-400 font-bold block mb-1">Estoque Mínimo (Alerta)</label>
+            <input type="number" id="prodMinStock" value="5" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+          </div>
+        </div>
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">Data de Validade</label>
+          <input type="date" id="prodExpiry" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+        </div>
+        <div class="pt-2">
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl">Salvar Produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ENTRADA DE REMESSA / NOTA FISCAL -->
+  <div id="remessaModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-truck-ramp-box text-blue-400 mr-1.5"></i> Entrada de Remessa / Nota</h3>
+        <button onclick="closeRemessaModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p class="text-xs text-slate-400">Escaneie o código do produto que chegou do fornecedor para somar imediatamente ao estoque.</p>
+      <div id="remessaReaderBox" class="relative rounded-xl overflow-hidden">
+        <div id="remessaReader" class="w-full"></div>
+      </div>
+      <div class="space-y-2 text-xs">
+        <label class="text-slate-400 font-bold block">Quantidade Recebida:</label>
+        <input type="number" id="remessaAddQty" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-emerald-400 font-bold text-center">
+      </div>
+      <button onclick="closeRemessaModal()" class="w-full bg-slate-800 text-slate-200 font-bold py-2.5 rounded-xl text-xs">Concluir Entrada</button>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRAR CLIENTE & FIADO -->
+  <div id="customerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100">Novo Cliente</h3>
+        <button onclick="closeCustomerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="saveCustomer(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="editCustomerId">
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">Nome do Cliente</label>
+          <input type="text" id="custName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+        </div>
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">WhatsApp (com DDD)</label>
+          <input type="text" id="custPhone" placeholder="47999999999" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100">
+        </div>
+        <div>
+          <label class="text-slate-400 font-bold block mb-1">Limite de Crédito Fiado (R$)</label>
+          <input type="number" step="0.01" id="custLimit" value="200.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-purple-400 font-bold">
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl mt-2">Salvar Cliente</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LEITOR PARA CADASTRO DE PRODUTO -->
+  <div id="barcodeScannerModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-200">Escanear Código de Barras</h3>
+        <button onclick="closeBarcodeScannerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div id="modalReader" class="w-full"></div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // ESTADO GLOBAL DO APLICATIVO
+    let db = {
+      products: JSON.parse(localStorage.getItem('pdv_products')) || [
+        { id: 1, barcode: '7891000100103', name: 'Leite Integral 1L', cost: 4.50, price: 6.50, stock: 35, minStock: 10, expiry: '2026-06-15' },
+        { id: 2, barcode: '7891000200204', name: 'Arroz 5kg', cost: 18.00, price: 24.90, stock: 4, minStock: 8, expiry: '2027-01-10' },
+        { id: 3, barcode: '7891000300305', name: 'Feijão Carioca 1kg', cost: 6.00, price: 8.90, stock: 12, minStock: 5, expiry: '2026-08-20' }
+      ],
+      customers: JSON.parse(localStorage.getItem('pdv_customers')) || [
+        { id: 1, name: 'João da Silva', phone: '47998877665', creditLimit: 300.00, debt: 45.00 }
+      ],
+      history: JSON.parse(localStorage.getItem('pdv_history')) || [],
+      restockToday: JSON.parse(localStorage.getItem('pdv_restock')) || [],
+      sangrias: JSON.parse(localStorage.getItem('pdv_sangrias')) || [],
+      cashRegister: JSON.parse(localStorage.getItem('pdv_cash')) || { fundoTroco: 50.00 }
+    };
+
+    let cart = [];
+    let currentSaleMethod = 'DINHEIRO';
+    let overrideFiado = false;
+    let html5QrcodeScanner = null;
+    let modalScanner = null;
+    let remessaScanner = null;
+    let isCameraPaused = false;
+    let lowStockFilterActive = false;
+
+    // INICIALIZAÇÃO
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCartUI();
+      renderProductList();
+      renderHistory();
+      renderCustomers();
+      renderRestockList();
+      updateCashRegisterSummary();
+      checkOnlineStatus();
+      window.addEventListener('online', checkOnlineStatus);
+      window.addEventListener('offline', checkOnlineStatus);
     });
-  }
 
-  // Só o dinheiro em espécie entra neste saldo
-  if (currentPaymentMethod === 'Dinheiro') {
-    const recebidoCentavos = Math.round(
-      Number(
-        document.getElementById('cashReceivedInput').value
-      ) * 100
-    );
+    function saveDB() {
+      localStorage.setItem('pdv_products', JSON.stringify(db.products));
+      localStorage.setItem('pdv_customers', JSON.stringify(db.customers));
+      localStorage.setItem('pdv_history', JSON.stringify(db.history));
+      localStorage.setItem('pdv_restock', JSON.stringify(db.restockToday));
+      localStorage.setItem('pdv_sangrias', JSON.stringify(db.sangrias));
+      localStorage.setItem('pdv_cash', JSON.stringify(db.cashRegister));
+    }
 
-    const trocoCentavos = recebidoCentavos - totalCentavos;
+    function showToast(msg) {
+      const t = document.getElementById('toastSuccess');
+      document.getElementById('toastMessage').innerText = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
 
-    db.cashDrawer = (
-      paraCentavos(db.cashDrawer) +
-      totalCentavos
-    ) / 100;
+    function checkOnlineStatus() {
+      const badge = document.getElementById('onlineStatusBadge');
+      if (navigator.onLine) {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> Sistema Online (PWA)`;
+        badge.className = "text-[10px] text-emerald-400 font-medium flex items-center gap-1";
+      } else {
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span> Modo Offline Ativo`;
+        badge.className = "text-[10px] text-amber-400 font-medium flex items-center gap-1";
+      }
+    }
 
-    // O troco entregue não permanece no caixa
-    db.cashDrawer = (
-      paraCentavos(db.cashDrawer) - trocoCentavos
-    ) / 100;
-  }
+    // NAVEGAÇÃO DE ABAS
+    function switchTab(tab) {
+      ['pos', 'products', 'restock', 'history', 'customers', 'settings'].forEach(t => {
+        const el = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Content`);
+        if (el) el.style.display = 'none';
+      });
+      document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}Content`).style.display = 'flex';
+      
+      if (tab === 'pos' && document.getElementById('activeSaleScreen').style.display === 'flex' && !isCameraPaused) {
+        initCamera();
+      } else {
+        stopCamera();
+      }
+      if (tab === 'products') renderProductList();
+      if (tab === 'history') renderHistory();
+      if (tab === 'customers') renderCustomers();
+      if (tab === 'restock') renderRestockList();
+    }
 
-  // Registra a venda
-  db.sales.push({
-    id: Date.now(),
-    date: new Date().toISOString(),
-    items: cart.map(item => ({ ...item })),
-    total,
-    cost: custo,
-    profit: lucro,
-    method: currentPaymentMethod,
-    customer: cliente ? cliente.name : null
-  });
+    function toggleOptionsMenu() {
+      const dd = document.getElementById('optionsDropdown');
+      dd.classList.toggle('hidden');
+    }
 
-  saveDB();
+    // FLUXO DE VENDA E CÂMERA PDV
+    function startNewSale() {
+      document.getElementById('standbyScreen').style.display = 'none';
+      document.getElementById('activeSaleScreen').style.display = 'flex';
+      cart = [];
+      updateCartUI();
+      initCamera();
+    }
 
-  closePaymentModal();
-  showToast('Venda concluída com sucesso!');
-  cancelSale();
+    function cancelSale() {
+      if (cart.length > 0 && !confirm('Deseja realmente cancelar esta venda?')) return;
+      cart = [];
+      updateCartUI();
+      document.getElementById('activeSaleScreen').style.display = 'none';
+      document.getElementById('standbyScreen').style.display = 'flex';
+      stopCamera();
+    }
 
-  // Atualiza as telas que dependem dos dados
-  renderProductList();
-  renderRestockList();
-  renderHistory();
-  renderCustomerList();
-}
+    function initCamera() {
+      if (html5QrcodeScanner) return;
+      try {
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        html5QrcodeScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (decodedText) => handleScannedCode(decodedText),
+          (error) => {}
+        ).catch(err => console.log("Câmera indisponível", err));
+      } catch (e) { console.log(e); }
+    }
+
+    function stopCamera() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          html5QrcodeScanner = null;
+        }).catch(err => { html5QrcodeScanner = null; });
+      }
+    }
+
+    function toggleCameraState() {
+      isCameraPaused = !isCameraPaused;
+      const overlay = document.getElementById('cameraPausedOverlay');
+      const dot = document.getElementById('cameraDot');
+      const statusText = document.getElementById('cameraStatusText');
+      const btnText = document.getElementById('toggleCameraBtnText');
+      const icon = document.getElementById('toggleCameraIcon');
+
+      if (isCameraPaused) {
+        overlay.classList.remove('hidden');
+        dot.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+        statusText.innerText = "Leitor Pausado";
+        statusText.className = "text-xs font-semibold text-slate-400 uppercase tracking-wider";
+        btnText.innerText = "Reativar Leitor";
+        icon.className = "fa-solid fa-play mr-1";
+        if (html5QrcodeScanner) html5QrcodeScanner.pause();
+      } else {
+        overlay.classList.add('hidden');
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        statusText.innerText = "Leitor Ativo";
+        statusText.className = "text-xs font-semibold text-emerald-400 uppercase tracking-wider";
+        btnText.innerText = "Pausar Leitor";
+        icon.className = "fa-solid fa-pause mr-1";
+        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+      }
+    }
+
+    function handleManualBarcodeSubmit(e) {
+      e.preventDefault();
+      const val = document.getElementById('manualBarcodeInput').value.trim();
+      if (!val) return;
+      handleScannedCode(val);
+      document.getElementById('manualBarcodeInput').value = '';
+    }
+
+    function handleScannedCode(codeOrName) {
+      const query = codeOrName.toLowerCase();
+      const product = db.products.find(p => p.barcode === query || p.name.toLowerCase().includes(query));
+      
+      if (!product) {
+        showToast('Produto não encontrado!');
+        return;
+      }
+
+      const qtyMul = parseInt(document.getElementById('multiplierQtyInput').value) || 1;
+      
+      if (product.stock < qtyMul) {
+        alert(`Estoque insuficiente! Restam apenas ${product.stock} unidades.`);
+        return;
+      }
+
+      const existing = cart.find(item => item.id === product.id);
+      if (existing) {
+        existing.qty += qtyMul;
+      } else {
+        cart.push({
+          id: product.id,
+          barcode: product.barcode,
+          name: product.name,
+          price: product.price,
+          cost: product.cost,
+          qty: qtyMul
+        });
+      }
+
+      document.getElementById('multiplierQtyInput').value = '1';
+      updateCartUI();
+      showLastScannedItem(product);
+    }
+
+    function showLastScannedItem(prod) {
+      const card = document.getElementById('lastScannedCard');
+      card.classList.remove('hidden');
+      document.getElementById('lastScannedName').innerText = prod.name;
+      document.getElementById('lastScannedPrice').innerText = `R$ ${prod.price.toFixed(2)}`;
+    }
+
+    function updateCartUI() {
+      const container = document.getElementById('cartList');
+      const countEl = document.getElementById('cartCount');
+      const totalDisplay = document.getElementById('cartTotalDisplay');
+      const bottomBar = document.getElementById('bottomActionBar');
+
+      countEl.innerText = cart.reduce((acc, i) => acc + i.qty, 0);
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div id="emptyCartState" class="py-8 text-center flex flex-col items-center justify-center text-slate-500">
+            <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
+            <p class="text-xs font-medium text-slate-400">Aguardando leitura de produtos</p>
+          </div>
+        `;
+        totalDisplay.innerText = 'R$ 0,00';
+        bottomBar.style.display = 'none';
+        return;
+      }
+
+      bottomBar.style.display = 'block';
+      let total = 0;
+      let html = '';
+
+      cart.forEach((item, index) => {
+        const sub = item.price * item.qty;
+        total += sub;
+        html += `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs">
+            <div class="min-w-0 flex-1">
+              <h4 class="font-bold text-slate-200 truncate">${item.name}</h4>
+              <p class="text-[11px] text-emerald-400 font-semibold">${item.qty}x R$ ${item.price.toFixed(2)} = R$ ${sub.toFixed(2)}</p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="changeCartQty(${index}, -1)" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-300 font-bold">-</button>
+              <span class="w-5 text-center font-bold">${item.qty}</span>
+              <button onclick="changeCartQty(${index}, 1)" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-300 font-bold">+</button>
+              <button onclick="removeFromCart(${index})" class="w-7 h-7 bg-rose-950/60 text-rose-400 rounded-lg ml-1"><i class="fa-solid fa-trash text-[10px]"></i></button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      totalDisplay.innerText = `R$ ${total.toFixed(2)}`;
+    }
+
+    function changeCartQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+      }
+      updateCartUI();
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    // PAGAMENTO E FINALIZAÇÃO
+    function openPaymentModal() {
+      if (cart.length === 0) return;
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      document.getElementById('modalCartTotalDisplay').innerText = `R$ ${total.toFixed(2)}`;
+      populateCustomerSelect();
+      selectPaymentMethod('DINHEIRO');
+      document.getElementById('paymentModal').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    function selectPaymentMethod(method) {
+      currentSaleMethod = method;
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500', 'bg-emerald-950/40', 'text-white');
+        btn.classList.add('border-slate-800', 'bg-slate-950/60', 'text-slate-300');
+      });
+
+      const btnMap = { 'DINHEIRO': 'btnMethodDinheiro', 'PIX': 'btnMethodPix', 'CARTAO': 'btnMethodCartao', 'FIADO': 'btnMethodFiado', 'MISTO': 'btnMethodMisto' };
+      const activeBtn = document.getElementById(btnMap[method]);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-slate-800', 'bg-slate-950/60', 'text-slate-300');
+        activeBtn.classList.add('border-emerald-500', 'bg-emerald-950/40', 'text-white');
+      }
+
+      document.querySelectorAll('.payment-subpanel').forEach(p => p.classList.add('hidden'));
+      if (method === 'DINHEIRO') {
+        document.getElementById('panelDinheiro').classList.remove('hidden');
+        document.getElementById('cashReceivedInput').value = '';
+        document.getElementById('changeDisplay').innerText = 'R$ 0,00';
+      } else if (method === 'PIX' || method === 'CARTAO') {
+        document.getElementById('panelSimple').classList.remove('hidden');
+        document.getElementById('simpleMethodIcon').className = method === 'PIX' ? 'fa-solid fa-bolt text-3xl mb-2 text-amber-400' : 'fa-solid fa-credit-card text-3xl mb-2 text-blue-400';
+        document.getElementById('simpleMethodText').innerText = `Pagamento via ${method} selecionado.`;
+      } else if (method === 'FIADO') {
+        document.getElementById('panelFiado').classList.remove('hidden');
+        checkCustomerDelinquency();
+      } else if (method === 'MISTO') {
+        document.getElementById('panelMisto').classList.remove('hidden');
+        document.getElementById('mistoPart1').value = '';
+        document.getElementById('mistoPart2').value = '';
+      }
+    }
+
+    function calculateChange() {
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const received = parseFloat(document.getElementById('cashReceivedInput').value) || 0;
+      const change = received - total;
+      document.getElementById('changeDisplay').innerText = change >= 0 ? `R$ ${change.toFixed(2)}` : 'Valor insuficiente';
+    }
+
+    function calculateMistoSplit() {
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const part1 = parseFloat(document.getElementById('mistoPart1').value) || 0;
+      const part2 = total - part1;
+      document.getElementById('mistoPart2').value = part2 >= 0 ? part2.toFixed(2) : '0.00';
+    }
+
+    function populateCustomerSelect() {
+      const sel = document.getElementById('customerSelect');
+      sel.innerHTML = db.customers.map(c => `<option value="${c.id}">${c.name} (Débito: R$ ${c.debt.toFixed(2)})</option>`).join('');
+    }
+
+    function checkCustomerDelinquency() {
+      const custId = parseInt(document.getElementById('customerSelect').value);
+      const customer = db.customers.find(c => c.id === custId);
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const warningBox = document.getElementById('overdueWarning');
+      
+      if (customer && (customer.debt > 0 || (customer.debt + total) > customer.creditLimit)) {
+        warningBox.classList.remove('hidden');
+        document.getElementById('overdueAmount').innerText = `R$ ${customer.debt.toFixed(2)} (Limite: R$ ${customer.creditLimit.toFixed(2)})`;
+        overrideFiado = false;
+      } else {
+        warningBox.classList.add('hidden');
+        overrideFiado = true;
+      }
+    }
+
+    function overrideDelinquency(status) {
+      overrideFiado = status;
+      showToast(status ? 'Fiado autorizado pelo gerente.' : 'Fiado bloqueado.');
+    }
+
+    function finalizeSale() {
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      const costTotal = cart.reduce((acc, i) => acc + (i.cost * i.qty), 0);
+
+      if (currentSaleMethod === 'FIADO') {
+        const custId = parseInt(document.getElementById('customerSelect').value);
+        const customer = db.customers.find(c => c.id === custId);
+        if (customer && !overrideFiado && (customer.debt + total > customer.creditLimit)) {
+          alert('Venda fiada não autorizada devido a limite excedido.');
+          return;
+        }
+        if (customer) {
+          customer.debt += total;
+        }
+      }
+
+      // Baixa no estoque e registro de reposição
+      cart.forEach(item => {
+        const prod = db.products.find(p => p.id === item.id);
+        if (prod) {
+          prod.stock -= item.qty;
+          // Adiciona na lista de reposição por saídas
+          const restockItem = db.restockToday.find(r => r.productId === prod.id);
+          if (restockItem) {
+            restockItem.qty += item.qty;
+          } else {
+            db.restockToday.push({ productId: prod.id, name: prod.name, qty: item.qty });
+          }
+        }
+      });
+
+      const saleRecord = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        items: [...cart],
+        total,
+        costTotal,
+        profit: total - costTotal,
+        method: currentSaleMethod
+      };
+
+      db.history.unshift(saleRecord);
+      saveDB();
+      closePaymentModal();
+
+      // Abrir recibo
+      showReceiptModal(saleRecord);
+      cancelSale();
+      renderProductList();
+      renderRestockList();
+      updateCashRegisterSummary();
+    }
+
+    // RECIBOS
+    let lastReceiptData = null;
+    function showReceiptModal(sale) {
+      lastReceiptData = sale;
+      document.getElementById('receiptDate').innerText = new Date(sale.date).toLocaleString('pt-BR');
+      document.getElementById('receiptMethod').innerText = sale.method;
+      document.getElementById('receiptTotal').innerText = `R$ ${sale.total.toFixed(2)}`;
+      
+      let html = '';
+      sale.items.forEach(i => {
+        html += `<div class="flex justify-between"><span>${i.qty}x ${i.name}</span><span>R$ ${(i.price * i.qty).toFixed(2)}</span></div>`;
+      });
+      document.getElementById('receiptItems').innerHTML = html;
+      document.getElementById('receiptModal').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receiptModal').classList.add('hidden');
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+
+    function shareWhatsAppReceipt() {
+      if (!lastReceiptData) return;
+      let text = `🛒 *Comprovante de Compra - Mercado*\nData: ${new Date(lastReceiptData.date).toLocaleString('pt-BR')}\n\n`;
+      lastReceiptData.items.forEach(i => {
+        text += `- ${i.qty}x ${i.name} (R$ ${(i.price * i.qty).toFixed(2)})\n`;
+      });
+      text += `\n*TOTAL: R$ ${lastReceiptData.total.toFixed(2)}*\nPagamento: ${lastReceiptData.method}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // CONTROLE DE CAIXA & SANGRIAS
+    function openCashRegisterModal() {
+      updateCashRegisterSummary();
+      renderSangriasList();
+      document.getElementById('cashRegisterModal').classList.remove('hidden');
+    }
+
+    function closeCashRegisterModal() {
+      document.getElementById('cashRegisterModal').classList.add('hidden');
+    }
+
+    function editFundoTroco() {
+      const val = prompt('Informe o valor do Fundo de Troco inicial:', db.cashRegister.fundoTroco);
+      if (val !== null && !isNaN(val)) {
+        db.cashRegister.fundoTroco = parseFloat(val);
+        saveDB();
+        updateCashRegisterSummary();
+      }
+    }
+
+    function updateCashRegisterSummary() {
+      const fundo = db.cashRegister.fundoTroco || 50.00;
+      let totalDinheiro = 0;
+      let totalSangrias = db.sangrias.reduce((acc, s) => acc + s.value, 0);
+
+      db.history.forEach(h => {
+        if (h.method === 'DINHEIRO') totalDinheiro += h.total;
+        if (h.method === 'MISTO') {
+          // Simplificação: assume 50% ou pode registrar parte
+          totalDinheiro += h.total * 0.5;
+        }
+      });
+
+      const expected = fundo + totalDinheiro - totalSangrias;
+
+      document.getElementById('cashFundo').innerText = `R$ ${fundo.toFixed(2)}`;
+      document.getElementById('cashDinheiro').innerText = `R$ ${totalDinheiro.toFixed(2)}`;
+      document.getElementById('cashSangrias').innerText = `R$ ${totalSangrias.toFixed(2)}`;
+      document.getElementById('cashTotalGaveta').innerText = `R$ ${expected.toFixed(2)}`;
+    }
+
+    function registerSangria() {
+      const val = parseFloat(document.getElementById('sangriaInput').value);
+      const reason = document.getElementById('sangriaReasonInput').value.trim() || 'Retirada de Caixa';
+      if (!val || val <= 0) {
+        alert('Informe um valor válido para a sangria.');
+        return;
+      }
+      db.sangrias.unshift({ id: Date.now(), value: val, reason, date: new Date().toLocaleTimeString('pt-BR') });
+      saveDB();
+      document.getElementById('sangriaInput').value = '';
+      document.getElementById('sangriaReasonInput').value = '';
+      updateCashRegisterSummary();
+      renderSangriasList();
+      showToast('Sangria registrada com sucesso!');
+    }
+
+    function renderSangriasList() {
+      const container = document.getElementById('sangriaList');
+      if (db.sangrias.length === 0) {
+        container.innerHTML = '<p class="text-[11px] text-slate-500 text-center py-2">Nenhuma sangria hoje.</p>';
+        return;
+      }
+      container.innerHTML = db.sangrias.map(s => `
+        <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs">
+          <div>
+            <span class="font-bold text-rose-400">R$ ${s.value.toFixed(2)}</span>
+            <span class="text-slate-300 ml-2">${s.reason}</span>
+          </div>
+          <span class="text-[10px] text-slate-500">${s.date}</span>
+        </div>
+      `).join('');
+    }
+
+    // PRODUTOS & ESTOQUE
+    function renderProductList() {
+      const container = document.getElementById('productList');
+      const search = document.getElementById('productSearchInput').value.toLowerCase();
+      document.getElementById('productCounterBadge').innerText = db.products.length;
+
+      let filtered = db.products.filter(p => p.name.toLowerCase().includes(search) || p.barcode.includes(search));
+      if (lowStockFilterActive) {
+        filtered = filtered.filter(p => p.stock <= p.minStock);
+      }
+
+      const lowStockItems = db.products.filter(p => p.stock <= p.minStock);
+      const wsBox = document.getElementById('supplierWhatsAppBox');
+      if (lowStockItems.length > 0) {
+        wsBox.classList.remove('hidden');
+        document.getElementById('lowStockCountText').innerText = `${lowStockItems.length} produtos abaixo do mínimo`;
+      } else {
+        wsBox.classList.add('hidden');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum produto encontrado.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => {
+        const isCritical = p.stock <= p.minStock;
+        return `
+          <div class="bg-slate-950 border ${isCritical ? 'border-amber-500/60' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-slate-100 truncate">${p.name}</h4>
+                ${isCritical ? '<span class="bg-amber-950/80 text-amber-400 text-[9px] px-1.5 py-0.5 rounded font-bold">Baixo</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-400">Cód: ${p.barcode} | Val: ${p.expiry || 'N/A'}</p>
+              <p class="text-[11px] text-emerald-400 font-bold mt-0.5">Venda: R$ ${p.price.toFixed(2)} | Estoque: <span class="${isCritical ? 'text-amber-400 font-black' : ''}">${p.stock}</span></p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="editProduct(${p.id})" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg"><i class="fa-solid fa-pen text-xs"></i></button>
+              <button onclick="deleteProduct(${p.id})" class="bg-rose-950/60 hover:bg-rose-900 text-rose-400 p-2 rounded-lg"><i class="fa-solid fa-trash text-xs"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleLowStockFilter() {
+      lowStockFilterActive = !lowStockFilterActive;
+      const btn = document.getElementById('lowStockFilterBtn');
+      btn.className = lowStockFilterActive ? "bg-amber-600 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5" : "bg-slate-900 border border-slate-800 text-amber-400 hover:bg-amber-950/40 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5";
+      renderProductList();
+    }
+
+    function openProductModal(id = null) {
+      document.getElementById('productModal').classList.remove('hidden');
+      if (id) {
+        const p = db.products.find(item => item.id === id);
+        document.getElementById('productModalTitle').innerText = 'Editar Produto';
+        document.getElementById('editProductId').value = p.id;
+        document.getElementById('prodBarcode').value = p.barcode;
+        document.getElementById('prodName').value = p.name;
+        document.getElementById('prodCost').value = p.cost;
+        document.getElementById('prodPrice').value = p.price;
+        document.getElementById('prodStock').value = p.stock;
+        document.getElementById('prodMinStock').value = p.minStock;
+        document.getElementById('prodExpiry').value = p.expiry || '';
+      } else {
+        document.getElementById('productModalTitle').innerText = 'Novo Produto';
+        document.getElementById('editProductId').value = '';
+        document.getElementById('prodBarcode').value = '';
+        document.getElementById('prodName').value = '';
+        document.getElementById('prodCost').value = '';
+        document.getElementById('prodPrice').value = '';
+        document.getElementById('prodStock').value = '10';
+        document.getElementById('prodMinStock').value = '5';
+        document.getElementById('prodExpiry').value = '';
+      }
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function calcSuggestedPrice() {
+      const cost = parseFloat(document.getElementById('prodCost').value) || 0;
+      if (cost > 0) {
+        document.getElementById('prodPrice').value = (cost * 1.4).toFixed(2); // Margem padrão de 40%
+      }
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('editProductId').value;
+      const barcode = document.getElementById('prodBarcode').value.trim();
+      const name = document.getElementById('prodName').value.trim();
+      const cost = parseFloat(document.getElementById('prodCost').value);
+      const price = parseFloat(document.getElementById('prodPrice').value);
+      const stock = parseInt(document.getElementById('prodStock').value);
+      const minStock = parseInt(document.getElementById('prodMinStock').value);
+      const expiry = document.getElementById('prodExpiry').value;
+
+      if (id) {
+        const p = db.products.find(item => item.id == id);
+        if (p) {
+          p.barcode = barcode; p.name = name; p.cost = cost; p.price = price; p.stock = stock; p.minStock = minStock; p.expiry = expiry;
+        }
+      } else {
+        db.products.push({ id: Date.now(), barcode, name, cost, price, stock, minStock, expiry });
+      }
+
+      saveDB();
+      closeProductModal();
+      renderProductList();
+      showToast('Produto salvo com sucesso!');
+    }
+
+    function deleteProduct(id) {
+      if (!confirm('Deseja excluir este produto?')) return;
+      db.products = db.products.filter(p => p.id !== id);
+      saveDB();
+      renderProductList();
+      showToast('Produto excluído.');
+    }
+
+    function sendLowStockToWhatsApp() {
+      const critical = db.products.filter(p => p.stock <= p.minStock);
+      if (critical.length === 0) return;
+      let text = `📦 *Lista de Pedido ao Fornecedor - Estoque Baixo*\n\n`;
+      critical.forEach(p => {
+        text += `- ${p.name} (Estoque atual: ${p.stock} | Mín: ${p.minStock})\n`;
+      });
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // ENTRADA DE REMESSA COM CÂMERA
+    function openRemessaModal() {
+      document.getElementById('remessaModal').classList.remove('hidden');
+      try {
+        remessaScanner = new Html5Qrcode("remessaReader");
+        remessaScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (code) => {
+            const prod = db.products.find(p => p.barcode === code);
+            const addQty = parseInt(document.getElementById('remessaAddQty').value) || 1;
+            if (prod) {
+              prod.stock += addQty;
+              saveDB();
+              renderProductList();
+              showToast(`Entrada: +${addQty} ${prod.name}`);
+            } else {
+              showToast('Produto não cadastrado para esta etiqueta!');
+            }
+          },
+          (err) => {}
+        );
+      } catch(e) {}
+    }
+
+    function closeRemessaModal() {
+      if (remessaScanner) {
+        remessaScanner.stop().catch(e => {});
+        remessaScanner = null;
+      }
+      document.getElementById('remessaModal').classList.add('hidden');
+    }
+
+    // LEITOR PARA CADASTRO DE PRODUTO
+    function openBarcodeScannerModal() {
+      document.getElementById('barcodeScannerModal').classList.remove('hidden');
+      try {
+        modalScanner = new Html5Qrcode("modalReader");
+        modalScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 200, height: 120 } },
+          (code) => {
+            document.getElementById('prodBarcode').value = code;
+            closeBarcodeScannerModal();
+          },
+          (err) => {}
+        );
+      } catch(e) {}
+    }
+
+    function closeBarcodeScannerModal() {
+      if (modalScanner) {
+        modalScanner.stop().catch(e => {});
+        modalScanner = null;
+      }
+      document.getElementById('barcodeScannerModal').classList.add('hidden');
+    }
+
+    // REPOSIÇÃO POR SAÍDAS
+    function renderRestockList() {
+      const container = document.getElementById('restockList');
+      if (db.restockToday.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum item registrado para reposição hoje.</p>';
+        return;
+      }
+      container.innerHTML = db.restockToday.map(r => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+          <div>
+            <h4 class="font-bold text-slate-200">${r.name}</h4>
+            <p class="text-[11px] text-teal-400 font-semibold">Quantidade a repor: ${r.qty} unidades</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearRestockList() {
+      if (!confirm('Deseja zerar a lista de reposição?')) return;
+      db.restockToday = [];
+      saveDB();
+      renderRestockList();
+    }
+
+    function sendRestockToWhatsApp() {
+      if (db.restockToday.length === 0) return;
+      let text = `🔄 *Lista de Reposição para Prateleira*\n\n`;
+      db.restockToday.forEach(r => {
+        text += `- ${r.name}: ${r.qty} un.\n`;
+      });
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // RELATÓRIO E DRE
+    function renderHistory() {
+      const container = document.getElementById('historyList');
+      document.getElementById('historyCount').innerText = db.history.length;
+
+      let totalSales = 0;
+      let totalCost = 0;
+
+      db.history.forEach(h => {
+        totalSales += h.total;
+        totalCost += h.costTotal;
+      });
+
+      const totalProfit = totalSales - totalCost;
+      const margin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
+
+      document.getElementById('historyTotalSales').innerText = `R$ ${totalSales.toFixed(2)}`;
+      document.getElementById('historyTotalCost').innerText = `R$ ${totalCost.toFixed(2)}`;
+      document.getElementById('historyTotalProfit').innerText = `R$ ${totalProfit.toFixed(2)}`;
+      document.getElementById('historyTotalMargin').innerText = `${margin.toFixed(1)}%`;
+
+      if (db.history.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhuma venda registrada.</p>';
+        return;
+      }
+
+      container.innerHTML = db.history.map(h => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1.5 text-xs">
+          <div class="flex justify-between items-center text-slate-400">
+            <span>${new Date(h.date).toLocaleString('pt-BR')}</span>
+            <span class="bg-slate-900 text-emerald-400 px-2 py-0.5 rounded font-bold">${h.method}</span>
+          </div>
+          <div class="flex justify-between items-center font-bold text-slate-100 pt-1 border-t border-slate-800/80">
+            <span>Total: R$ ${h.total.toFixed(2)}</span>
+            <span class="text-emerald-400 text-[11px]">Lucro: R$ ${h.profit.toFixed(2)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (!confirm('Deseja apagar todo o histórico financeiro?')) return;
+      db.history = [];
+      saveDB();
+      renderHistory();
+    }
+
+    // CLIENTES & FIADO
+    function renderCustomers() {
+      const container = document.getElementById('customerList');
+      let totalDebts = db.customers.reduce((acc, c) => acc + c.debt, 0);
+      document.getElementById('totalDebtsBadge').innerText = `R$ ${totalDebts.toFixed(2)}`;
+
+      if (db.customers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">Nenhum cliente cadastrado.</p>';
+        return;
+      }
+
+      container.innerHTML = db.customers.map(c => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+          <div>
+            <h4 class="font-bold text-slate-100">${c.name}</h4>
+            <p class="text-[11px] text-slate-400">Tel: ${c.phone || 'N/A'} | Limite: R$ ${c.creditLimit.toFixed(2)}</p>
+            <p class="text-[11px] text-rose-400 font-bold mt-0.5">Débito Atual: R$ ${c.debt.toFixed(2)}</p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            ${c.debt > 0 ? `
+              <button onclick="payCustomerDebt(${c.id})" title="Quitar Dívida" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-2 rounded-lg font-bold text-[10px]">Pagar</button>
+              <button onclick="sendWhatsAppDebt(${c.id})" title="Cobrar no WhatsApp" class="bg-emerald-800 hover:bg-emerald-700 text-white p-2 rounded-lg"><i class="fa-brands fa-whatsapp"></i></button>
+            ` : ''}
+            <button onclick="deleteCustomer(${c.id})" class="bg-rose-950/60 text-rose-400 p-2 rounded-lg"><i class="fa-solid fa-trash text-[10px]"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openCustomerModal() {
+      document.getElementById('customerModal').classList.remove('hidden');
+    }
+
+    function closeCustomerModal() {
+      document.getElementById('customerModal').classList.add('hidden');
+    }
+
+    function saveCustomer(e) {
+      e.preventDefault();
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const creditLimit = parseFloat(document.getElementById('custLimit').value) || 200;
+
+      db.customers.push({ id: Date.now(), name, phone, creditLimit, debt: 0.00 });
+      saveDB();
+      closeCustomerModal();
+      renderCustomers();
+      showToast('Cliente cadastrado!');
+    }
+
+    function payCustomerDebt(id) {
+      const c = db.customers.find(item => item.id === id);
+      if (!c) return;
+      const val = prompt(`Quanto o cliente ${c.name} está pagando? (Débito atual: R$ ${c.debt.toFixed(2)})`, c.debt);
+      if (val !== null && !isNaN(val)) {
+        const paid = parseFloat(val);
+        c.debt = Math.max(0, c.debt - paid);
+        saveDB();
+        renderCustomers();
+        updateCashRegisterSummary();
+        showToast('Pagamento registrado no caixa!');
+      }
+    }
+
+    function sendWhatsAppDebt(id) {
+      const c = db.customers.find(item => item.id === id);
+      if (!c || !c.phone) {
+        alert('Cliente sem telefone cadastrado.');
+        return;
+      }
+      const text = `Olá *${c.name}*, passando para lembrar que seu extrato em aberto na nossa mercearia é de *R$ ${c.debt.toFixed(2)}*. Caso possa quitar ou realizar uma parcial, agradecemos!`;
+      window.open(`https://wa.me/55${c.phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function deleteCustomer(id) {
+      if (!confirm('Excluir este cliente?')) return;
+      db.customers = db.customers.filter(c => c.id !== id);
+      saveDB();
+      renderCustomers();
+    }
+
+    // CONFIGURAÇÕES & BACKUP
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `backup_pdv_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+      showToast('Backup exportado com sucesso!');
+    }
+
+    function importData() {
+      document.getElementById('importFile').click();
+    }
+
+    function processImportFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          if (imported && imported.products) {
+            db = imported;
+            saveDB();
+            updateCartUI();
+            renderProductList();
+            renderHistory();
+            renderCustomers();
+            renderRestockList();
+            updateCashRegisterSummary();
+            showToast('Dados importados com sucesso!');
+          } else {
+            alert('Arquivo JSON inválido.');
+          }
+        } catch(err) {
+          alert('Erro ao ler arquivo JSON.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAllSystemData() {
+      if (!confirm('ATENÇÃO: Deseja apagar todos os dados, produtos e histórico do aplicativo? Esta ação não pode ser desfeita.')) return;
+      localStorage.clear();
+      location.reload();
+    }
+  </script>
+</body>
+</html>
