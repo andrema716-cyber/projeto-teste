@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caixa PDV v5.2 Pro</title>
+  <title>Caixa PDV v5.3 Pro</title>
   <style>
     :root {
       --bg-dark: #0f172a;
@@ -20,25 +20,27 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* Topbar Moderna */
+    /* Topbar Moderna Responsiva */
     header {
       background: var(--card-dark);
       border-bottom: 1px solid var(--border);
-      padding: 0.75rem 1rem;
+      padding: 0.5rem 0.75rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .brand { display: flex; align-items: center; gap: 0.75rem; }
-    .brand h1 { font-size: 1.1rem; font-weight: 700; color: #fff; }
-    .version-badge { font-size: 0.7rem; background: rgba(16, 185, 129, 0.2); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 9999px; }
+    .brand { display: flex; align-items: center; gap: 0.5rem; }
+    .brand h1 { font-size: 1rem; font-weight: 700; color: #fff; }
+    .version-badge { font-size: 0.65rem; background: rgba(16, 185, 129, 0.2); color: var(--primary); padding: 0.15rem 0.4rem; border-radius: 9999px; }
     
-    .nav-tabs { display: flex; gap: 0.5rem; }
-    .tab-btn { background: #334155; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .nav-tabs { display: flex; gap: 0.3rem; overflow-x: auto; max-width: 100%; padding-bottom: 2px; }
+    .tab-btn { background: #334155; border: none; color: var(--text-muted); padding: 0.4rem 0.75rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap; }
     .tab-btn.active { background: var(--primary); color: #fff; }
 
     /* Views / Abas */
-    .view-section { display: none; flex: 1; overflow: hidden; flex-direction: column; padding: 1rem; }
+    .view-section { display: none; flex: 1; overflow: hidden; flex-direction: column; padding: 0.75rem; }
     .view-section.active { display: flex; }
 
     /* Tela Inicial / Pronto para Atendimento */
@@ -51,72 +53,80 @@
       background: var(--card-dark);
       border: 1px solid var(--border);
       border-radius: 1rem;
-      padding: 2rem;
+      padding: 1.5rem;
       text-align: center;
       margin: auto;
-      max-width: 500px;
+      max-width: 450px;
       width: 100%;
     }
-    .hero-icon { font-size: 3rem; margin-bottom: 1rem; background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 50%; color: var(--primary); }
+    .hero-icon { font-size: 2.5rem; margin-bottom: 0.75rem; background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 50%; color: var(--primary); }
     .btn-start {
       background: var(--primary);
       color: white;
       border: none;
-      padding: 1rem 2rem;
-      border-radius: 0.75rem;
-      font-size: 1.1rem;
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 1.5rem;
+      margin-top: 1rem;
       width: 100%;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     .btn-start:hover { background: var(--primary-dark); }
 
-    /* Tela de Venda Ativa */
-    .sale-layout { display: flex; flex: 1; gap: 1rem; overflow: hidden; }
-    .sale-left { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
-    .sale-right { width: 380px; background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+    /* Tela de Venda Ativa Adaptável */
+    .sale-layout { display: flex; flex: 1; gap: 0.75rem; overflow: hidden; flex-direction: column; }
+    @media (min-width: 768px) {
+      .sale-layout { flex-direction: row; }
+    }
+
+    .sale-left { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; min-height: 0; }
+    .sale-right { width: 100%; max-height: 45vh; background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
+    @media (min-width: 768px) {
+      .sale-right { width: 320px; max-height: none; }
+    }
     
     .barcode-box input {
       width: 100%;
-      padding: 1rem;
+      padding: 0.75rem;
       background: var(--card-dark);
       border: 2px solid var(--border);
       border-radius: 0.5rem;
       color: #fff;
-      font-size: 1.1rem;
+      font-size: 1rem;
       outline: none;
     }
     .barcode-box input:focus { border-color: var(--primary); }
 
-    .cart-table-container { flex: 1; background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.5rem; overflow-y: auto; }
+    .cart-table-container { flex: 1; background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.5rem; overflow-y: auto; min-height: 120px; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
     th { background: #273548; color: var(--text-muted); position: sticky; top: 0; }
     
-    .totals-box { display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-    .total-line { display: flex; justify-content: space-between; font-size: 1rem; }
-    .total-final { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+    .totals-box { display: flex; flex-direction: column; gap: 0.3rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+    .total-line { display: flex; justify-content: space-between; font-size: 0.9rem; }
+    .total-final { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
 
-    .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
-    .pay-opt { background: #334155; border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 0.375rem; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.3rem; }
+    .pay-opt { background: #334155; border: 1px solid var(--border); color: #fff; padding: 0.5rem; border-radius: 0.375rem; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
     .pay-opt.selected { background: rgba(16, 185, 129, 0.2); border-color: var(--primary); color: var(--primary); }
 
-    .btn-finish-sale { background: var(--primary); color: #fff; border: none; padding: 1rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 1rem; }
+    .btn-finish-sale { background: var(--primary); color: #fff; border: none; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.75rem; }
 
     /* Modais & Tabelas de Gestão */
-    .data-table-container { background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.5rem; flex: 1; overflow-y: auto; margin-top: 1rem; }
-    .action-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-    .btn-action { background: #334155; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.85rem; }
+    .data-table-container { background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.5rem; flex: 1; overflow-y: auto; margin-top: 0.75rem; }
+    .action-bar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .action-bar h3 { font-size: 1rem; }
+    .btn-action { background: #334155; color: #fff; border: none; padding: 0.4rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.8rem; }
     .btn-action.primary { background: var(--primary); }
 
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
     .modal.active { display: flex; }
-    .modal-box { background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; width: 90%; max-width: 450px; }
-    .form-ctrl { margin-bottom: 1rem; }
-    .form-ctrl label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem; }
-    .form-ctrl input, .form-ctrl select { width: 100%; padding: 0.6rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 0.375rem; color: #fff; }
+    .modal-box { background: var(--card-dark); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; width: 100%; max-width: 400px; }
+    .form-ctrl { margin-bottom: 0.75rem; }
+    .form-ctrl label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+    .form-ctrl input, .form-ctrl select { width: 100%; padding: 0.5rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 0.375rem; color: #fff; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -125,7 +135,7 @@
   <header>
     <div class="brand">
       <h1>Caixa PDV</h1>
-      <span class="version-badge">v5.2 Pro</span>
+      <span class="version-badge">v5.3 Pro</span>
     </div>
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('home')">Caixa</button>
@@ -141,7 +151,7 @@
     <div id="readyHero" class="hero-container">
       <div class="hero-icon">🛒</div>
       <h2>Pronto para Atendimento</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Clique abaixo para ativar o leitor e registrar os produtos do cliente.</p>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">Clique abaixo para ativar o leitor e registrar os produtos do cliente.</p>
       <button class="btn-start" onclick="startNewSale()">▶ Iniciar Nova Venda</button>
     </div>
 
@@ -169,13 +179,13 @@
 
       <div class="sale-right">
         <div>
-          <h3 style="font-size: 1rem; margin-bottom: 1rem;">Resumo da Venda</h3>
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Resumo da Venda</h3>
           <div class="totals-box">
             <div class="total-line"><span>Qtd Itens:</span><span id="txtQtyItems">0</span></div>
             <div class="total-line total-final"><span>TOTAL:</span><span id="txtGrandTotal">R$ 0,00</span></div>
           </div>
 
-          <h4 style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1.5rem; margin-bottom: 0.5rem;">Forma de Pagamento</h4>
+          <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0.3rem;">Forma de Pagamento</h4>
           <div class="pay-grid">
             <div class="pay-opt selected" onclick="setPayment('Dinheiro', this)">Dinheiro</div>
             <div class="pay-opt" onclick="setPayment('PIX', this)">PIX</div>
@@ -183,12 +193,12 @@
             <div class="pay-opt" onclick="setPayment('Fiado', this)" style="border-color: var(--warning); color: var(--warning);">A Prazo</div>
           </div>
 
-          <div id="fiadoBox" style="display: none; margin-top: 1rem;">
+          <div id="fiadoBox" style="display: none; margin-top: 0.5rem;">
             <div class="form-ctrl" style="margin-bottom:0;">
-              <label>Cliente (Obrigatório para Fiado):</label>
+              <label>Cliente (Obrigatório):</label>
               <select id="selectFiadoClient" onchange="checkClientLimit()"></select>
             </div>
-            <div id="clientLimitWarning" style="font-size: 0.75rem; margin-top: 0.3rem; color: var(--warning);"></div>
+            <div id="clientLimitWarning" style="font-size: 0.7rem; margin-top: 0.2rem; color: var(--warning);"></div>
           </div>
         </div>
 
@@ -265,13 +275,13 @@
   <div class="modal" id="modalProduct">
     <div class="modal-box">
       <h3>Cadastrar Novo Produto</h3>
-      <form onsubmit="saveNewProduct(event)" style="margin-top: 1rem;">
+      <form onsubmit="saveNewProduct(event)" style="margin-top: 0.75rem;">
         <div class="form-ctrl"><label>Código de Barras</label><input type="text" id="newProdCode" required></div>
         <div class="form-ctrl"><label>Nome do Produto</label><input type="text" id="newProdName" required></div>
         <div class="form-ctrl"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="newProdPrice" required></div>
         <div class="form-ctrl"><label>Estoque Inicial</label><input type="number" id="newProdStock" value="10" required></div>
         <div class="form-ctrl"><label>Validade (Opcional)</label><input type="date" id="newProdExpiry"></div>
-        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
           <button type="button" class="btn-action" style="flex:1;" onclick="closeModal('modalProduct')">Cancelar</button>
           <button type="submit" class="btn-action primary" style="flex:1;">Salvar</button>
         </div>
@@ -283,11 +293,11 @@
   <div class="modal" id="modalClient">
     <div class="modal-box">
       <h3>Cadastrar Novo Cliente</h3>
-      <form onsubmit="saveNewClient(event)" style="margin-top: 1rem;">
+      <form onsubmit="saveNewClient(event)" style="margin-top: 0.75rem;">
         <div class="form-ctrl"><label>Nome do Cliente</label><input type="text" id="newCliName" required></div>
         <div class="form-ctrl"><label>Telefone / WhatsApp</label><input type="text" id="newCliPhone"></div>
         <div class="form-ctrl"><label>Limite de Crédito (R$)</label><input type="number" step="0.01" id="newCliLimit" value="200.00" required></div>
-        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
           <button type="button" class="btn-action" style="flex:1;" onclick="closeModal('modalClient')">Cancelar</button>
           <button type="submit" class="btn-action primary" style="flex:1;">Salvar</button>
         </div>
@@ -295,7 +305,7 @@
     </div>
   </div>
 
-  <!-- BEEP AUDIO (Sintetizado via Web Audio API) -->
+  <!-- SCRIPT DE CONTROLE E SOM -->
   <script>
     function playBeep() {
       try {
@@ -303,7 +313,7 @@
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.value = 850; // Tom de bipe de leitor
+        osc.frequency.value = 850;
         gain.gain.setValueAtTime(0.1, ctx.currentTime);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -312,7 +322,6 @@
       } catch (e) {}
     }
 
-    // BANCO DE DADOS LOCAL (COM PRESERVAÇÃO DE DADOS EXISTENTES)
     let db = {
       products: JSON.parse(localStorage.getItem('pdv_products')) || [
         { code: '789100000001', name: 'Arroz 5kg', price: 24.90, stock: 20, expiry: '2026-11-15' },
@@ -339,7 +348,6 @@
       renderSalesHistory();
     };
 
-    // NAVEGAÇÃO DE ABAS
     function switchTab(tabId) {
       document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -353,7 +361,6 @@
       setTimeout(() => document.getElementById('barcodeInput').focus(), 100);
     }
 
-    // LEITOR DE CÓDIGO DE BARRAS / BUSCA COM DEBOUNCE (1.5s)
     function handleBarcode(e) {
       if (e.key === 'Enter') {
         const now = Date.now();
@@ -406,9 +413,9 @@
           <tr>
             <td>${item.name}</td>
             <td>
-              <button onclick="updateQty(${index}, -1)" style="padding:0.2rem 0.5rem; background:#334155; border:none; color:#fff; border-radius:3px;">-</button>
+              <button onclick="updateQty(${index}, -1)" style="padding:0.2rem 0.4rem; background:#334155; border:none; color:#fff; border-radius:3px;">-</button>
               ${item.qty}
-              <button onclick="updateQty(${index}, 1)" style="padding:0.2rem 0.5rem; background:#334155; border:none; color:#fff; border-radius:3px;">+</button>
+              <button onclick="updateQty(${index}, 1)" style="padding:0.2rem 0.4rem; background:#334155; border:none; color:#fff; border-radius:3px;">+</button>
             </td>
             <td>R$ ${item.price.toFixed(2)}</td>
             <td>R$ ${sub.toFixed(2)}</td>
@@ -421,7 +428,6 @@
       document.getElementById('txtGrandTotal').innerText = `R$ ${total.toFixed(2)}`;
     }
 
-    // PAGAMENTO & FIADO BLINDADO
     function setPayment(method, el) {
       currentPayment = method;
       document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
@@ -436,7 +442,7 @@
       const sel = document.getElementById('selectFiadoClient');
       sel.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
       db.customers.forEach((c, idx) => {
-        sel.innerHTML += `<option value="${idx}">${c.name} (Saldo Devendo: R$ ${(c.balance || 0).toFixed(2)})</option>`;
+        sel.innerHTML += `<option value="${idx}">${c.name} (Devendo: R$ ${(c.balance || 0).toFixed(2)})</option>`;
       });
     }
 
@@ -451,10 +457,10 @@
 
       if (newBalance > cli.limit) {
         warn.style.color = 'var(--danger)';
-        warn.innerText = `⚠️ Ultrapassa o limite de R$ ${cli.limit.toFixed(2)}! Novo saldo seria R$ ${newBalance.toFixed(2)}`;
+        warn.innerText = `⚠️ Passa do limite de R$ ${cli.limit.toFixed(2)}!`;
       } else {
         warn.style.color = 'var(--warning)';
-        warn.innerText = `Limite OK. Saldo após compra: R$ ${newBalance.toFixed(2)}`;
+        warn.innerText = `Saldo após compra: R$ ${newBalance.toFixed(2)}`;
       }
     }
 
@@ -476,13 +482,11 @@
         clientName = cli.name;
       }
 
-      // Baixa de Estoque
       cart.forEach(item => {
         const p = db.products.find(x => x.code === item.code);
         if (p) p.stock -= item.qty;
       });
 
-      // Salvar Histórico
       db.sales.push({
         id: Date.now(),
         date: new Date().toLocaleString('pt-BR'),
@@ -495,7 +499,6 @@
       saveDB();
       alert('Venda finalizada com sucesso!');
       
-      // Resetar Carrinho e voltar à tela inicial pronta
       cart = [];
       renderCart();
       renderProductsTable();
@@ -506,7 +509,6 @@
       document.getElementById('readyHero').style.display = 'flex';
     }
 
-    // CADASTROS & TABELAS DE GESTÃO
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -545,7 +547,7 @@
       e.preventDefault();
       db.customers.push({
         name: document.getElementById('newCliName').value,
-        phone: document.getElementById('newCliPhone').value,
+        phone: document.getElementById('newCliPhone5').value || document.getElementById('newCliPhone').value,
         limit: parseFloat(document.getElementById('newCliLimit').value),
         balance: 0,
         history: []
